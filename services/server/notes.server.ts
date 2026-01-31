@@ -70,3 +70,17 @@ export async function getNotesByFilters(
     }
   )
 }
+
+/**
+ * Fetch all notes for category aggregation (Server-side)
+ * Used for homepage category display
+ */
+export async function getAllNotes(): Promise<NotesListResponse> {
+  return apiClient<NotesListResponse>('/api/v1/notes', {
+    params: {
+      page: 0,
+      size: 1000, // Fetch large set to get all categories
+    },
+    cache: 'no-store',
+  })
+}

@@ -1,30 +1,51 @@
-export function HomeLeadingCourses() {
-  const courses = [
-    {
-      title: 'Comprehensive BSc CSIT Preparation: From Core Concepts to Mock Tests',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuAUQ4DUX-srzz6et53Bt1ftoOoCtS43rHb6HaCPHMz25-wd0qVC8RXOPwCn9AYlsCBSUty7lA-tseGWdnLtIaIwWRCBrmaIjZclhN9RAwNguQwleIg20buvWfHnvCrSm2pNgJwRnpa2UfVHECptd6OZVCErDr1-RhuAOjbBGpXrhnLYDPXu8ifHe_Bip6lsKonUazzhRWQUqMnotoMZRccqjHI7KS5N6heFDHvBzXbjvd4oxqktCVZM9nmavucEfZmQfjBpFn-6AQo',
-      rating: 5.0,
-      price: 'Rs. 4,500',
-      duration: '120 hrs',
-    },
-    {
-      title: 'MBBS Masterclass: Advanced Biology and Chemistry Focused Prep',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuBkRyAr9Fr5xmiQdeC1G6jQzYwQWCVo7ktSOzfP7jiOfaWqS6lzRWxCz2oKQgAFVkwe_9pnly1ZN8z2aleK8O8QGWbXDdFWEAxOT_uAd1ZZH8J9rqT3jaag6Be9sIrEeR0olanHgKyvpYDhcTGwp-sVKX4L9wkxKhrg_oQkWNaX740vqCZYj7zEuNM-zobL3oMqUiLdEMfCBtZO6jFMVn0g4q6jljL9yHZyd9zjCIinHj33B2-88_vVj3XALs2sp_zQ_OU1t18r3BM',
-      rating: 4.9,
-      price: 'Rs. 8,999',
-      duration: '240 hrs',
-    },
-    {
-      title: 'BCA Gateway: Mathematics and Digital Logic for Aspiring Developers',
-      image:
-        'https://lh3.googleusercontent.com/aida-public/AB6AXuCXCJwp8wrgxmblLvmmHBNvmFmvU2LWGVX1OGH_9A6rZ_--pKM1jLIFMfWKBCskQhwy0E77V77fS_CiC1iopuI7VnjJkUqFejc7tTZjOzvG6VEtfFfrkD5hm7TcMT7VQABPhx4_EhCbaw7oljhJUWhhX9DwSW5nn06I76vZCxYnBktppWwedxJjpLNlVljLW4acKScawPIAf5eAXkzyk0RZbxNRmHjNm_DBXVxcoAOCGhigeSz244XaD0Rvaa-pkA6CJMLZlz4fCYg',
-      rating: 5.0,
-      price: 'Rs. 3,500',
-      duration: '90 hrs',
-    },
-  ]
+import Link from 'next/link'
+import type { Training } from '@/types/trainings.types'
+
+interface HomeLeadingCoursesProps {
+  trainingsData?: Training[]
+}
+
+export function HomeLeadingCourses({ trainingsData = [] }: HomeLeadingCoursesProps) {
+  // Format trainings for display
+  const courses = trainingsData.map((training) => {
+    const capacityPercentage = (training.currentParticipants / training.maxParticipants) * 100
+    
+    return {
+      id: training.trainingId,
+      title: training.trainingName,
+      price: `Rs. ${training.price.toLocaleString()}`,
+      duration: `${training.trainingHours} hrs`,
+      status: training.trainingStatus,
+      category: training.trainingCategory,
+      type: training.trainingType,
+      currentParticipants: training.currentParticipants,
+      maxParticipants: training.maxParticipants,
+      capacityPercentage,
+    }
+  })
+
+  // Show message if no trainings available
+  if (courses.length === 0) {
+    return (
+      <section className="py-24 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-end mb-12">
+            <div>
+              <h2 className="text-4xl font-extrabold text-brand-navy font-heading">
+                Our leading courses
+              </h2>
+              <p className="text-gray-600 mt-2">
+                Prepared by industry experts for maximum clarity and cognitive ease.
+              </p>
+            </div>
+          </div>
+          <div className="text-center py-12">
+            <p className="text-gray-500 text-lg">No courses available at the moment.</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   return (
     <section className="py-24 bg-gray-50">
@@ -38,59 +59,90 @@ export function HomeLeadingCourses() {
               Prepared by industry experts for maximum clarity and cognitive ease.
             </p>
           </div>
-          <button className="bg-brand-navy text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-opacity-90 transition-all hidden md:block">
+          <Link
+            href="/trainings"
+            className="bg-brand-navy text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-opacity-90 transition-all hidden md:block"
+          >
             Explore All Courses
-          </button>
+          </Link>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
           {courses.map((course) => (
-            <div
-              key={course.title}
+            <Link
+              key={course.id}
+              href={`/trainings/${course.id}`}
               className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all group"
             >
-              <div className="aspect-video relative overflow-hidden">
-                <img
-                  alt={course.title}
-                  className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-500"
-                  src={course.image}
-                />
-              </div>
               <div className="p-6">
-                <div className="flex gap-1 mb-2">
-                  {[...Array(5)].map((_, i) => (
-                    <svg
-                      key={i}
-                      viewBox="0 0 24 24"
-                      fill="currentColor"
-                      className="size-4 text-brand-gold"
-                    >
-                      <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                    </svg>
-                  ))}
-                  <span className="text-xs text-gray-500 ml-1 font-medium">({course.rating})</span>
+                {/* Header: Status Badge and Category */}
+                <div className="flex justify-between items-start mb-4">
+                  <span
+                    className={`text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded ${
+                      course.status === 'UPCOMING'
+                        ? 'bg-warning/10 text-warning'
+                        : course.status === 'ONGOING'
+                          ? 'bg-success/10 text-success'
+                          : 'bg-gray-100 text-gray-600'
+                    }`}
+                  >
+                    {course.status}
+                  </span>
+                  <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                    {course.category}
+                  </span>
                 </div>
-                <h3 className="text-lg font-bold text-brand-navy mb-4 h-14 leading-snug">
+
+                {/* Training Title */}
+                <h3 className="text-xl font-bold text-brand-navy  leading-tight h-14 line-clamp-2 group-hover:text-brand-blue transition-colors">
                   {course.title}
                 </h3>
-                <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-                  <span className="text-xl font-extrabold text-brand-navy">{course.price}</span>
-                  <div className="flex items-center text-gray-400 text-sm">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 mr-1">
-                      <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                    </svg>
-                    {course.duration}
+
+                {/* Training Details Grid */}
+                <div className="grid grid-cols-3 gap-2 mb-6 py-4 border-y border-gray-100">
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-400 uppercase font-bold">Type</div>
+                    <div className="text-xs font-bold text-gray-800">{course.type}</div>
+                  </div>
+                  <div className="text-center border-x border-gray-100 px-1">
+                    <div className="text-[10px] text-gray-400 uppercase font-bold">Duration</div>
+                    <div className="text-xs font-bold text-gray-800">{course.duration}</div>
+                  </div>
+                  <div className="text-center">
+                    <div className="text-[10px] text-gray-400 uppercase font-bold">Price</div>
+                    <div className="text-xs font-bold text-brand-blue">{course.price}</div>
+                  </div>
+                </div>
+
+                {/* Capacity Progress */}
+                <div className="mb-4">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-xs font-medium text-gray-600">Capacity</span>
+                    <span className="text-xs font-bold text-brand-navy">
+                      {course.currentParticipants}/{course.maxParticipants} joined
+                    </span>
+                  </div>
+                  <div className="w-full bg-gray-100 rounded-full h-1.5 overflow-hidden">
+                    <div
+                      className={`${
+                        course.capacityPercentage >= 80 ? 'bg-warning' : 'bg-brand-blue'
+                      } h-full rounded-full transition-all duration-300`}
+                      style={{ width: `${course.capacityPercentage}%` }}
+                    />
                   </div>
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
         <div className="mt-8 text-center md:hidden">
-          <button className="bg-brand-navy text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-opacity-90 transition-all">
+          <Link
+            href="/trainings"
+            className="bg-brand-navy text-white px-6 py-2 rounded-lg font-semibold text-sm hover:bg-opacity-90 transition-all inline-block"
+          >
             Explore All Courses
-          </button>
+          </Link>
         </div>
       </div>
     </section>

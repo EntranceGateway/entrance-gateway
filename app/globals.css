@@ -284,3 +284,42 @@
     animation: slide-in 0.3s ease-out;
   }
 }
+
+/* ============================================
+   Prose Styling for Blog Articles
+   ============================================ */
+.prose {
+  @apply text-gray-700 leading-relaxed;
+}
+
+.prose h2 {
+  @apply text-2xl font-bold text-brand-navy mt-10 mb-4 font-sans tracking-tight;
+}
+
+.prose h3 {
+  @apply text-xl font-semibold text-brand-blue mt-8 mb-3 font-sans;
+}
+
+.prose p {
+  @apply text-gray-700 leading-8 mb-6 text-lg;
+}
+
+.prose ul {
+  @apply list-disc list-outside ml-6 mb-6 text-gray-700 leading-8 text-lg;
+}
+
+.prose li {
+  @apply mb-2 pl-2;
+}
+
+.prose strong {
+  @apply font-bold text-gray-900;
+}
+
+.prose code {
+  @apply bg-gray-100 text-brand-blue px-1.5 py-0.5 rounded text-sm font-mono;
+}
+
+.prose a {
+  @apply text-brand-blue hover:text-brand-navy underline transition-colors;
+}

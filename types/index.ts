@@ -40,3 +40,10 @@ export type {
   TrainingDetailResponse,
   TrainingsQueryParams,
 } from './trainings.types'
+
+export type {
+  Blog,
+  BlogsListResponse,
+  BlogDetailResponse,
+  BlogsQueryParams,
+} from './blogs.types'
