@@ -1,6 +1,7 @@
 export { SyllabusPageContent } from './SyllabusPageContent'
 export { SyllabusDetailContent } from './SyllabusDetailContent'
 export { SyllabusHeader } from './SyllabusHeader'
+export { SyllabusAccordion } from './SyllabusAccordion'
 export { SyllabusFilters } from './SyllabusFilters'
 export { SyllabusTable } from './SyllabusTable'
 export { SyllabusCard, SyllabusCardList } from './SyllabusCard'

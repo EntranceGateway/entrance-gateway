@@ -1,6 +1,7 @@
 interface NotesPaginationProps {
   currentPage: number
   totalItems: number
+  totalPages: number
   itemsPerPage: number
   onPageChange: (page: number) => void
 }
@@ -8,10 +9,10 @@ interface NotesPaginationProps {
 export function NotesPagination({
   currentPage,
   totalItems,
+  totalPages,
   itemsPerPage,
   onPageChange,
 }: NotesPaginationProps) {
-  const totalPages = Math.ceil(totalItems / itemsPerPage)
   const startItem = (currentPage - 1) * itemsPerPage + 1
   const endItem = Math.min(currentPage * itemsPerPage, totalItems)
 
@@ -25,6 +26,49 @@ export function NotesPagination({
     if (currentPage < totalPages) {
       onPageChange(currentPage + 1)
     }
+  }
+
+  // Generate page numbers to display
+  const getPageNumbers = () => {
+    const pages: (number | string)[] = []
+    const maxVisible = 5
+
+    if (totalPages <= maxVisible) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        pages.push(i)
+      }
+    } else {
+      // Always show first page
+      pages.push(1)
+
+      if (currentPage > 3) {
+        pages.push('...')
+      }
+
+      // Show pages around current page
+      const start = Math.max(2, currentPage - 1)
+      const end = Math.min(totalPages - 1, currentPage + 1)
+
+      for (let i = start; i <= end; i++) {
+        pages.push(i)
+      }
+
+      if (currentPage < totalPages - 2) {
+        pages.push('...')
+      }
+
+      // Always show last page
+      if (totalPages > 1) {
+        pages.push(totalPages)
+      }
+    }
+
+    return pages
+  }
+
+  if (totalPages <= 1) {
+    return null // Don't show pagination if only one page
   }
 
   return (
@@ -52,44 +96,35 @@ export function NotesPagination({
           </svg>
         </button>
 
-        {/* Page 1 */}
-        <button
-          onClick={() => onPageChange(1)}
-          aria-current={currentPage === 1 ? 'page' : undefined}
-          className={
-            currentPage === 1
-              ? 'relative z-10 inline-flex items-center bg-brand-navy px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue'
-              : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+        {/* Page Numbers */}
+        {getPageNumbers().map((page, index) => {
+          if (page === '...') {
+            return (
+              <span
+                key={`ellipsis-${index}`}
+                className="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-700 ring-1 ring-inset ring-gray-300"
+              >
+                ...
+              </span>
+            )
           }
-        >
-          1
-        </button>
 
-        {/* Page 2 */}
-        <button
-          onClick={() => onPageChange(2)}
-          aria-current={currentPage === 2 ? 'page' : undefined}
-          className={
-            currentPage === 2
-              ? 'relative z-10 inline-flex items-center bg-brand-navy px-4 py-2 text-sm font-semibold text-white focus:z-20'
-              : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-          }
-        >
-          2
-        </button>
-
-        {/* Page 3 */}
-        <button
-          onClick={() => onPageChange(3)}
-          aria-current={currentPage === 3 ? 'page' : undefined}
-          className={
-            currentPage === 3
-              ? 'relative z-10 inline-flex items-center bg-brand-navy px-4 py-2 text-sm font-semibold text-white focus:z-20'
-              : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
-          }
-        >
-          3
-        </button>
+          const pageNumber = page as number
+          return (
+            <button
+              key={pageNumber}
+              onClick={() => onPageChange(pageNumber)}
+              aria-current={currentPage === pageNumber ? 'page' : undefined}
+              className={
+                currentPage === pageNumber
+                  ? 'relative z-10 inline-flex items-center bg-brand-navy px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-blue'
+                  : 'relative inline-flex items-center px-4 py-2 text-sm font-semibold text-gray-900 ring-1 ring-inset ring-gray-300 hover:bg-gray-50 focus:z-20 focus:outline-offset-0'
+              }
+            >
+              {pageNumber}
+            </button>
+          )
+        })}
 
         {/* Next Button */}
         <button

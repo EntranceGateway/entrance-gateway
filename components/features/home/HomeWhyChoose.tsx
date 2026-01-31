@@ -197,41 +197,41 @@ export function HomeWhyChoose() {
   return (
     <section className="py-24 bg-gray-50 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-extrabold text-brand-navy mb-4 font-heading">
+        <div className="text-center mb-12">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-brand-navy mb-4 font-heading">
             Why choose EntranceGateway?
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <p className="text-gray-600 max-w-2xl mx-auto text-sm sm:text-base">
             We provide the most comprehensive resources designed for academic authority and student
             success.
           </p>
         </div>
 
         {/* Coverflow Carousel */}
-        <div className="relative h-[500px] md:h-[550px]">
+        <div className="relative h-[450px] sm:h-[500px] md:h-[550px]">
           {/* Cards Container */}
           <div className="relative h-full flex items-center justify-center" style={{ perspective: '2000px' }}>
             {features.map((feature, index) => (
               <div
                 key={feature.title}
-                className="absolute w-full max-w-sm md:max-w-md transition-all duration-700 ease-out cursor-pointer"
+                className="absolute w-full max-w-[280px] sm:max-w-sm md:max-w-md transition-all duration-700 ease-out cursor-pointer"
                 style={getCardStyle(index)}
                 onClick={() => goToSlide(index)}
               >
-                <div className="relative p-8 bg-white rounded-3xl shadow-2xl h-full">
+                <div className="relative p-6 sm:p-8 bg-white rounded-3xl shadow-2xl h-full">
                   {/* Icon */}
-                  <div className="w-16 h-16 bg-brand-gold rounded-2xl flex items-center justify-center mb-6 text-brand-navy">
+                  <div className="w-12 h-12 sm:w-16 sm:h-16 bg-brand-gold rounded-2xl flex items-center justify-center mb-3 sm:mb-4 text-brand-navy">
                     {feature.icon}
                   </div>
 
                   {/* Title */}
-                  <h3 className="text-2xl font-bold text-brand-navy mb-4">{feature.title}</h3>
+                  <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-brand-navy mb-2 sm:mb-3">{feature.title}</h3>
 
                   {/* Description */}
-                  <p className="text-gray-600 mb-4 leading-relaxed">{feature.description}</p>
+                  <p className="text-gray-600 mb-2 sm:mb-3 leading-relaxed text-sm sm:text-base">{feature.description}</p>
 
                   {/* Tags */}
-                  <p className="text-brand-blue text-sm font-medium">{feature.tags}</p>
+                  <p className="text-brand-blue text-xs sm:text-sm font-medium">{feature.tags}</p>
                 </div>
               </div>
             ))}
@@ -240,32 +240,32 @@ export function HomeWhyChoose() {
           {/* Navigation Arrows */}
           <button
             onClick={goToPrevious}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
+            className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
             aria-label="Previous slide"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </svg>
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
+            className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
             aria-label="Next slide"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">
               <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
             </svg>
           </button>
         </div>
 
         {/* Dots Indicator */}
-        <div className="flex justify-center gap-2 mt-12">
+        <div className="flex justify-center gap-2 mt-8 sm:mt-12">
           {features.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'w-8 bg-brand-gold' : 'w-2 bg-gray-300'
+                index === currentIndex ? 'w-6 sm:w-8 bg-brand-gold' : 'w-2 bg-gray-300'
               }`}
               aria-label={`Go to slide ${index + 1}`}
             />

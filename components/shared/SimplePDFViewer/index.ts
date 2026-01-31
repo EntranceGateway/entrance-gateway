@@ -1,0 +1,1 @@
+export { SimplePDFViewer } from './SimplePDFViewer'

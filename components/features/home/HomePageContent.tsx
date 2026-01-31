@@ -14,13 +14,13 @@ export function HomePageContent() {
   return (
     <>
       <HomeHero />
-      <HomePartners />
+      {/* <HomePartners /> */}
       <HomeWhyChoose />
       <HomeBrowseCategory />
       <HomeSimpleSteps />
       <HomeTestimonials />
       <HomeLeadingCourses />
-      <HomeCTA />
+      {/* <HomeCTA /> */}
       <HomeNews />
     </>
   )

@@ -111,17 +111,17 @@ export function HomeTestimonials() {
   return (
     <section className="py-24 bg-white border-t border-gray-100 overflow-hidden">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-16">
-          <h2 className="text-4xl font-extrabold text-brand-navy font-heading">
+        <div className="text-center mb-12 sm:mb-16">
+          <h2 className="text-3xl sm:text-4xl font-extrabold text-brand-navy font-heading">
             Success Stories from Learners
           </h2>
-          <p className="text-gray-600 mt-4 max-w-2xl mx-auto">
+          <p className="text-gray-600 mt-4 max-w-2xl mx-auto text-sm sm:text-base">
             Hear from students who transformed their academic journey with EntranceGateway
           </p>
         </div>
 
         {/* Coverflow Carousel */}
-        <div className="relative h-[550px] md:h-[600px]">
+        <div className="relative h-[500px] sm:h-[550px] md:h-[600px]">
           {/* Cards Container */}
           <div
             className="relative h-full flex items-center justify-center"
@@ -130,14 +130,14 @@ export function HomeTestimonials() {
             {testimonials.map((testimonial, index) => (
               <div
                 key={testimonial.name}
-                className="absolute w-full max-w-sm md:max-w-md transition-all duration-700 ease-out cursor-pointer"
+                className="absolute w-full max-w-[280px] sm:max-w-sm md:max-w-md transition-all duration-700 ease-out cursor-pointer"
                 style={getCardStyle(index)}
                 onClick={() => goToSlide(index)}
               >
-                <div className="bg-gray-50 rounded-3xl p-8 pt-10 relative flex flex-col h-full shadow-2xl">
+                <div className="bg-gray-50 rounded-3xl p-6 sm:p-8 pt-8 sm:pt-10 relative flex flex-col h-full shadow-2xl">
                   {/* Profile Image */}
-                  <div className="absolute -top-12 -right-2">
-                    <div className="w-24 h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
+                  <div className="absolute -top-10 sm:-top-12 -right-2">
+                    <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-full border-4 border-white shadow-md overflow-hidden bg-white">
                       <img
                         alt={`Student ${testimonial.name}`}
                         className="w-full h-full object-cover"
@@ -147,20 +147,20 @@ export function HomeTestimonials() {
                   </div>
 
                   {/* Quote Icon */}
-                  <div className="text-gray-200 mb-6">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-20 h-20">
+                  <div className="text-gray-200 mb-4 sm:mb-6">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="w-16 h-16 sm:w-20 sm:h-20">
                       <path d="M6 17h3l2-4V7H5v6h3zm8 0h3l2-4V7h-6v6h3z" />
                     </svg>
                   </div>
 
                   {/* Star Rating */}
-                  <div className="flex gap-1 mb-4">
+                  <div className="flex gap-1 mb-3 sm:mb-4">
                     {[...Array(5)].map((_, i) => (
                       <svg
                         key={i}
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                        className="w-5 h-5 text-brand-gold"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-brand-gold"
                       >
                         <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
                       </svg>
@@ -168,14 +168,14 @@ export function HomeTestimonials() {
                   </div>
 
                   {/* Quote */}
-                  <p className="text-gray-700 text-base leading-relaxed mb-8 flex-grow">
+                  <p className="text-gray-700 text-sm sm:text-base leading-relaxed mb-6 sm:mb-8 flex-grow">
                     "{testimonial.quote}"
                   </p>
 
                   {/* Student Info */}
                   <div>
-                    <h4 className="text-brand-navy text-lg font-bold">{testimonial.name}</h4>
-                    <p className="text-gray-500 text-sm">{testimonial.role}</p>
+                    <h4 className="text-brand-navy text-base sm:text-lg font-bold">{testimonial.name}</h4>
+                    <p className="text-gray-500 text-xs sm:text-sm">{testimonial.role}</p>
                   </div>
                 </div>
               </div>
@@ -185,32 +185,32 @@ export function HomeTestimonials() {
           {/* Navigation Arrows */}
           <button
             onClick={goToPrevious}
-            className="absolute left-4 md:left-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
+            className="absolute left-2 sm:left-4 md:left-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
             aria-label="Previous testimonial"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">
               <path d="M15.41 7.41L14 6l-6 6 6 6 1.41-1.41L10.83 12z" />
             </svg>
           </button>
           <button
             onClick={goToNext}
-            className="absolute right-4 md:right-8 top-1/2 -translate-y-1/2 w-12 h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
+            className="absolute right-2 sm:right-4 md:right-8 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg flex items-center justify-center text-brand-navy hover:bg-brand-gold transition-colors z-40"
             aria-label="Next testimonial"
           >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="w-6 h-6">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 sm:w-6 sm:h-6">
               <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
             </svg>
           </button>
         </div>
 
         {/* Dots Indicator */}
-        <div className="flex justify-center gap-2 mt-12">
+        <div className="flex justify-center gap-2 mt-8 sm:mt-12">
           {testimonials.map((_, index) => (
             <button
               key={index}
               onClick={() => goToSlide(index)}
               className={`h-2 rounded-full transition-all duration-300 ${
-                index === currentIndex ? 'w-8 bg-brand-gold' : 'w-2 bg-gray-300'
+                index === currentIndex ? 'w-6 sm:w-8 bg-brand-gold' : 'w-2 bg-gray-300'
               }`}
               aria-label={`Go to testimonial ${index + 1}`}
             />

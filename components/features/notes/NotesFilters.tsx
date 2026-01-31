@@ -1,11 +1,9 @@
 interface NotesFiltersProps {
   searchQuery: string
   selectedCourse: string
-  selectedYear: string
   selectedSemester: string
   onSearchChange: (value: string) => void
   onCourseChange: (value: string) => void
-  onYearChange: (value: string) => void
   onSemesterChange: (value: string) => void
   onFilter: () => void
 }
@@ -13,11 +11,9 @@ interface NotesFiltersProps {
 export function NotesFilters({
   searchQuery,
   selectedCourse,
-  selectedYear,
   selectedSemester,
   onSearchChange,
   onCourseChange,
-  onYearChange,
   onSemesterChange,
   onFilter,
 }: NotesFiltersProps) {
@@ -25,7 +21,7 @@ export function NotesFilters({
     <div className="bg-white rounded-xl border border-gray-200 p-4 mb-8 shadow-sm">
       <form className="grid grid-cols-1 md:grid-cols-12 gap-4 items-end">
         {/* Search Input */}
-        <div className="md:col-span-4 relative group">
+        <div className="md:col-span-5 relative group">
           <label
             htmlFor="search"
             className="sr-only"
@@ -59,7 +55,7 @@ export function NotesFilters({
         </div>
 
         {/* Course Select */}
-        <div className="md:col-span-2">
+        <div className="md:col-span-3">
           <label htmlFor="course" className="sr-only">
             Course
           </label>
@@ -71,29 +67,11 @@ export function NotesFilters({
           >
             <option value="">All Courses</option>
             <option value="MBBS">MBBS</option>
-            <option value="CSIT">BSc. CSIT</option>
+            <option value="BSc. CSIT">BSc. CSIT</option>
             <option value="BBA">BBA</option>
             <option value="BDS">BDS</option>
             <option value="BCA">BCA</option>
-          </select>
-        </div>
-
-        {/* Year Select */}
-        <div className="md:col-span-2">
-          <label htmlFor="year" className="sr-only">
-            Year
-          </label>
-          <select
-            id="year"
-            value={selectedYear}
-            onChange={(e) => onYearChange(e.target.value)}
-            className="w-full py-2.5 pl-3 pr-8 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue text-sm text-gray-700 outline-none cursor-pointer"
-          >
-            <option value="">All Years</option>
-            <option>1st Year</option>
-            <option>2nd Year</option>
-            <option>3rd Year</option>
-            <option>4th Year</option>
+            <option value="B.E. Computer Engineering">B.E. Computer Engineering</option>
           </select>
         </div>
 
@@ -109,10 +87,14 @@ export function NotesFilters({
             className="w-full py-2.5 pl-3 pr-8 bg-gray-50 border border-gray-200 rounded-lg focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue text-sm text-gray-700 outline-none cursor-pointer"
           >
             <option value="">All Semesters</option>
-            <option>1st Semester</option>
-            <option>2nd Semester</option>
-            <option>3rd Semester</option>
-            <option>4th Semester</option>
+            <option value="1">Semester 1</option>
+            <option value="2">Semester 2</option>
+            <option value="3">Semester 3</option>
+            <option value="4">Semester 4</option>
+            <option value="5">Semester 5</option>
+            <option value="6">Semester 6</option>
+            <option value="7">Semester 7</option>
+            <option value="8">Semester 8</option>
           </select>
         </div>
 

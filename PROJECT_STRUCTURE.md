@@ -55,9 +55,23 @@ entrance-gateway/
 │   │   │   └── page.tsx
 │   │   └── layout.tsx
 │   │
-│   ├── api/                                # API Routes (BFF Pattern)
-│   │   └── [...proxy]/                     # Catch-all for proxying to Java backend
-│   │       └── route.ts
+│   ├── api/                                # API Routes (Proxy to Java Backend)
+│   │   ├── courses/                        # Courses API proxy
+│   │   │   ├── [id]/
+│   │   │   │   └── route.ts                # GET /api/courses/:id
+│   │   │   ├── full-syllabus/
+│   │   │   │   └── [id]/
+│   │   │   │       └── route.ts            # GET /api/courses/full-syllabus/:id
+│   │   │   └── route.ts                    # GET /api/courses
+│   │   ├── notes/                          # Notes API proxy
+│   │   │   ├── [id]/
+│   │   │   │   └── route.ts                # GET /api/notes/:id
+│   │   │   ├── by-course-semester-affiliation/
+│   │   │   │   └── route.ts                # GET /api/notes/by-course-semester-affiliation
+│   │   │   └── route.ts                    # GET /api/notes
+│   │   └── resources/                      # Resource files proxy (PDFs, images)
+│   │       └── [id]/
+│   │           └── route.ts                # GET /api/resources/:id
 │   │
 │   ├── error.tsx                           # Global error boundary
 │   ├── loading.tsx                         # Global loading state
@@ -287,6 +301,172 @@ export async function getUsers() {
 ---
 
 ## 🔌 Java Backend Integration
+
+### Proxy Server Architecture
+
+The application uses **Next.js API Routes** as a proxy layer between the frontend and Java backend. This provides:
+
+- ✅ **Security**: Backend URL hidden from client
+- ✅ **CORS**: No cross-origin issues
+- ✅ **Caching**: Server-side caching control
+- ✅ **Authentication**: Centralized auth header injection
+- ✅ **Error Handling**: Consistent error responses
+
+### API Proxy Structure
+
+```
+app/api/
+├── courses/
+│   ├── route.ts                    # GET /api/courses → Java backend
+│   ├── [id]/route.ts               # GET /api/courses/:id
+│   └── full-syllabus/[id]/route.ts # GET /api/courses/full-syllabus/:id
+├── notes/
+│   ├── route.ts                    # GET /api/notes
+│   ├── [id]/route.ts               # GET /api/notes/:id
+│   └── by-course-semester-affiliation/route.ts
+└── resources/
+    └── [id]/route.ts               # GET /api/resources/:id (PDFs, images)
+```
+
+### Proxy Route Example
+
+```typescript
+// app/api/courses/route.ts
+import { NextRequest, NextResponse } from 'next/server'
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
+
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const page = searchParams.get('page') || '0'
+    const size = searchParams.get('size') || '10'
+    const sortBy = searchParams.get('sortBy') || 'courseName'
+    const sortDir = searchParams.get('sortDir') || 'asc'
+
+    const url = `${API_BASE_URL}/api/v1/courses?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
+
+    const response = await fetch(url, {
+      method: 'GET',
+      headers: {
+        'Accept': '*/*',
+      },
+      cache: 'no-store', // SSR - no caching
+    })
+
+    if (!response.ok) {
+      return NextResponse.json(
+        { message: 'Failed to fetch courses', data: null },
+        { status: response.status }
+      )
+    }
+
+    const data = await response.json()
+    return NextResponse.json(data)
+  } catch (error) {
+    console.error('Error fetching courses:', error)
+    return NextResponse.json(
+      { message: 'Internal server error', data: null },
+      { status: 500 }
+    )
+  }
+}
+```
+
+### Client Service Layer
+
+Client-side services call the Next.js proxy endpoints:
+
+```typescript
+// services/client/courses.client.ts
+export async function fetchCourses(params: CoursesQueryParams = {}): Promise<CoursesListResponse> {
+  const queryParams = new URLSearchParams({
+    page: params.page?.toString() || '0',
+    size: params.size?.toString() || '10',
+    sortBy: params.sortBy || 'courseName',
+    sortDir: params.sortDir || 'asc',
+  })
+
+  const response = await fetch(`/api/courses?${queryParams}`, {
+    method: 'GET',
+    headers: {
+      'Accept': 'application/json',
+    },
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch courses: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+```
+
+### Server Service Layer
+
+Server-side services call the Java backend directly (for SSR):
+
+```typescript
+// services/server/courses.server.ts
+export async function getCourses(params: CoursesQueryParams = {}): Promise<CoursesListResponse> {
+  const queryParams = new URLSearchParams({
+    page: params.page?.toString() || '0',
+    size: params.size?.toString() || '10',
+    sortBy: params.sortBy || 'courseName',
+    sortDir: params.sortDir || 'asc',
+  })
+
+  const response = await fetch(
+    `${API_BASE_URL}/api/v1/courses?${queryParams}`,
+    {
+      method: 'GET',
+      headers: {
+        'Accept': '*/*',
+      },
+      cache: 'no-store', // Dynamic rendering (SSR)
+    }
+  )
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch courses: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+```
+
+### Data Flow
+
+```
+┌─────────────────┐
+│  Server Page    │  1. SSR: Direct call to Java backend
+│  (page.tsx)     │     getCourses() → Java API
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ Client Component│  2. Receives initialData from SSR
+│ (PageContent)   │     Skips initial fetch if data exists
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│ User Interaction│  3. CSR: Calls Next.js proxy
+│ (expand, filter)│     fetchFullSyllabus() → /api/courses/full-syllabus/:id
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Next.js Proxy  │  4. Proxy forwards to Java backend
+│  (API Route)    │     /api/courses/full-syllabus/:id → Java API
+└────────┬────────┘
+         │
+         ▼
+┌─────────────────┐
+│  Java Backend   │  5. Returns data
+│  (Spring Boot)  │     Response → Proxy → Client
+└─────────────────┘
+```
 
 ### API Client Configuration
 

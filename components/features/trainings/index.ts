@@ -1,0 +1,6 @@
+export { TrainingsHeader } from './TrainingsHeader'
+export { TrainingsCard, TrainingsCardGrid } from './TrainingsCard'
+export { TrainingsPageContent } from './TrainingsPageContent'
+export { TrainingsDetailHero } from './TrainingsDetailHero'
+export { TrainingsDetailSidebar } from './TrainingsDetailSidebar'
+export { TrainingsDetailContent } from './TrainingsDetailContent'

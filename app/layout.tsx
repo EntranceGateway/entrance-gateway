@@ -1,9 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
-import { NavbarExample } from "@/components/layout/Navbar/Navbar.example";
-import { Footer } from "@/components/layout/Footer";
+import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { ProgressBar } from "@/components/shared/Loading";
+import { ToastProvider } from "@/components/shared/Toast";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -30,14 +30,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="scroll-smooth">
+    <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       <body
-        className={`${inter.variable} ${roboto.variable} antialiased min-h-screen flex flex-col`}
+        className={`${inter.variable} ${roboto.variable} antialiased`}
       >
-        <ProgressBar />
-        <NavbarExample />
-        {children}
-        <Footer />
+        <ToastProvider>
+          <ProgressBar />
+          <ConditionalLayout>{children}</ConditionalLayout>
+        </ToastProvider>
       </body>
     </html>
   );

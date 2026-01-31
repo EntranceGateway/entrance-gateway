@@ -1,17 +1,10 @@
-interface NoteInfo {
-  id: string
-  subject: string
-  examYear: string
-  course: string
-  university: string
-  verified?: boolean
-}
+import type { Note } from '@/types/notes.types'
 
 interface NotesDetailSidebarProps {
-  info: NoteInfo
+  note: Note
 }
 
-export function NotesDetailSidebar({ info }: NotesDetailSidebarProps) {
+export function NotesDetailSidebar({ note }: NotesDetailSidebarProps) {
   return (
     <aside className="w-full space-y-4 sm:space-y-6 lg:sticky lg:top-24">
       {/* Main Info Card */}
@@ -32,17 +25,17 @@ export function NotesDetailSidebar({ info }: NotesDetailSidebarProps) {
                 Affiliation
               </span>
               <h3 className="text-sm font-bold text-brand-navy truncate">
-                {info.university}
+                {note.affiliation}
               </h3>
             </div>
           </div>
 
           {/* Title */}
           <h1 className="text-xl sm:text-2xl font-heading font-bold text-brand-navy mb-2">
-            Question set {info.examYear}
+            {note.subject}
           </h1>
           <p className="text-gray-500 text-sm mb-6 sm:mb-8">
-            Official entrance examination document for prospective students.
+            Official academic note for {note.courseName} students.
           </p>
 
           {/* Details */}
@@ -56,13 +49,12 @@ export function NotesDetailSidebar({ info }: NotesDetailSidebarProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-gray-500 uppercase font-semibold mb-0.5">
-                  Subject
+                  code
                 </p>
-                <p className="font-medium text-gray-900">{info.subject}</p>
-              </div>
+                <p className="font-medium text-gray-900">{note.subjectCode}</p>              </div>
             </div>
 
-            {/* Exam Year */}
+            {/* Semester */}
             <div className="flex items-start gap-3">
               <div className="mt-1 shrink-0">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-brand-blue">
@@ -71,9 +63,12 @@ export function NotesDetailSidebar({ info }: NotesDetailSidebarProps) {
               </div>
               <div className="min-w-0">
                 <p className="text-xs text-gray-500 uppercase font-semibold mb-0.5">
-                  Exam Year
+                  Semester
                 </p>
-                <p className="font-medium text-gray-900">{info.examYear}</p>
+                <p className="font-medium text-gray-900">Semester {note.semester}</p>
+                {note.year && (
+                  <p className="text-xs text-gray-500 mt-0.5">Year {note.year}</p>
+                )}
               </div>
             </div>
 
@@ -88,26 +83,9 @@ export function NotesDetailSidebar({ info }: NotesDetailSidebarProps) {
                 <p className="text-xs text-gray-500 uppercase font-semibold mb-0.5">
                   Course
                 </p>
-                <p className="font-medium text-gray-900">{info.course}</p>
+                <p className="font-medium text-gray-900">{note.courseName}</p>
               </div>
             </div>
-          </div>
-        </div>
-
-        {/* Footer with ID and Status */}
-        <div className="bg-gray-50 px-5 sm:px-6 py-4 border-t border-gray-100">
-          <div className="flex justify-between items-center gap-3">
-            <span className="text-xs font-mono text-gray-400 truncate">
-              ID: {info.id}
-            </span>
-            {info.verified && (
-              <div className="flex items-center gap-1.5 text-green-700 bg-green-50 border border-green-100 px-2 py-0.5 rounded text-xs font-medium shrink-0">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-3.5">
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
-                </svg>
-                Verified
-              </div>
-            )}
           </div>
         </div>
       </div>
