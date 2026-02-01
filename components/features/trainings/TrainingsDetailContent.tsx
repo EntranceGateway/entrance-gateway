@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { TrainingsDetailHero } from './TrainingsDetailHero'
 import { TrainingsDetailSidebar } from './TrainingsDetailSidebar'
 import { CenteredSpinner } from '@/components/shared/Loading'
-import { fetchTrainingById } from '@/services/client/trainings.client'
-import type { Training, TrainingDetailResponse } from '@/types/trainings.types'
+import { fetchTrainingById, checkEnrollmentStatus } from '@/services/client/trainings.client'
+import type { Training, TrainingDetailResponse, TrainingEnrollmentResponse } from '@/types/trainings.types'
 
 interface TrainingsDetailContentProps {
   trainingId: string
@@ -13,38 +14,51 @@ interface TrainingsDetailContentProps {
 }
 
 export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDetailContentProps) {
+  const router = useRouter()
   const [training, setTraining] = useState<Training | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
+  const [enrollmentStatus, setEnrollmentStatus] = useState<TrainingEnrollmentResponse | null>(null)
+  const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true)
 
-  // Fetch training data (skip if we have SSR data)
+  // Fetch training data and enrollment status
   useEffect(() => {
-    // Skip if we already have initial data
-    if (initialData) {
-      return
-    }
+    const loadData = async () => {
+      // Load training if not from SSR
+      if (!initialData) {
+        setIsLoading(true)
+        setError(null)
 
-    const loadTraining = async () => {
-      setIsLoading(true)
-      setError(null)
+        try {
+          const response = await fetchTrainingById(trainingId)
+          setTraining(response.data)
+        } catch (err) {
+          setError(err instanceof Error ? err.message : 'Failed to load training')
+          console.error('Error fetching training:', err)
+        } finally {
+          setIsLoading(false)
+        }
+      }
 
+      // Check enrollment status
+      setIsCheckingEnrollment(true)
       try {
-        const response = await fetchTrainingById(trainingId)
-        setTraining(response.data)
+        const status = await checkEnrollmentStatus(parseInt(trainingId))
+        setEnrollmentStatus(status)
+        console.log('Enrollment status:', status)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load training')
-        console.error('Error fetching training:', err)
+        console.error('Error checking enrollment status:', err)
       } finally {
-        setIsLoading(false)
+        setIsCheckingEnrollment(false)
       }
     }
 
-    loadTraining()
+    loadData()
   }, [trainingId, initialData])
 
   const handleRegister = () => {
-    // TODO: Implement registration logic
-    console.log('Register for training:', training?.trainingId)
+    // Redirect to enrollment page
+    router.push(`/trainings/${trainingId}/enroll`)
   }
 
   const handleDownloadMaterials = () => {
@@ -90,6 +104,14 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
     ? training.syllabusDescription.split(/[,;]/).map(point => point.trim()).filter(Boolean)
     : []
 
+  // Get enrollment status details
+  const isEnrolled = enrollmentStatus?.data !== null
+  const enrollmentData = enrollmentStatus?.data
+  const isPending = enrollmentData?.status === 'PAYMENT_PENDING'
+  const isConfirmed = enrollmentData?.status === 'CONFIRMED' || enrollmentData?.status === 'COMPLETED'
+  const isExpired = enrollmentData?.status === 'EXPIRED'
+  const isCancelled = enrollmentData?.status === 'CANCELLED'
+
   return (
     <main className="flex-grow">
       {/* Hero Section */}
@@ -97,6 +119,135 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
 
       {/* Main Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        
+        {/* Enrollment Status Banner */}
+        {!isCheckingEnrollment && isEnrolled && (
+          <div className="mb-6">
+            {/* Confirmed Enrollment */}
+            {isConfirmed && (
+              <div className="bg-semantic-success/10 border-l-4 border-semantic-success rounded-r-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="size-8 rounded-full bg-semantic-success flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-white">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-semantic-success uppercase tracking-wide mb-1">
+                      ✓ Enrollment Confirmed
+                    </h3>
+                    <p className="text-sm text-gray-700">
+                      You are successfully enrolled in this training. Check your email for confirmation details.
+                    </p>
+                    {enrollmentData?.enrollmentDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Enrolled on: {new Date(enrollmentData.enrollmentDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Pending Payment */}
+            {isPending && (
+              <div className="bg-amber-50 border-l-4 border-amber-500 rounded-r-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="size-8 rounded-full bg-amber-500 flex items-center justify-center animate-pulse">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-white">
+                        <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-amber-900 uppercase tracking-wide mb-1">
+                      ⏳ Payment Pending
+                    </h3>
+                    <p className="text-sm text-amber-900">
+                      Your enrollment is pending payment. Complete payment within 24 hours to confirm your spot.
+                    </p>
+                    {enrollmentData?.createdAt && (
+                      <p className="text-xs text-amber-800 mt-1 font-medium">
+                        Expires: {new Date(new Date(enrollmentData.createdAt).getTime() + 24 * 60 * 60 * 1000).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    )}
+                    <button
+                      onClick={() => router.push(`/trainings/${trainingId}/enroll`)}
+                      className="mt-3 inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
+                    >
+                      Complete Payment
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
+                        <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Expired Enrollment */}
+            {isExpired && (
+              <div className="bg-red-50 border-l-4 border-red-600 rounded-r-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="size-8 rounded-full bg-red-600 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-white">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-red-900 uppercase tracking-wide mb-1">
+                      ⚠️ Enrollment Expired
+                    </h3>
+                    <p className="text-sm text-red-900">
+                      Your previous enrollment has expired due to non-payment. You can enroll again if seats are available.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Cancelled Enrollment */}
+            {isCancelled && (
+              <div className="bg-gray-50 border-l-4 border-gray-400 rounded-r-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="size-8 rounded-full bg-gray-400 flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-white">
+                        <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-gray-700 uppercase tracking-wide mb-1">
+                      Enrollment Cancelled
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Your enrollment has been cancelled. Contact support if you have any questions.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -190,7 +341,12 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
 
           {/* Right Column - Sidebar */}
           <div>
-            <TrainingsDetailSidebar training={training} onRegister={handleRegister} />
+            <TrainingsDetailSidebar 
+              training={training} 
+              onRegister={handleRegister}
+              enrollmentStatus={enrollmentStatus}
+              isCheckingEnrollment={isCheckingEnrollment}
+            />
           </div>
         </div>
       </div>

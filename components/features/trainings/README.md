@@ -2,198 +2,183 @@
 
 ## Overview
 
-The Trainings feature displays upcoming technical training programs and courses offered by EntranceGateway. It follows the same patterns as Notes and Colleges features.
+The trainings feature provides a complete training program management system with listing, detail, and enrollment pages.
 
 ## Components
 
-### TrainingsHeader
-- Displays page title, breadcrumb, and description
-- Matches the design pattern from the reference HTML
-- Located at the top of the page
-
-### TrainingsCard
-- Displays individual training information
-- Shows:
-  - Status badge (UPCOMING, ONGOING, etc.)
-  - Category tag
-  - Training title
-  - Type, Duration, and Price in a 3-column grid
-  - Capacity progress bar with visual indicators
-  - View Details button
-  - Download Syllabus link (if available)
-- Progress bar color changes based on capacity:
-  - Blue: < 80% capacity
-  - Warning (yellow): ≥ 80% capacity
-
-### TrainingsCardGrid
-- Container component for the card grid
-- Responsive layout:
-  - Mobile: 1 column
-  - Tablet: 2 columns
-  - Desktop: 4 columns
-
 ### TrainingsPageContent
-- Main page component
-- Handles:
-  - Loading states (skeleton)
-  - Error states
-  - Empty states
-  - Data fetching (currently mock data)
-  - Navigation to detail pages
-  - Syllabus downloads
+Main listing page showing all available training programs in a responsive grid layout.
 
-## File Structure
+**Features:**
+- 4-column responsive grid (1 col mobile, 2 cols tablet, 3 cols desktop, 4 cols large)
+- Training cards with image, title, category, price, duration, and availability
+- Hover effects and smooth transitions
 
-```
-components/features/trainings/
-├── TrainingsHeader.tsx          # Page header with breadcrumb
-├── TrainingsCard.tsx            # Training card component
-├── TrainingsPageContent.tsx     # Main page content
-├── index.ts                     # Barrel exports
-└── README.md                    # This file
+### TrainingsDetailContent
+Detailed view of a single training program with comprehensive information.
 
-app/(dashboard)/trainings/
-├── page.tsx                     # Server component (SSR)
-└── loading.tsx                  # Loading skeleton
+**Features:**
+- Hero section with training image and key details
+- About section with syllabus and learning highlights
+- Who should attend section
+- Sticky sidebar with pricing and registration
+- Certificate badge if applicable
+- Download materials button if available
 
-types/
-└── trainings.types.ts           # TypeScript types
-```
+### TrainingEnrollmentContent
+Enrollment form for users to register for a training program.
 
-## Usage
+**Features:**
+- **Important Notices Section:**
+  - Warning to verify personal information before submission
+  - Payment deadline notice (24-hour expiration)
+  - Enrollment process information
+- Pre-filled personal information from user profile
+- Educational background display
+- Training summary sidebar with payment reminder
+- Comprehensive terms and conditions with checkboxes
+- Availability check
+- Success/error toast notifications
+- Automatic redirect after successful enrollment
 
-### Basic Usage
+**User Warnings:**
+1. **Verify Information**: Users are warned to check their profile details and update if needed
+2. **Payment Deadline**: Clear notice that enrollment expires if payment is not completed within 24 hours
+3. **Enrollment Process**: Step-by-step information about what happens after submission
 
-```tsx
-import { TrainingsPageContent } from '@/components/features/trainings'
+## Routes
 
-export default function TrainingsPage() {
-  return <TrainingsPageContent />
-}
-```
+- `/trainings` - Training listing page
+- `/trainings/[id]` - Training detail page
+- `/trainings/[id]/enroll` - Training enrollment page
 
-### With SSR Data
+## Data Flow
 
-```tsx
-import { TrainingsPageContent } from '@/components/features/trainings'
-import { getTrainings } from '@/services/server/trainings.server'
+### SSR (Server-Side Rendering)
+All pages fetch initial data on the server for better SEO and performance:
+- Training listing: `getTrainings()`
+- Training detail: `getTrainingById(id)`
+- Enrollment: `getTrainingById(id)` + `getUserProfile()`
 
-export default async function TrainingsPage() {
-  const initialData = await getTrainings({ page: 0, size: 12 }).catch(() => null)
-  
-  return <TrainingsPageContent initialData={initialData} />
-}
-```
+### CSR (Client-Side Rendering)
+Client components handle:
+- Interactive filtering (if implemented)
+- Form submissions
+- Navigation
+- Toast notifications
 
 ## API Integration
 
-### Types
+### Endpoints Used
+- `GET /api/v1/trainings` - List all trainings
+- `GET /api/v1/trainings/{id}` - Get training details
+- `GET /api/v1/user/me` - Get user profile (for enrollment)
+- `POST /api/v1/training-enrollments/{trainingId}/enroll` - Enroll in training
 
-```typescript
-interface Training {
-  trainingId: number
-  title: string
-  category: string
-  type: 'REMOTE' | 'IN_PERSON' | 'HYBRID'
-  duration: number // in hours
-  price: number
-  currency: string
-  capacity: number
-  enrolled: number
-  status: 'UPCOMING' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
-  startDate: string
-  endDate: string
-  description: string
-  syllabus?: string // PDF file name
-  instructor?: string
-  level?: 'BEGINNER' | 'INTERMEDIATE' | 'ADVANCED'
+### Enrollment API
+
+**Endpoint**: `POST /api/v1/training-enrollments/{trainingId}/enroll`
+
+**Content-Type**: `multipart/form-data`
+
+**Headers**:
+- `Authorization: Bearer {accessToken}` - Required
+- `Idempotency-Key: {uuid}` - Required (auto-generated)
+
+**Request Body** (multipart/form-data):
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| request | JSON | Yes | Payment request data |
+| file | File | Yes | Payment proof image/document |
+
+**Request JSON Structure**:
+```json
+{
+  "amount": 500.00,
+  "paymentMethod": "BANK_TRANSFER",
+  "remarks": "Paid via bank transfer on 2026-02-01"
 }
 ```
 
-### Server Service (To be implemented)
-
-```typescript
-// services/server/trainings.server.ts
-export async function getTrainings(params: TrainingsQueryParams = {}) {
-  const queryParams = new URLSearchParams({
-    page: params.page?.toString() || '0',
-    size: params.size?.toString() || '12',
-    sortBy: params.sortBy || 'startDate',
-    sortDir: params.sortDir || 'asc',
-  })
-
-  const response = await fetch(
-    `${API_BASE_URL}/api/v1/trainings?${queryParams}`,
-    {
-      method: 'GET',
-      headers: { 'Accept': '*/*' },
-      cache: 'no-store',
-    }
-  )
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch trainings')
+**Response**:
+```json
+{
+  "message": "Enrollment successful",
+  "data": {
+    "enrollmentId": 123,
+    "trainingId": 6,
+    "userId": 45,
+    "enrollmentDate": "2026-02-01T10:30:00",
+    "status": "PENDING"
   }
-
-  return response.json()
 }
 ```
 
-### Client Service (To be implemented)
+**Idempotency Key**:
+The API requires an `Idempotency-Key` header (UUID v4 format) to prevent duplicate enrollments. This is automatically generated using `generateUUID()` utility function.
 
+**Payment Methods**:
+- `FONEPAY` - FonePay QR code payment
+- `BANK_TRANSFER` - Direct bank transfer
+
+**Implementation**:
 ```typescript
-// services/client/trainings.client.ts
-export async function fetchTrainings(params: TrainingsQueryParams = {}) {
-  const queryParams = new URLSearchParams({
-    page: params.page?.toString() || '0',
-    size: params.size?.toString() || '12',
-    sortBy: params.sortBy || 'startDate',
-    sortDir: params.sortDir || 'asc',
-  })
+import { enrollInTraining } from '@/services/client/trainings.client'
 
-  const response = await fetch(`/api/trainings?${queryParams}`, {
-    method: 'GET',
-    headers: { 'Accept': 'application/json' },
-  })
-
-  if (!response.ok) {
-    throw new Error('Failed to fetch trainings')
-  }
-
-  return response.json()
-}
+const response = await enrollInTraining(trainingId, {
+  amount: 500.00,
+  paymentMethod: 'BANK_TRANSFER',
+  remarks: 'Paid via bank transfer on 2026-02-01',
+  proofFile: file // File object from input
+})
 ```
+
+## User Flow
+
+1. **Browse Trainings**: User views all available trainings on `/trainings`
+2. **View Details**: User clicks on a training card to view details at `/trainings/[id]`
+3. **Register**: User clicks "Register Now" button
+4. **Enrollment Form**: User is redirected to `/trainings/[id]/enroll`
+5. **Review Information**: User reviews pre-filled personal and educational information
+6. **Accept Terms**: User checks the terms and conditions checkbox
+7. **Submit**: User clicks "Confirm Enrollment"
+8. **Confirmation**: Success toast appears and user is redirected back to training details
 
 ## Design Tokens
 
-The component uses the project's design tokens:
-
-- **Brand Colors**: `text-brand-navy`, `bg-brand-blue`, `bg-brand-gold`
-- **Semantic Colors**: `bg-semantic-warning`, `text-semantic-error`
-- **Typography**: `font-heading` for titles
-- **Spacing**: Consistent with other features
+All components use the project's design tokens:
+- `text-brand-navy` - Primary text color
+- `bg-brand-blue` - Interactive elements
+- `bg-brand-gold` - CTA buttons
+- `text-semantic-success` - Success states
+- `text-semantic-error` - Error states
 
 ## Responsive Design
 
-- **Mobile (< 768px)**: Single column layout
-- **Tablet (768px - 1023px)**: 2-column grid
-- **Desktop (≥ 1024px)**: 4-column grid
+### Mobile (< 640px)
+- Single column layout
+- Stacked sidebar below content
+- Full-width cards
 
-## Accessibility
+### Tablet (640px - 1024px)
+- 2-column grid for cards
+- Stacked layout for detail pages
 
-- Semantic HTML structure
-- ARIA labels where needed
-- Keyboard navigation support
-- Focus states on interactive elements
-- Color contrast meets WCAG standards
+### Desktop (≥ 1024px)
+- 3-4 column grid for cards
+- Sidebar layout for detail pages
+- Sticky sidebar on enrollment page
 
-## Future Enhancements
+## Loading States
 
-1. Add filters (category, type, status)
-2. Add search functionality
-3. Add pagination
-4. Implement actual API integration
-5. Add training detail page
-6. Add enrollment functionality
-7. Add instructor information
-8. Add reviews/ratings
+All pages include proper loading states:
+- Skeleton screens for listing page
+- Centered spinner for detail and enrollment pages
+- Button loading states during form submission
+
+## Error Handling
+
+- API errors display user-friendly error messages
+- Form validation prevents invalid submissions
+- Toast notifications for success/error feedback
+- Graceful fallbacks for missing data

@@ -1,14 +1,27 @@
-import type { Training } from '@/types/trainings.types'
+import type { Training, TrainingEnrollmentResponse } from '@/types/trainings.types'
 
 interface TrainingsDetailSidebarProps {
   training: Training
   onRegister?: () => void
+  enrollmentStatus?: TrainingEnrollmentResponse | null
+  isCheckingEnrollment?: boolean
 }
 
-export function TrainingsDetailSidebar({ training, onRegister }: TrainingsDetailSidebarProps) {
+export function TrainingsDetailSidebar({ 
+  training, 
+  onRegister,
+  enrollmentStatus,
+  isCheckingEnrollment = false
+}: TrainingsDetailSidebarProps) {
   // Calculate capacity percentage
   const capacityPercentage = (training.currentParticipants / training.maxParticipants) * 100
   const availableSeats = training.maxParticipants - training.currentParticipants
+
+  // Check enrollment status
+  const isEnrolled = enrollmentStatus?.data !== null
+  const enrollmentData = enrollmentStatus?.data
+  const isConfirmed = enrollmentData?.status === 'CONFIRMED' || enrollmentData?.status === 'COMPLETED'
+  const isPending = enrollmentData?.status === 'PAYMENT_PENDING'
 
   return (
     <aside className="lg:sticky lg:top-24">
@@ -78,16 +91,42 @@ export function TrainingsDetailSidebar({ training, onRegister }: TrainingsDetail
             </div>
           </div>
 
-          {/* Register Button */}
-          <button
-            onClick={onRegister}
-            className="w-full bg-brand-gold hover:bg-[#EBB000] text-brand-navy font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2"
-          >
-            <span>Register Now</span>
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
-              <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-            </svg>
-          </button>
+          {/* Register Button or Enrollment Status */}
+          {isCheckingEnrollment ? (
+            <div className="w-full py-4 text-center text-gray-500 text-sm">
+              Checking enrollment status...
+            </div>
+          ) : isConfirmed ? (
+            <div className="w-full bg-semantic-success text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+              </svg>
+              <span>Enrolled</span>
+            </div>
+          ) : isPending ? (
+            <button
+              onClick={onRegister}
+              className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2"
+            >
+              <span>Complete Payment</span>
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+              </svg>
+            </button>
+          ) : (
+            <button
+              onClick={onRegister}
+              disabled={availableSeats <= 0}
+              className="w-full bg-brand-gold hover:bg-[#EBB000] text-brand-navy font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span>{availableSeats > 0 ? 'Register Now' : 'Training Full'}</span>
+              {availableSeats > 0 && (
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                  <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                </svg>
+              )}
+            </button>
+          )}
 
           {/* Limited Seats Notice */}
           <p className="text-center text-[11px] text-gray-400 uppercase tracking-tighter">

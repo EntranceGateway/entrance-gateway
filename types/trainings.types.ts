@@ -52,3 +52,37 @@ export interface ApiErrorResponse {
   message: string
   data: null
 }
+
+// Training Enrollment Types
+export interface TrainingEnrollmentResponse {
+  message: string
+  data: {
+    enrollmentId: number
+    userId: number
+    userName: string
+    trainingId: number
+    trainingName: string
+    status: 'PAYMENT_PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'COMPLETED'
+    enrollmentDate: string
+    completionDate: string | null
+    paidAmount: number
+    paymentReference: string | null
+    paymentMethod: string | null
+    progressPercentage: number
+    remarks: string | null
+    createdAt: string
+    updatedAt: string
+  } | null
+}
+
+// Payment Response Types
+export interface PaymentResponse {
+  message: string
+  data: {
+    paymentId: number
+    amount: number
+    paymentMethod: string
+    paymentDate: string
+    status?: string
+  }
+}
