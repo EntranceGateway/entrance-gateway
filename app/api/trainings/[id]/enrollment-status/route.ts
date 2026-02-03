@@ -9,6 +9,16 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+    
+    // Validate training ID
+    const trainingId = parseInt(id)
+    if (isNaN(trainingId) || trainingId <= 0) {
+      return NextResponse.json(
+        { message: 'Invalid training ID', data: null },
+        { status: 400 }
+      )
+    }
+
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('accessToken')?.value
 
@@ -22,7 +32,7 @@ export async function GET(
     // Check if user has an enrollment for this training
     // This endpoint should return the enrollment if it exists
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/training-enrollments/user/training/${id}`,
+      `${API_BASE_URL}/api/v1/training-enrollments/user/training/${trainingId}`,
       {
         method: 'GET',
         headers: {
@@ -56,7 +66,7 @@ export async function GET(
   } catch (error) {
     console.error('❌ [API] Check enrollment status error:', error)
     return NextResponse.json(
-      { message: 'Internal server error', data: null },
+      { message: error instanceof Error ? error.message : 'Internal server error', data: null },
       { status: 500 }
     )
   }

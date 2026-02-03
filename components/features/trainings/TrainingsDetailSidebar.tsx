@@ -5,13 +5,15 @@ interface TrainingsDetailSidebarProps {
   onRegister?: () => void
   enrollmentStatus?: TrainingEnrollmentResponse | null
   isCheckingEnrollment?: boolean
+  onViewEnrollment?: () => void
 }
 
 export function TrainingsDetailSidebar({ 
   training, 
   onRegister,
   enrollmentStatus,
-  isCheckingEnrollment = false
+  isCheckingEnrollment = false,
+  onViewEnrollment,
 }: TrainingsDetailSidebarProps) {
   // Calculate capacity percentage
   const capacityPercentage = (training.currentParticipants / training.maxParticipants) * 100
@@ -20,7 +22,8 @@ export function TrainingsDetailSidebar({
   // Check enrollment status
   const isEnrolled = enrollmentStatus?.data !== null
   const enrollmentData = enrollmentStatus?.data
-  const isConfirmed = enrollmentData?.status === 'CONFIRMED' || enrollmentData?.status === 'COMPLETED'
+  const isConfirmed = enrollmentData?.status === 'COMPLETED' || enrollmentData?.status === 'ACTIVE'
+  const isPaymentReceived = enrollmentData?.status === 'PAYMENT_RECEIVED_ADMIN_APPROVAL_PENDING'
   const isPending = enrollmentData?.status === 'PAYMENT_PENDING'
 
   return (
@@ -96,12 +99,22 @@ export function TrainingsDetailSidebar({
             <div className="w-full py-4 text-center text-gray-500 text-sm">
               Checking enrollment status...
             </div>
+          ) : isPaymentReceived ? (
+            <button
+              onClick={onViewEnrollment}
+              className="w-full bg-brand-blue hover:bg-brand-navy text-white font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+              </svg>
+              <span>View Enrollment</span>
+            </button>
           ) : isConfirmed ? (
-            <div className="w-full bg-semantic-success text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2">
+            <div className="w-full bg-semantic-success text-white font-bold py-4 rounded-lg flex items-center justify-center gap-2 cursor-pointer" onClick={onViewEnrollment}>
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
                 <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
               </svg>
-              <span>Enrolled</span>
+              <span>View Enrollment</span>
             </div>
           ) : isPending ? (
             <button

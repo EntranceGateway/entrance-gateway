@@ -62,7 +62,7 @@ export interface TrainingEnrollmentResponse {
     userName: string
     trainingId: number
     trainingName: string
-    status: 'PAYMENT_PENDING' | 'CONFIRMED' | 'CANCELLED' | 'EXPIRED' | 'COMPLETED'
+    status: 'PENDING' | 'PAYMENT_PENDING' | 'PAYMENT_RECEIVED_ADMIN_APPROVAL_PENDING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED' | 'PAYMENT_FAILED' | 'EXPIRED' | 'SUSPENDED'
     enrollmentDate: string
     completionDate: string | null
     paidAmount: number

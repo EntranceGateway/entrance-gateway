@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TrainingsDetailHero } from './TrainingsDetailHero'
 import { TrainingsDetailSidebar } from './TrainingsDetailSidebar'
+import { EnrollmentDetailsModal } from './EnrollmentDetailsModal'
 import { CenteredSpinner } from '@/components/shared/Loading'
 import { fetchTrainingById, checkEnrollmentStatus } from '@/services/client/trainings.client'
 import type { Training, TrainingDetailResponse, TrainingEnrollmentResponse } from '@/types/trainings.types'
@@ -20,6 +21,7 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
   const [error, setError] = useState<string | null>(null)
   const [enrollmentStatus, setEnrollmentStatus] = useState<TrainingEnrollmentResponse | null>(null)
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true)
+  const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false)
 
   // Fetch training data and enrollment status
   useEffect(() => {
@@ -108,9 +110,13 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
   const isEnrolled = enrollmentStatus?.data !== null
   const enrollmentData = enrollmentStatus?.data
   const isPending = enrollmentData?.status === 'PAYMENT_PENDING'
-  const isConfirmed = enrollmentData?.status === 'CONFIRMED' || enrollmentData?.status === 'COMPLETED'
+  const isConfirmed = enrollmentData?.status === 'COMPLETED' || enrollmentData?.status === 'ACTIVE'
+  const isPaymentReceived = enrollmentData?.status === 'PAYMENT_RECEIVED_ADMIN_APPROVAL_PENDING'
   const isExpired = enrollmentData?.status === 'EXPIRED'
   const isCancelled = enrollmentData?.status === 'CANCELLED'
+
+  // User can view enrollment details if enrolled
+  const canViewEnrollment = isEnrolled
 
   return (
     <main className="flex-grow">
@@ -123,6 +129,40 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
         {/* Enrollment Status Banner */}
         {!isCheckingEnrollment && isEnrolled && (
           <div className="mb-6">
+            {/* Payment Received - Awaiting Admin Approval */}
+            {isPaymentReceived && (
+              <div className="bg-blue-50 border-l-4 border-brand-blue rounded-r-lg p-4 shadow-sm">
+                <div className="flex items-start gap-3">
+                  <div className="flex-shrink-0">
+                    <div className="size-8 rounded-full bg-brand-blue flex items-center justify-center">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-white">
+                        <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                      </svg>
+                    </div>
+                  </div>
+                  <div className="flex-1">
+                    <h3 className="text-sm font-bold text-brand-navy uppercase tracking-wide mb-1">
+                      ✓ Payment Received
+                    </h3>
+                    <p className="text-sm text-gray-700">
+                      Your payment has been received and is pending admin approval. You'll receive a confirmation email once approved.
+                    </p>
+                    {enrollmentData?.enrollmentDate && (
+                      <p className="text-xs text-gray-500 mt-1">
+                        Payment received on: {new Date(enrollmentData.enrollmentDate).toLocaleDateString('en-US', {
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric',
+                          hour: '2-digit',
+                          minute: '2-digit'
+                        })}
+                      </p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Confirmed Enrollment */}
             {isConfirmed && (
               <div className="bg-semantic-success/10 border-l-4 border-semantic-success rounded-r-lg p-4 shadow-sm">
@@ -248,6 +288,53 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
           </div>
         )}
 
+        {/* Enrollment Details Section - Show if user is enrolled */}
+        {!isCheckingEnrollment && canViewEnrollment && enrollmentData && (
+          <div className="mb-6">
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 sm:gap-0 sm:justify-between">
+                <div className="flex items-start gap-3 flex-1 w-full sm:w-auto">
+                  <div className="size-10 rounded-full bg-brand-blue/10 flex items-center justify-center shrink-0">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-brand-blue">
+                      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                    </svg>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-brand-navy mb-1 text-sm sm:text-base">
+                      Your Enrollment
+                    </h3>
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="text-xs text-gray-500">Status:</span>
+                        <span className={`text-xs font-semibold px-2 py-1 rounded whitespace-nowrap ${
+                          isPaymentReceived ? 'bg-blue-100 text-brand-blue' :
+                          isConfirmed ? 'bg-green-100 text-semantic-success' :
+                          isPending ? 'bg-amber-100 text-amber-700' :
+                          'bg-gray-100 text-gray-700'
+                        }`}>
+                          {enrollmentData.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-600">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 flex-shrink-0">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                        <span>Progress: {enrollmentData.progressPercentage}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setIsEnrollmentModalOpen(true)}
+                  className="w-full sm:w-auto px-4 py-2 bg-brand-navy hover:bg-brand-blue text-white font-bold rounded-lg transition-colors text-sm whitespace-nowrap"
+                >
+                  View Details
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-8">
@@ -346,10 +433,19 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
               onRegister={handleRegister}
               enrollmentStatus={enrollmentStatus}
               isCheckingEnrollment={isCheckingEnrollment}
+              onViewEnrollment={() => setIsEnrollmentModalOpen(true)}
             />
           </div>
         </div>
       </div>
+
+      {/* Enrollment Details Modal */}
+      {isEnrollmentModalOpen && enrollmentData && (
+        <EnrollmentDetailsModal
+          enrollmentData={enrollmentData}
+          onClose={() => setIsEnrollmentModalOpen(false)}
+        />
+      )}
     </main>
   )
 }

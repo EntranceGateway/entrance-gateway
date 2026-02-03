@@ -77,6 +77,15 @@ export async function fetchTrainingById(id: string): Promise<TrainingDetailRespo
  * Returns enrollment status if exists, null if not enrolled
  */
 export async function checkEnrollmentStatus(trainingId: number): Promise<TrainingEnrollmentResponse | null> {
+  // Validate trainingId
+  if (!trainingId || isNaN(trainingId) || trainingId <= 0) {
+    console.error('Invalid trainingId:', trainingId)
+    return {
+      message: 'Invalid training ID',
+      data: null
+    }
+  }
+
   try {
     const response = await fetch(`/api/trainings/${trainingId}/enrollment-status`, {
       method: 'GET',
@@ -109,109 +118,84 @@ export async function checkEnrollmentStatus(trainingId: number): Promise<Trainin
 }
 
 /**
- * Create initial enrollment (Step 1 - Personal Detail)
- * This creates the enrollment record before payment
+ * Single-step enrollment with payment (RECOMMENDED)
+ * Uses the backend endpoint: POST /api/v1/training-enrollments/{trainingId}/enroll-with-payment
+ * Combines enrollment creation and payment submission in one atomic transaction
  */
-export async function createEnrollment(trainingId: number): Promise<TrainingEnrollmentResponse> {
-  const idempotencyKey = generateUUID()
-  
-  const response = await fetch(`/api/trainings/${trainingId}/enroll`, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      'Idempotency-Key': idempotencyKey,
-    },
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.message || `Failed to create enrollment: ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
-/**
- * Submit manual payment with proof for training enrollment
- * Uses the payment API endpoint: POST /api/v1/payments/pay/{id}/{type}
- */
-export async function submitTrainingPayment(
+export async function enrollWithPayment(
   trainingId: number,
   paymentData: {
     amount: number
-    paymentMethod: string
+    paymentMethod: 'FONE_PAY_QR' | 'BANK_TRANSFER'
+    transactionReference?: string
     remarks: string
     proofFile: File
   }
-): Promise<PaymentResponse> {
+): Promise<TrainingEnrollmentResponse> {
+  console.log('=== enrollWithPayment START ===')
+  console.log('trainingId:', trainingId)
+  console.log('trainingId type:', typeof trainingId)
+  console.log('paymentData:', {
+    amount: paymentData.amount,
+    paymentMethod: paymentData.paymentMethod,
+    transactionReference: paymentData.transactionReference,
+    remarks: paymentData.remarks,
+    proofFileName: paymentData.proofFile.name
+  })
+  
+  // Validate trainingId
+  if (!trainingId || isNaN(trainingId) || trainingId <= 0) {
+    console.error('❌ Invalid trainingId in enrollWithPayment')
+    console.error('trainingId:', trainingId)
+    throw new Error('Invalid training ID')
+  }
+
+  // Validate payment data
+  if (!paymentData.amount || paymentData.amount <= 0) {
+    console.error('❌ Invalid amount')
+    throw new Error('Invalid payment amount')
+  }
+  if (!paymentData.remarks || !paymentData.remarks.trim()) {
+    console.error('❌ Invalid remarks')
+    throw new Error('Payment remarks are required')
+  }
+  if (!paymentData.proofFile) {
+    console.error('❌ Missing proof file')
+    throw new Error('Payment proof file is required')
+  }
+
+  console.log('✅ All validations passed in enrollWithPayment')
+
+  const idempotencyKey = generateUUID()
+  console.log('Generated idempotency key:', idempotencyKey)
+  
   // Create FormData for multipart/form-data
   const formData = new FormData()
   
-  // Add payment request as JSON blob with correct content type
+  // Create request JSON with enrollment and payment data
   const requestData = {
+    enrollmentRemarks: 'Enrollment via web portal',
     amount: paymentData.amount,
     paymentMethod: paymentData.paymentMethod,
-    remarks: paymentData.remarks
+    transactionReference: paymentData.transactionReference || '',
+    paymentRemarks: paymentData.remarks
   }
   
-  // Create a Blob with application/json content type
+  console.log('Request data:', requestData)
+  
+  // Add request as JSON blob with correct content type
   const requestBlob = new Blob([JSON.stringify(requestData)], { 
     type: 'application/json' 
   })
   formData.append('request', requestBlob)
   
-  // Add file
-  formData.append('file', paymentData.proofFile)
+  // Add payment proof file
+  formData.append('paymentProof', paymentData.proofFile)
   
-  const response = await fetch(`/api/payments/pay/${trainingId}/TRAINING`, {
-    method: 'POST',
-    headers: {
-      'Accept': 'application/json',
-      // Don't set Content-Type - browser will set it with boundary for multipart/form-data
-    },
-    body: formData,
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.message || `Failed to submit payment: ${response.statusText}`)
-  }
-
-  return response.json()
-}
-
-/**
- * @deprecated Use createEnrollment() and submitTrainingPayment() separately
- * Enroll in a training program with payment (Final submission)
- * Generates Idempotency-Key automatically
- * Sends multipart/form-data with payment proof file
- */
-export async function enrollInTraining(
-  trainingId: number,
-  paymentData: {
-    amount: number
-    paymentMethod: string
-    remarks: string
-    proofFile: File
-  }
-): Promise<TrainingEnrollmentResponse> {
-  const idempotencyKey = generateUUID()
+  const url = `/api/trainings/${trainingId}/enroll-with-payment`
+  console.log('Making request to:', url)
   
-  // Create FormData for multipart/form-data
-  const formData = new FormData()
-  
-  // Add payment request as JSON blob
-  const requestData = {
-    amount: paymentData.amount,
-    paymentMethod: paymentData.paymentMethod,
-    remarks: paymentData.remarks
-  }
-  formData.append('request', new Blob([JSON.stringify(requestData)], { type: 'application/json' }))
-  
-  // Add file
-  formData.append('file', paymentData.proofFile)
-  
-  const response = await fetch(`/api/trainings/${trainingId}/enroll`, {
+  const response = await fetch(url, {
     method: 'POST',
     headers: {
       'Accept': 'application/json',
@@ -221,10 +205,18 @@ export async function enrollInTraining(
     body: formData,
   })
 
+  console.log('Response status:', response.status)
+  console.log('Response ok:', response.ok)
+
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({}))
-    throw new Error(errorData.message || `Failed to enroll in training: ${response.statusText}`)
+    console.error('❌ API Error Response:', errorData)
+    throw new Error(errorData.message || `Failed to enroll with payment: ${response.statusText}`)
   }
 
-  return response.json()
+  const result = await response.json()
+  console.log('✅ Success response:', result)
+  console.log('=== enrollWithPayment END ===')
+  
+  return result
 }

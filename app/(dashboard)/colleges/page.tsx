@@ -1,10 +1,10 @@
-import { CollegesPageContent } from '@/components/features/colleges/CollegesPageContent'
+import { ComingSoonContent } from '@/components/features/coming-soon/ComingSoonContent'
 
 export const metadata = {
-  title: 'Featured Institutes - EntranceGateway',
-  description: 'Discover premier campuses with world-class infrastructure and academic excellence.',
+  title: 'Featured Institutes - Coming Soon | EntranceGateway',
+  description: 'College listings coming soon to EntranceGateway',
 }
 
 export default function CollegesPage() {
-  return <CollegesPageContent />
+  return <ComingSoonContent />
 }
