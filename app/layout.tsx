@@ -22,6 +22,11 @@ const roboto = Roboto({
 export const metadata: Metadata = {
   title: "EntranceGateway",
   description: "Your gateway to academic success",
+  icons: {
+    icon: '/eg-logo.jpg',
+    shortcut: '/eg-logo.jpg',
+    apple: '/eg-logo.jpg',
+  },
 };
 
 export default function RootLayout({

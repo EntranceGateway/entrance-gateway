@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { NotesHeader } from './NotesHeader'
 import { NotesFilters } from './NotesFilters'
 import { NotesCard, NotesCardGrid } from './NotesCard'
@@ -15,7 +14,6 @@ interface NotesPageContentProps {
 }
 
 export function NotesPageContent({ initialData }: NotesPageContentProps) {
-  const router = useRouter()
   const [notes, setNotes] = useState<Note[]>(initialData?.data.content || [])
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
@@ -77,10 +75,6 @@ export function NotesPageContent({ initialData }: NotesPageContentProps) {
     // Reset to first page when filtering
     setCurrentPage(0)
     loadNotes()
-  }
-
-  const handleView = (id: number) => {
-    router.push(`/notes/${id}`)
   }
 
   const handlePageChange = (page: number) => {
@@ -147,7 +141,6 @@ export function NotesPageContent({ initialData }: NotesPageContentProps) {
                 <NotesCard
                   key={note.noteId}
                   item={note}
-                  onView={handleView}
                 />
               ))}
             </NotesCardGrid>

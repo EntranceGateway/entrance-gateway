@@ -1,5 +1,7 @@
 'use client'
 
+import Link from "next/link"
+
 export function HomeHero() {
   return (
     <section className="bg-gradient-to-b from-gray-50 to-white py-12 md:py-16 lg:py-20 overflow-hidden">
@@ -17,9 +19,9 @@ export function HomeHero() {
 
           {/* CTA Buttons */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-3 md:gap-4 px-4">
-            <button className="bg-brand-gold text-brand-navy px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-base md:text-lg hover:shadow-lg transition-all w-full sm:w-auto">
+            <Link href={"/courses"} className="bg-brand-gold text-brand-navy px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-base md:text-lg hover:shadow-lg transition-all w-full sm:w-auto">
               Explore Courses
-            </button>
+            </Link>
             <button className="border-2 border-brand-blue text-brand-blue px-6 py-3 md:px-8 md:py-4 rounded-lg font-bold text-base md:text-lg hover:bg-brand-blue hover:text-white transition-all w-full sm:w-auto">
               View Mock Tests
             </button>

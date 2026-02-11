@@ -1,3 +1,5 @@
+import Link from "next/link"
+
 export function HomeSimpleSteps() {
   const steps = [
     {
@@ -74,14 +76,14 @@ export function HomeSimpleSteps() {
 
               {/* CTA Button */}
               <div className="break-inside-avoid pt-4">
-                <button className="bg-brand-navy text-white pl-6 sm:pl-8 pr-4 sm:pr-6 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:shadow-lg transition-all flex items-center gap-3 sm:gap-4 w-fit group">
+                <Link href={"/trainings"} className="bg-brand-navy text-white pl-6 sm:pl-8 pr-4 sm:pr-6 py-3 sm:py-4 rounded-full font-bold text-base sm:text-lg hover:shadow-lg transition-all flex items-center gap-3 sm:gap-4 w-fit group">
                   Get Started Today
                   <span className="bg-white text-brand-navy rounded-full p-1 flex items-center justify-center group-hover:translate-x-1 transition-transform">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="w-4 h-4 sm:w-5 sm:h-5">
                       <path d="M10 6L8.59 7.41 13.17 12l-4.58 4.59L10 18l6-6z" />
                     </svg>
                   </span>
-                </button>
+                </Link>
               </div>
             </div>
           </div>

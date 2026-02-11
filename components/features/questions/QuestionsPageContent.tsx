@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { fetchOldQuestions } from '@/services/client/questions.client'
 import { QuestionsHeader } from './QuestionsHeader'
 import { QuestionsFilters } from './QuestionsFilters'
@@ -22,7 +21,6 @@ export function QuestionsPageContent({
   initialError,
   initialTotalPages = 0 
 }: QuestionsPageContentProps) {
-  const router = useRouter()
   const { showToast } = useToast()
   const [questions, setQuestions] = useState<OldQuestion[]>(initialData || [])
   const [isLoading, setIsLoading] = useState(!initialData && !initialError)
@@ -81,10 +79,6 @@ export function QuestionsPageContent({
     setSelectedYear('')
     setCurrentPage(0)
     setError(null)
-  }
-
-  const handleView = (id: number) => {
-    router.push(`/questions/${id}`)
   }
 
   // Filter questions by search query (client-side)
@@ -149,7 +143,7 @@ export function QuestionsPageContent({
           onReset={handleReset}
         />
 
-        <QuestionsTable data={filteredQuestions} onView={handleView} isLoading={isLoading} />
+        <QuestionsTable data={filteredQuestions} isLoading={isLoading} />
 
         {totalPages > 1 && (
           <div className="mt-6 flex justify-end">

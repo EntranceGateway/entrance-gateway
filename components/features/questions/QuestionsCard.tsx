@@ -1,19 +1,14 @@
+import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import type { OldQuestion } from '@/types/questions.types'
 
 interface QuestionsCardProps {
   item: OldQuestion
-  onView?: (id: number) => void
 }
 
-export function QuestionsCard({ item, onView }: QuestionsCardProps) {
+export function QuestionsCard({ item }: QuestionsCardProps) {
   return (
-    <div
-      className={cn(
-        'bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all',
-        onView && 'cursor-pointer hover:shadow-md hover:border-brand-blue/30'
-      )}
-    >
+    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all hover:shadow-md hover:border-brand-blue/30">
       {/* Header: Set Name with Icon */}
       <div className="flex items-center gap-3 mb-3">
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-gray-400 shrink-0">
@@ -58,15 +53,15 @@ export function QuestionsCard({ item, onView }: QuestionsCardProps) {
       </div>
 
       {/* Action Button */}
-      <button
-        onClick={() => onView?.(item.id)}
+      <Link
+        href={`/questions/${item.id}`}
         className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-2 px-4 rounded-md text-sm transition-all shadow-sm flex items-center justify-center gap-2"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
           <path d="M12 4.5C7 4.5 2.73 7.61 1 12c1.73 4.39 6 7.5 11 7.5s9.27-3.11 11-7.5c-1.73-4.39-6-7.5-11-7.5zM12 17c-2.76 0-5-2.24-5-5s2.24-5 5-5 5 2.24 5 5-2.24 5-5 5zm0-8c-1.66 0-3 1.34-3 3s1.34 3 3 3 3-1.34 3-3-1.34-3-3-3z" />
         </svg>
         View PDF
-      </button>
+      </Link>
     </div>
   )
 }

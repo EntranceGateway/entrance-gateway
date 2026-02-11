@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { TrainingsDetailHero } from './TrainingsDetailHero'
 import { TrainingsDetailSidebar } from './TrainingsDetailSidebar'
 import { EnrollmentDetailsModal } from './EnrollmentDetailsModal'
@@ -16,7 +16,6 @@ interface TrainingsDetailContentProps {
 }
 
 export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDetailContentProps) {
-  const router = useRouter()
   const [training, setTraining] = useState<Training | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
@@ -64,11 +63,6 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
 
     loadData()
   }, [trainingId, initialData])
-
-  const handleRegister = () => {
-    // Redirect to enrollment page
-    router.push(`/trainings/${trainingId}/enroll`)
-  }
 
   const handleDownloadMaterials = () => {
     if (training?.materialsLink) {
@@ -233,15 +227,15 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
                         })}
                       </p>
                     )}
-                    <button
-                      onClick={() => router.push(`/trainings/${trainingId}/enroll`)}
+                    <Link
+                      href={`/trainings/${trainingId}/enroll`}
                       className="mt-3 inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
                     >
                       Complete Payment
                       <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
                         <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
                       </svg>
-                    </button>
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -437,7 +431,6 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
           <div>
             <TrainingsDetailSidebar 
               training={training} 
-              onRegister={handleRegister}
               enrollmentStatus={enrollmentStatus}
               isCheckingEnrollment={isCheckingEnrollment}
               onViewEnrollment={() => setIsEnrollmentModalOpen(true)}

@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import { cn } from '@/lib/utils/cn'
 import { QuestionsCard, QuestionsCardList } from './QuestionsCard'
 import { Spinner } from '@/components/shared/Loading'
@@ -5,11 +6,10 @@ import type { OldQuestion } from '@/types/questions.types'
 
 interface QuestionsTableProps {
   data: OldQuestion[]
-  onView?: (id: number) => void
   isLoading?: boolean
 }
 
-export function QuestionsTable({ data, onView, isLoading }: QuestionsTableProps) {
+export function QuestionsTable({ data, isLoading }: QuestionsTableProps) {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
@@ -59,19 +59,18 @@ export function QuestionsTable({ data, onView, isLoading }: QuestionsTableProps)
               {data.map((item, index) => (
                 <tr
                   key={item.id}
-                  onClick={() => onView?.(item.id)}
                   className={cn(
-                    'transition-colors hover:bg-brand-blue/5 cursor-pointer',
+                    'transition-colors hover:bg-brand-blue/5',
                     index % 2 === 1 && 'bg-gray-50'
                   )}
                 >
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-3">
-                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-gray-400 shrink-0">
+                    <Link href={`/questions/${item.id}`} className="flex items-center gap-3 group">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-gray-400 shrink-0 group-hover:text-brand-blue transition-colors">
                         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
                       </svg>
-                      <span className="text-sm font-medium text-gray-900">{item.setName}</span>
-                    </div>
+                      <span className="text-sm font-medium text-gray-900 group-hover:text-brand-blue transition-colors">{item.setName}</span>
+                    </Link>
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{item.subject}</td>
                   <td className="px-6 py-4 text-sm text-gray-600 text-center">{item.year}</td>
@@ -111,7 +110,7 @@ export function QuestionsTable({ data, onView, isLoading }: QuestionsTableProps)
       <div className="lg:hidden">
         <QuestionsCardList>
           {data.map((item) => (
-            <QuestionsCard key={item.id} item={item} onView={onView} />
+            <QuestionsCard key={item.id} item={item} />
           ))}
         </QuestionsCardList>
       </div>

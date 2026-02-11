@@ -1,11 +1,11 @@
+import Link from 'next/link'
 import type { Note } from '@/types/notes.types'
 
 interface NotesCardProps {
   item: Note
-  onView?: (id: number) => void
 }
 
-export function NotesCard({ item, onView }: NotesCardProps) {
+export function NotesCard({ item }: NotesCardProps) {
   return (
     <div className="group bg-white border border-gray-200 hover:border-brand-blue/30 rounded-xl p-6 shadow-sm hover:shadow-md transition-all duration-200 flex flex-col h-full">
       {/* Header: Code and Course Badge */}
@@ -53,12 +53,12 @@ export function NotesCard({ item, onView }: NotesCardProps) {
 
       {/* Actions */}
       <div className="flex items-center pt-4 border-t border-gray-100 mt-auto">
-        <button
-          onClick={() => onView?.(item.noteId)}
-          className="w-full bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-4 rounded-lg transition-colors text-sm shadow-sm"
+        <Link
+          href={`/notes/${item.noteId}`}
+          className="w-full bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-4 rounded-lg transition-colors text-sm shadow-sm text-center"
         >
           View Note
-        </button>
+        </Link>
       </div>
     </div>
   )

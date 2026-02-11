@@ -4,11 +4,10 @@ import type { College } from '@/types/colleges.types'
 
 interface CollegesCardProps {
   item: College
-  onVisit?: (id: number) => void
   onFavorite?: (id: number) => void
 }
 
-export function CollegesCard({ item, onVisit, onFavorite }: CollegesCardProps) {
+export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
   // Fetch logo image using resource hook
   const { src: logoSrc, isLoading: isLogoLoading } = useResourceImage(item.logoName || null, {
     enabled: !!item.logoName,
@@ -91,12 +90,12 @@ export function CollegesCard({ item, onVisit, onFavorite }: CollegesCardProps) {
 
         {/* Actions */}
         <div className="mt-auto flex gap-2">
-          <button
-            onClick={() => onVisit?.(item.collegeId)}
-            className="flex-1 bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2.5 px-4 rounded-lg transition-colors text-sm"
+          <Link
+            href={`/colleges/${item.collegeId}`}
+            className="flex-1 bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2.5 px-4 rounded-lg transition-colors text-sm text-center"
           >
             View Details
-          </button>
+          </Link>
           <button
             onClick={() => onFavorite?.(item.collegeId)}
             className="p-2.5 border-2 border-gray-200 hover:border-brand-gold hover:bg-brand-gold/10 rounded-lg transition-colors"

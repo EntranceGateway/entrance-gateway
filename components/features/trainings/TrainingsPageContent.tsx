@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { TrainingsHeader } from './TrainingsHeader'
 import { TrainingsCard, TrainingsCardGrid } from './TrainingsCard'
 import { CardGridSkeleton } from '@/components/shared/Loading'
@@ -13,7 +12,6 @@ interface TrainingsPageContentProps {
 }
 
 export function TrainingsPageContent({ initialData }: TrainingsPageContentProps) {
-  const router = useRouter()
   const [trainings, setTrainings] = useState<Training[]>(initialData?.data.content || [])
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
@@ -46,10 +44,6 @@ export function TrainingsPageContent({ initialData }: TrainingsPageContentProps)
 
     loadTrainings()
   }, [initialData])
-
-  const handleViewDetails = (id: number) => {
-    router.push(`/trainings/${id}`)
-  }
 
   const handleDownloadSyllabus = (id: number) => {
     const training = trainings.find(t => t.trainingId === id)
@@ -117,7 +111,6 @@ export function TrainingsPageContent({ initialData }: TrainingsPageContentProps)
               <TrainingsCard
                 key={training.trainingId}
                 item={training}
-                onViewDetails={handleViewDetails}
                 onDownloadSyllabus={handleDownloadSyllabus}
               />
             ))}

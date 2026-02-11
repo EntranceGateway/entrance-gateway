@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Spinner } from '@/components/shared/Loading'
 import { fetchFullSyllabus } from '@/services/client/courses.client'
 import type { Year, FullSyllabusResponse } from '@/types/courses.types'
@@ -22,7 +22,6 @@ interface SyllabusAccordionProps {
 }
 
 export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllabus }: SyllabusAccordionProps) {
-  const router = useRouter()
   const [expandedCourse, setExpandedCourse] = useState<string | null>(null)
   const [expandedSemester, setExpandedSemester] = useState<string | null>(null)
   const [loadingCourse, setLoadingCourse] = useState<string | null>(null)
@@ -76,10 +75,6 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
       return
     }
     setExpandedSemester(semesterId)
-  }
-
-  const handleSubjectClick = (subjectId: string) => {
-    router.push(`/syllabus/${subjectId}`)
   }
 
   if (filteredCourses.length === 0) {
@@ -224,16 +219,11 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                 const subjectId = subject.syllabusId
                                 
                                 return (
-                                  <button
+                                  <Link
                                     key={subjectKey}
-                                    onClick={() => {
-                                      if (subjectId) {
-                                        handleSubjectClick(subjectId.toString())
-                                      }
-                                    }}
-                                    disabled={!subjectId}
-                                    className={`w-full px-4 py-3 hover:bg-white transition-all duration-200 text-left group ${
-                                      !subjectId ? 'opacity-50 cursor-not-allowed' : ''
+                                    href={subjectId ? `/syllabus/${subjectId}` : '#'}
+                                    className={`w-full px-4 py-3 hover:bg-white transition-all duration-200 text-left group block ${
+                                      !subjectId ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                                     }`}
                                   >
                                     <div className="flex items-center justify-between gap-3">
@@ -260,7 +250,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                         </svg>
                                       )}
                                     </div>
-                                  </button>
+                                  </Link>
                                 )
                               })}
                             </div>

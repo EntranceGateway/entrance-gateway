@@ -1,12 +1,12 @@
+import Link from 'next/link'
 import type { Training } from '@/types/trainings.types'
 
 interface TrainingsCardProps {
   item: Training
-  onViewDetails?: (id: number) => void
   onDownloadSyllabus?: (id: number) => void
 }
 
-export function TrainingsCard({ item, onViewDetails, onDownloadSyllabus }: TrainingsCardProps) {
+export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) {
   // Calculate capacity percentage
   const capacityPercentage = (item.currentParticipants / item.maxParticipants) * 100
   
@@ -77,12 +77,12 @@ export function TrainingsCard({ item, onViewDetails, onDownloadSyllabus }: Train
 
       {/* Actions */}
       <div className="p-6 pt-0 space-y-3">
-        <button
-          onClick={() => onViewDetails?.(item.trainingId)}
-          className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-3 rounded-xl transition-colors text-sm shadow-sm"
+        <Link
+          href={`/trainings/${item.trainingId}`}
+          className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-3 rounded-xl transition-colors text-sm shadow-sm block text-center"
         >
           View Details
-        </button>
+        </Link>
         {item.materialsLink && (
           <button
             onClick={() => onDownloadSyllabus?.(item.trainingId)}

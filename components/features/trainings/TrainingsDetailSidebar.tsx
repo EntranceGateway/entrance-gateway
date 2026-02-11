@@ -1,8 +1,8 @@
+import Link from 'next/link'
 import type { Training, TrainingEnrollmentResponse } from '@/types/trainings.types'
 
 interface TrainingsDetailSidebarProps {
   training: Training
-  onRegister?: () => void
   enrollmentStatus?: TrainingEnrollmentResponse | null
   isCheckingEnrollment?: boolean
   onViewEnrollment?: () => void
@@ -10,7 +10,6 @@ interface TrainingsDetailSidebarProps {
 
 export function TrainingsDetailSidebar({ 
   training, 
-  onRegister,
   enrollmentStatus,
   isCheckingEnrollment = false,
   onViewEnrollment,
@@ -117,20 +116,21 @@ export function TrainingsDetailSidebar({
               <span>View Enrollment</span>
             </div>
           ) : isPending ? (
-            <button
-              onClick={onRegister}
+            <Link
+              href={`/trainings/${training.trainingId}/enroll`}
               className="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2"
             >
               <span>Complete Payment</span>
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
                 <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
               </svg>
-            </button>
+            </Link>
           ) : (
-            <button
-              onClick={onRegister}
-              disabled={availableSeats <= 0}
-              className="w-full bg-brand-gold hover:bg-[#EBB000] text-brand-navy font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+            <Link
+              href={`/trainings/${training.trainingId}/enroll`}
+              className={`w-full bg-brand-gold hover:bg-[#EBB000] text-brand-navy font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
+                availableSeats <= 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+              }`}
             >
               <span>{availableSeats > 0 ? 'Register Now' : 'Training Full'}</span>
               {availableSeats > 0 && (
@@ -138,7 +138,7 @@ export function TrainingsDetailSidebar({
                   <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
                 </svg>
               )}
-            </button>
+            </Link>
           )}
 
           {/* Limited Seats Notice */}

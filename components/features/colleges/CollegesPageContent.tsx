@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
 import { fetchColleges } from '@/services/client/colleges.client'
 import { CollegesHeader } from './CollegesHeader'
 import { CollegesSearch } from './CollegesSearch'
@@ -23,7 +22,6 @@ export function CollegesPageContent({
   initialError,
   initialTotalPages = 0 
 }: CollegesPageContentProps) {
-  const router = useRouter()
   const { showToast } = useToast()
   const [colleges, setColleges] = useState<College[]>(initialData || [])
   const [isLoading, setIsLoading] = useState(!initialData && !initialError)
@@ -111,10 +109,6 @@ export function CollegesPageContent({
     setSearchQuery('')
     setCurrentPage(0)
     setError(null)
-  }
-
-  const handleVisit = (id: number) => {
-    router.push(`/colleges/${id}`)
   }
 
   const handleFavorite = (id: number) => {
@@ -208,7 +202,6 @@ export function CollegesPageContent({
                     <CollegesCard
                       key={college.collegeId}
                       item={college}
-                      onVisit={handleVisit}
                       onFavorite={handleFavorite}
                     />
                   ))}
