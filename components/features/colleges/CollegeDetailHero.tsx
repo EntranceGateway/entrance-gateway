@@ -1,4 +1,5 @@
 import { cn } from '@/lib/utils/cn'
+import Image from 'next/image'
 
 interface CollegeDetailHeroProps {
   name: string
@@ -7,6 +8,7 @@ interface CollegeDetailHeroProps {
   established: string
   coverImage: string
   logoText: string
+  logoSrc?: string | null
   isFeatured?: boolean
   isVerified?: boolean
 }
@@ -18,6 +20,7 @@ export function CollegeDetailHero({
   established,
   coverImage,
   logoText,
+  logoSrc,
   isFeatured = false,
   isVerified = false,
 }: CollegeDetailHeroProps) {
@@ -39,7 +42,17 @@ export function CollegeDetailHero({
           {/* Logo - hidden on mobile, shown on desktop */}
           <div className="bg-white p-2 rounded-xl shadow-lg flex-shrink-0 hidden md:block">
             <div className="w-24 h-24 bg-brand-navy text-white flex items-center justify-center rounded-lg font-bold text-2xl overflow-hidden">
-              {logoText}
+              {logoSrc ? (
+                <Image
+                  src={logoSrc}
+                  alt={`${name} Logo`}
+                  width={96}
+                  height={96}
+                  className="w-full h-full object-cover"
+                />
+              ) : (
+                logoText
+              )}
             </div>
           </div>
           

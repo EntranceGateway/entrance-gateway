@@ -1,72 +1,36 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
+import { fetchColleges } from '@/services/client/colleges.client'
 import { CollegesHeader } from './CollegesHeader'
 import { CollegesSearch } from './CollegesSearch'
 import { CollegesFilters } from './CollegesFilters'
 import { CollegesCard, CollegesCardGrid } from './CollegesCard'
 import { CollegesPagination } from './CollegesPagination'
+import { CenteredSpinner } from '@/components/shared/Loading'
+import { useToast } from '@/components/shared/Toast'
+import type { College } from '@/types/colleges.types'
 
-const collegesData = [
-  {
-    id: '1',
-    name: 'Asian College Of Higher Studies',
-    category: 'Management & IT',
-    location: 'Jawalakhel, Lalitpur',
-    affiliation: 'Tribhuvan University',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuChGFHaTg2-8dLr4shytEWEf0mn6D6nIcqmVR0X9_U8QKk7mwPG7pePZ-XkcCyOKbcpKU3wawrPmZXfmPnd9W9NT9CJsmeHeSOPPdsVUqE0Oe4KA-uJTr8KdsyuqE0TaivlFzzptGcdxp5HzHLRORlG7xAILSWvAWCkxskLpR4w7RR6QXHFCTg-ck7ZAXp13nuzo_k8LF9VymJeZnmFIAXyScaTwym3kw4yslUeiGKXBuCMr6d-Uzxyaw9eNp7afu9jTy1oxM37SaY',
-    website: 'https://achs.edu.np',
-  },
-  {
-    id: '2',
-    name: 'Advance College of Engineering',
-    category: 'Engineering',
-    location: 'Bhuwaneswari Marga, Kalanki',
-    affiliation: 'Tribhuvan University',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAWbf1Z15APDbTna6qrZALaKx_2FmN5r4Ji1QgD0C0QEMgTkbAzz8xDPwtw588McSbw-vIEtLTEllQr66gA4_g8fPfPdU6kAGCWEg1BjZm2cxr7fANvyqA-8lYG0e4sWTMZfA_UvDCIyGV5_saq7tGVbjHJ1QjWAHCskJyUV2hTvcPUZ0jX8YEFbb3eKIx3LHI2wAgi-gr1LAVXUBkKZtL3L-YHvTLuzOZ07KdaUZs90p0Pi8qsfB_eGfzaZndcZpwQRZVHYWa3Luk',
-    website: 'https://ace.edu.np',
-  },
-  {
-    id: '3',
-    name: 'Kathmandu Engineering College',
-    category: 'Engineering & Architecture',
-    location: 'Kalimati, Kathmandu',
-    affiliation: 'Pokhara University',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDJa8Ha1oPeOvU4SHD_uM5UxZXcXoLNjhsePAZkJIjvi7955i6qGrF14BHB2jmUwrPJGxG6vFJcEzIfJjZJYl02zCo7inUmnCwWh5s6lKYDbG6FRcCgkZ2sHbzwgfYqtVlBu6Kziqmly1EGEbVGOCaCYrnVpKnVslYh6BQ8XJ9yX7JL1Srk6JcyIjv-fdRtTre557MImehNP2oNiF7ThMDIstE1scsUOlgw4awDm7uory7B5Z2MnHEAsmroMAPOOd8xgury78sLdxM',
-    website: 'https://kec.edu.np',
-  },
-  {
-    id: '4',
-    name: 'Islington College',
-    category: 'IT & Business',
-    location: 'Kamal Pokhari, Kathmandu',
-    affiliation: 'London Met Univ',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuC64vp1FIQFzptNzN_TViEN1kqv1n2YY1e9uI9LLshs4UYjNdHH3gZy9EcF6b-vFP8RXgyzBCPzC2AVb9W2801Kr0jVS8C-mX3Fz4iBMHhkAT_yTZZD-afWU-lapID_zLHzaFvDmy10LnVXdNbtdzpcxWO8dpdzKbwXMQhhhlHM8VLRiHXhS0JZBEeXujpyBOTCPOadYz3-MtVytiPwY8HGN_a_MrlXU73XchFw0xa1iDf7LKULaYGw0vYTOl9bDF9msTZkqugWbGI',
-    website: 'https://islington.edu.np',
-  },
-  {
-    id: '5',
-    name: 'Nepal Medical College',
-    category: 'Medical Science',
-    location: 'Jorpati, Kathmandu',
-    affiliation: 'Kathmandu Univ',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuBk0RAuLnWRuP2eXmf8h_6rr1jv904VyknJ_SZdEp1ydzEeCEe41npfS1HmsA8f1vUCsqQ0nVxIiw0ESaa9nWx76jXmscqebJx6WvhnGDyCJw2hP0IqvYq6hLOT3PJckAm8BfH_IR3mD5QQu8BZeoYpI6T4H2nnolFY9YQcyiNacqUfhBfdk82FxLusSU4gSk3T--ZCUFOZ185AiFb3BFZVtrjpguYy-vrEsRL8xKHN8JRIySeBX5k90ycEIRPGEPYBOnWfnlzHKfc',
-    website: 'https://nmcth.edu',
-  },
-  {
-    id: '6',
-    name: 'Apex College',
-    category: 'Business & IT',
-    location: 'Old Baneshwor, Kathmandu',
-    affiliation: 'Pokhara University',
-    image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB3oAusVNZ2-RhDjc5KIZGU0WHBnLiCuOjdtHRyR3LIDLw0-MZk-J129SfLwQV6ncD3caHVBkuDtgcbVpgM2Yqif4AN--1JWMO6ikoCIQ_dQsVWMvBm-xtbOLfzuGp_3r4DVhWcQqP90vpxmCOpF-SdG-vOIv2ARXFK58QHHnxkEX-UNAvNyGImPwwvJIoxwuca35n7FLF3LdpvFDILe3osQ2t6CZT4oO95g_vr13986_GMr1Mwd0k0SO0cD6LducEjw2maibOcClA',
-    website: 'https://apex.edu.np',
-  },
-]
+interface CollegesPageContentProps {
+  initialData?: College[] | null
+  initialError?: string | null
+  initialTotalPages?: number
+}
 
-export function CollegesPageContent() {
+export function CollegesPageContent({ 
+  initialData, 
+  initialError,
+  initialTotalPages = 0 
+}: CollegesPageContentProps) {
+  const router = useRouter()
+  const { showToast } = useToast()
+  const [colleges, setColleges] = useState<College[]>(initialData || [])
+  const [isLoading, setIsLoading] = useState(!initialData && !initialError)
+  const [error, setError] = useState<string | null>(initialError || null)
   const [searchQuery, setSearchQuery] = useState('')
-  const [currentPage, setCurrentPage] = useState(1)
+  const [currentPage, setCurrentPage] = useState(0)
+  const [totalPages, setTotalPages] = useState(initialTotalPages)
   
   const [categories, setCategories] = useState([
     { id: 'all', label: 'All Institutes', checked: true },
@@ -82,6 +46,46 @@ export function CollegesPageContent() {
     { id: 'bhaktapur', label: 'Bhaktapur', checked: false },
     { id: 'pokhara', label: 'Pokhara', checked: false },
   ])
+
+  // Show error toast on mount if there's an initial error
+  useEffect(() => {
+    if (initialError) {
+      showToast(initialError, 'error')
+    }
+  }, [initialError, showToast])
+
+  useEffect(() => {
+    // Skip initial load if we have SSR data and no filters
+    if (initialData && currentPage === 0) {
+      return
+    }
+
+    loadColleges()
+  }, [currentPage])
+
+  const loadColleges = async () => {
+    setIsLoading(true)
+    setError(null)
+    
+    try {
+      const response = await fetchColleges({
+        page: currentPage,
+        size: 10,
+        sortBy: 'collegeName',
+        sortDir: 'asc',
+      })
+
+      setColleges(response.data.content)
+      setTotalPages(response.data.totalPages)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load colleges'
+      setError(errorMessage)
+      setColleges([])
+      showToast(errorMessage, 'error')
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   const handleCategoryChange = (id: string) => {
     setCategories((prev) =>
@@ -105,17 +109,63 @@ export function CollegesPageContent() {
     )
     setLocations((prev) => prev.map((loc) => ({ ...loc, checked: false })))
     setSearchQuery('')
+    setCurrentPage(0)
+    setError(null)
   }
 
-  const handleVisit = (id: string) => {
-    const college = collegesData.find((c) => c.id === id)
-    if (college?.website) {
-      window.open(college.website, '_blank')
-    }
+  const handleVisit = (id: number) => {
+    router.push(`/colleges/${id}`)
   }
 
-  const handleFavorite = (id: string) => {
-    console.log('Favorite college:', id)
+  const handleFavorite = (id: number) => {
+    showToast('Favorite feature coming soon!', 'info')
+  }
+
+  // Filter colleges by search query (client-side)
+  const filteredColleges = colleges.filter(college => 
+    searchQuery === '' || 
+    college.collegeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    college.location.toLowerCase().includes(searchQuery.toLowerCase())
+  )
+
+  // Show error state
+  if (error && !isLoading && colleges.length === 0) {
+    return (
+      <main className="flex-grow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <CollegesHeader />
+          
+          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mt-8">
+            <svg viewBox="0 0 24 24" fill="currentColor" className="size-12 text-red-400 mx-auto mb-4">
+              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+            </svg>
+            <h3 className="text-lg font-semibold text-red-900 mb-2">Failed to Load Colleges</h3>
+            <p className="text-sm text-red-700 mb-4">{error}</p>
+            <button
+              onClick={() => {
+                setError(null)
+                loadColleges()
+              }}
+              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
+            >
+              Try Again
+            </button>
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  // Show loading state
+  if (isLoading && !colleges.length) {
+    return (
+      <main className="flex-grow">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <CollegesHeader />
+          <CenteredSpinner size="lg" text="Loading colleges..." />
+        </div>
+      </main>
+    )
   }
 
   return (
@@ -143,23 +193,37 @@ export function CollegesPageContent() {
 
           {/* Colleges Grid */}
           <div className="flex-grow">
-            <CollegesCardGrid>
-              {collegesData.map((college) => (
-                <CollegesCard
-                  key={college.id}
-                  item={college}
-                  onVisit={handleVisit}
-                  onFavorite={handleFavorite}
-                />
-              ))}
-            </CollegesCardGrid>
+            {filteredColleges.length === 0 ? (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-12 text-gray-300 mx-auto mb-4">
+                  <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
+                </svg>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">No colleges found</h3>
+                <p className="text-sm text-gray-500">Try adjusting your search or filters.</p>
+              </div>
+            ) : (
+              <>
+                <CollegesCardGrid>
+                  {filteredColleges.map((college) => (
+                    <CollegesCard
+                      key={college.collegeId}
+                      item={college}
+                      onVisit={handleVisit}
+                      onFavorite={handleFavorite}
+                    />
+                  ))}
+                </CollegesCardGrid>
 
-            {/* Pagination */}
-            <CollegesPagination
-              currentPage={currentPage}
-              totalPages={9}
-              onPageChange={setCurrentPage}
-            />
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <CollegesPagination
+                    currentPage={currentPage + 1}
+                    totalPages={totalPages}
+                    onPageChange={(page) => setCurrentPage(page - 1)}
+                  />
+                )}
+              </>
+            )}
           </div>
         </div>
       </div>

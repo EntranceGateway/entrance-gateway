@@ -16,6 +16,15 @@ export type {
 export { CourseLevel, CourseType, Affiliation } from './courses.types'
 
 export type {
+  College,
+  CollegesListResponse,
+  CollegeDetailResponse,
+  CollegesFilters,
+} from './colleges.types'
+
+export { CollegeType, Priority } from './colleges.types'
+
+export type {
   Syllabus,
   SyllabusDetailResponse,
 } from './syllabus.types'
@@ -54,3 +63,10 @@ export type {
   UpdateUserRequest,
   UpdateUserResponse,
 } from './user.types'
+
+export type {
+  OldQuestion,
+  OldQuestionsListResponse,
+  OldQuestionDetailResponse,
+  OldQuestionsFilters,
+} from './questions.types'

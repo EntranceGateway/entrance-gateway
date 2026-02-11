@@ -1,21 +1,35 @@
 import { cn } from '@/lib/utils/cn'
 import { QuestionsCard, QuestionsCardList } from './QuestionsCard'
-
-interface QuestionItem {
-  id: string
-  setName: string
-  subject: string
-  year: string
-  course: string
-  affiliation: string
-}
+import { Spinner } from '@/components/shared/Loading'
+import type { OldQuestion } from '@/types/questions.types'
 
 interface QuestionsTableProps {
-  data: QuestionItem[]
-  onView?: (id: string) => void
+  data: OldQuestion[]
+  onView?: (id: number) => void
+  isLoading?: boolean
 }
 
-export function QuestionsTable({ data, onView }: QuestionsTableProps) {
+export function QuestionsTable({ data, onView, isLoading }: QuestionsTableProps) {
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Spinner size="lg" />
+      </div>
+    )
+  }
+
+  if (data.length === 0) {
+    return (
+      <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-12 text-center">
+        <svg viewBox="0 0 24 24" fill="currentColor" className="size-12 text-gray-300 mx-auto mb-4">
+          <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+        </svg>
+        <h3 className="text-lg font-semibold text-gray-900 mb-2">No questions found</h3>
+        <p className="text-sm text-gray-500">Try adjusting your filters to see more results.</p>
+      </div>
+    )
+  }
+
   return (
     <>
       {/* Desktop Table View - Hidden on mobile/tablet */}
@@ -65,17 +79,18 @@ export function QuestionsTable({ data, onView }: QuestionsTableProps) {
                     <span
                       className={cn(
                         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-                        item.course === 'BCA' && 'bg-blue-100 text-blue-800',
-                        item.course === 'CSIT' && 'bg-indigo-100 text-indigo-800',
-                        item.course === 'BIT' && 'bg-purple-100 text-purple-800'
+                        item.courseName === 'BCA' && 'bg-blue-100 text-blue-800',
+                        item.courseName === 'CSIT' && 'bg-indigo-100 text-indigo-800',
+                        item.courseName === 'BIT' && 'bg-purple-100 text-purple-800',
+                        item.courseName !== 'BCA' && item.courseName !== 'CSIT' && item.courseName !== 'BIT' && 'bg-green-100 text-green-800'
                       )}
                     >
-                      {item.course}
+                      {item.courseName}
                     </span>
                   </td>
                   <td className="px-6 py-4">
                     <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
-                      {item.affiliation}
+                      {item.affiliation.replace(/_/g, ' ')}
                     </span>
                   </td>
                 </tr>
@@ -87,8 +102,7 @@ export function QuestionsTable({ data, onView }: QuestionsTableProps) {
         {/* Table Footer */}
         <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="text-sm text-gray-600">
-            Showing <span className="font-semibold text-gray-900">{data.length}</span> of{' '}
-            <span className="font-semibold text-gray-900">{data.length}</span> elements
+            Showing <span className="font-semibold text-gray-900">{data.length}</span> questions
           </div>
         </div>
       </div>

@@ -1,17 +1,9 @@
 import { cn } from '@/lib/utils/cn'
-
-interface QuestionItem {
-  id: string
-  setName: string
-  subject: string
-  year: string
-  course: string
-  affiliation: string
-}
+import type { OldQuestion } from '@/types/questions.types'
 
 interface QuestionsCardProps {
-  item: QuestionItem
-  onView?: (id: string) => void
+  item: OldQuestion
+  onView?: (id: number) => void
 }
 
 export function QuestionsCard({ item, onView }: QuestionsCardProps) {
@@ -45,12 +37,13 @@ export function QuestionsCard({ item, onView }: QuestionsCardProps) {
         <span
           className={cn(
             'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
-            item.course === 'BCA' && 'bg-blue-100 text-blue-800',
-            item.course === 'CSIT' && 'bg-indigo-100 text-indigo-800',
-            item.course === 'BIT' && 'bg-purple-100 text-purple-800'
+            item.courseName === 'BCA' && 'bg-blue-100 text-blue-800',
+            item.courseName === 'CSIT' && 'bg-indigo-100 text-indigo-800',
+            item.courseName === 'BIT' && 'bg-purple-100 text-purple-800',
+            item.courseName !== 'BCA' && item.courseName !== 'CSIT' && item.courseName !== 'BIT' && 'bg-green-100 text-green-800'
           )}
         >
-          {item.course}
+          {item.courseName}
         </span>
       </div>
 
@@ -60,7 +53,7 @@ export function QuestionsCard({ item, onView }: QuestionsCardProps) {
           <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 text-gray-400 shrink-0">
             <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
           </svg>
-          <span className="text-xs text-gray-600">{item.affiliation}</span>
+          <span className="text-xs text-gray-600">{item.affiliation.replace(/_/g, ' ')}</span>
         </div>
       </div>
 

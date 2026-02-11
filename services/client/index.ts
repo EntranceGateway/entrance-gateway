@@ -24,3 +24,5 @@ export {
 } from './auth.client'
 export { fetchBlogs, fetchBlogById } from './blogs.client'
 export { fetchUserProfile, updateUserProfile } from './user.client'
+export { fetchOldQuestions, fetchOldQuestionById } from './questions.client'
+export { fetchColleges, fetchCollegeById } from './colleges.client'

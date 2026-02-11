@@ -8,6 +8,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
+
     const url = `${API_BASE_URL}/api/v1/courses/${id}`
 
     const response = await fetch(url, {
@@ -19,8 +20,20 @@ export async function GET(
     })
 
     if (!response.ok) {
+      if (response.status === 404) {
+        return NextResponse.json(
+          { message: 'Course not found', data: null },
+          { status: 404 }
+        )
+      }
+      if (response.status === 401) {
+        return NextResponse.json(
+          { message: 'Unauthorized', data: null },
+          { status: 401 }
+        )
+      }
       return NextResponse.json(
-        { message: 'Course not found', data: null },
+        { message: 'Failed to fetch course', data: null },
         { status: response.status }
       )
     }
@@ -29,6 +42,15 @@ export async function GET(
     return NextResponse.json(data)
   } catch (error) {
     console.error('Error fetching course:', error)
+    
+    // Check if it's a network error
+    if (error instanceof TypeError && error.message.includes('fetch')) {
+      return NextResponse.json(
+        { message: 'Network error: Please check your internet connection', data: null },
+        { status: 503 }
+      )
+    }
+    
     return NextResponse.json(
       { message: 'Internal server error', data: null },
       { status: 500 }

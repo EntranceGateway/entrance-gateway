@@ -1,4 +1,5 @@
 export { QuestionsPageContent } from './QuestionsPageContent'
+export { QuestionsDetailContent } from './QuestionsDetailContent'
 export { QuestionsHeader } from './QuestionsHeader'
 export { QuestionsFilters } from './QuestionsFilters'
 export { QuestionsTable } from './QuestionsTable'

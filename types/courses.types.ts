@@ -26,7 +26,26 @@ export interface Course {
   courseType: CourseType
   affiliation: Affiliation
   criteria: string
-  collegeResponses: null | any[] // Can be typed later if needed
+  collegeResponses: CollegeResponse[] | null
+}
+
+export interface CollegeResponse {
+  collegeId: number
+  collegeName: string
+  location: string
+  affiliation: string
+  website: string
+  contact: string
+  email: string
+  description: string
+  establishedYear: string
+  collegeType: string
+  priority: string
+  logoName: string
+  latitude: number
+  longitude: number
+  collegePictureName: string[] | null
+  courses: null
 }
 
 export interface CoursesListResponse {
