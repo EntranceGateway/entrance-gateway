@@ -197,14 +197,20 @@ jobs:
                 "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
                  docker volume ls -q | grep entrance-gateway | xargs -r docker volume rm || true"
       
-      - name: Start new containers
+      - name: Deploy or restart container
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
                 "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
-                 docker-compose up -d"
+                 if docker ps -a --format '{{.Names}}' | grep -q '^entrance-gateway-app$'; then \
+                   echo 'Container exists, restarting...'; \
+                   docker-compose restart; \
+                 else \
+                   echo 'Container does not exist, creating new...'; \
+                   docker-compose up -d; \
+                 fi"
       
       - name: Wait for application startup
         run: |
