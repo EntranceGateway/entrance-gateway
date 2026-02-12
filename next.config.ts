@@ -9,9 +9,6 @@ const nextConfig: NextConfig = {
   experimental: {
     optimizePackageImports: ['react', 'react-dom', 'clsx', 'gsap'],
   },
-  
-  // Use SWC minification (faster, less memory)
-  swcMinify: true,
 };
 
 export default nextConfig;

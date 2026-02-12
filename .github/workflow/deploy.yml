@@ -1,0 +1,217 @@
+name: Build & Deploy Frontend to Docker Hub & VPS
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/frontend-app
+  VPS_USER: ${{ secrets.VPS_USER }}
+  VPS_HOST: ${{ secrets.VPS_HOST }}
+  VPS_PORT: ${{ secrets.VPS_SSH_PORT }}
+  DEPLOY_PATH: /opt/frontend-app
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    outputs:
+      image-tag: ${{ steps.image.outputs.tag }}
+      docker-image: ${{ steps.image.outputs.image }}
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to Docker Hub
+        if: github.event_name == 'push'
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Generate image tag
+        id: image
+        run: |
+          BRANCH=${GITHUB_REF#refs/heads/}
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          TAG="${BRANCH}-${SHORT_SHA}"
+          IMAGE="${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          
+          echo "tag=${TAG}" >> $GITHUB_OUTPUT
+          echo "image=${IMAGE}" >> $GITHUB_OUTPUT
+          echo "Full image: ${IMAGE}:${TAG}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          push: ${{ github.event_name == 'push' }}
+          tags: |
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ steps.image.outputs.tag }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.ref_name }}-latest
+          cache-from: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache
+          cache-to: type=registry,ref=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:buildcache,mode=max
+
+      - name: Display build summary
+        run: |
+          echo "Build completed successfully"
+          echo "Repository: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}"
+          echo "Tag: ${{ steps.image.outputs.tag }}"
+
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop')
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup SSH key
+        run: |
+          mkdir -p ~/.ssh
+          echo "${{ secrets.VPS_PRIVATE_KEY }}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p ${{ env.VPS_PORT }} ${{ env.VPS_HOST }} >> ~/.ssh/known_hosts 2>/dev/null || true
+
+      - name: Verify VPS connectivity
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.VPS_PORT }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} \
+            "echo 'VPS connection successful' && docker --version"
+
+      - name: Create deployment directory on VPS
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.VPS_PORT }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} << 'EOF'
+          mkdir -p ${{ env.DEPLOY_PATH }}/logs
+          echo "Deployment directories created"
+          EOF
+
+      - name: Copy docker-compose.prod.yml to VPS
+        run: |
+          scp -i ~/.ssh/deploy_key -P ${{ env.VPS_PORT }} \
+            docker-compose.prod.yml \
+            ${{ env.VPS_USER }}@${{ env.VPS_HOST }}:${{ env.DEPLOY_PATH }}/
+          echo "docker-compose.prod.yml copied successfully"
+
+      - name: Stop old containers and deploy
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.VPS_PORT }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} << 'EOF'
+          set -e
+          cd ${{ env.DEPLOY_PATH }}
+          
+          export IMAGE_TAG="${{ needs.build.outputs.image-tag }}"
+          export REGISTRY="${{ env.REGISTRY }}"
+          export IMAGE_NAME="${{ env.IMAGE_NAME }}"
+          
+          echo "=== Deployment Information ==="
+          echo "Image: ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}"
+          echo "Time: $(date)"
+          echo ""
+          
+          # Pull latest image from Docker Hub
+          echo "Pulling Docker image..."
+          docker pull ${REGISTRY}/${IMAGE_NAME}:${IMAGE_TAG}
+          
+          # Stop old containers
+          echo "Stopping old containers..."
+          docker-compose -f docker-compose.prod.yml down || true
+          
+          # Start containers with docker-compose
+          echo "Starting containers..."
+          docker-compose -f docker-compose.prod.yml up -d
+          
+          # Wait for services to stabilize
+          echo "Waiting for services to start..."
+          sleep 5
+          
+          # Show running containers
+          echo ""
+          echo "=== Running Containers ==="
+          docker-compose -f docker-compose.prod.yml ps
+          
+          echo ""
+          echo "=== Container Status ==="
+          docker ps --format "table {{.Names}}\t{{.Status}}"
+          EOF
+
+      - name: Health check
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.VPS_PORT }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} << 'EOF'
+          set -e
+          
+          echo "Running health checks..."
+          
+          # Check if application is responding
+          MAX_ATTEMPTS=5
+          ATTEMPT=0
+          
+          while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+            ATTEMPT=$((ATTEMPT + 1))
+            echo "Attempt $ATTEMPT/$MAX_ATTEMPTS: Checking application health..."
+            
+            if curl -f http://localhost/health 2>/dev/null; then
+              echo "✓ Health check passed"
+              exit 0
+            fi
+            
+            if [ $ATTEMPT -lt $MAX_ATTEMPTS ]; then
+              echo "✗ Health check failed, retrying in 5 seconds..."
+              sleep 5
+            fi
+          done
+          
+          echo "✗ Health check failed after $MAX_ATTEMPTS attempts"
+          echo ""
+          echo "Container logs:"
+          docker-compose -f ${{ env.DEPLOY_PATH }}/docker-compose.prod.yml logs --tail=50
+          exit 1
+          EOF
+
+      - name: Cleanup Docker resources
+        if: always()
+        run: |
+          ssh -i ~/.ssh/deploy_key -p ${{ env.VPS_PORT }} ${{ env.VPS_USER }}@${{ env.VPS_HOST }} << 'EOF'
+          set +e
+          
+          echo "=== Docker Cleanup ==="
+          
+          # Remove unused images older than 168 hours (7 days)
+          echo "Removing images older than 7 days..."
+          docker image prune -a --filter "until=168h" -f
+          
+          # Remove exited containers
+          echo "Removing stopped containers..."
+          docker container prune -f
+          
+          # Display final state
+          echo ""
+          echo "=== Current Docker State ==="
+          echo "Images (top 10):"
+          docker images --format "table {{.Repository}}:{{.Tag}}\t{{.Size}}" | head -11
+          
+          echo ""
+          echo "Disk usage:"
+          docker system df
+          EOF
+
+      - name: Deployment success notification
+        run: |
+          echo "✓ Deployment completed successfully"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo "Image: ${{ needs.build.outputs.docker-image }}:${{ needs.build.outputs.image-tag }}"
