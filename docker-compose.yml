@@ -6,9 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile
       cache_from:
-        - ${REGISTRY:-docker.io}/${IMAGE_NAME:-entrance-gateway}:cache
-    image: ${REGISTRY:-docker.io}/${IMAGE_NAME:-entrance-gateway}:${IMAGE_TAG:-latest}
-    container_name: entrance-gateway-app
+        - ${REGISTRY:-docker.io}/${IMAGE_NAME:-entrance-gateway-frontend}:cache
+    image: ${REGISTRY:-docker.io}/${IMAGE_NAME:-entrance-gateway-frontend}:${IMAGE_TAG:-latest}
+    container_name: entrance-gateway-frontend
     restart: unless-stopped
     ports:
       - "${APP_PORT:-3000}:3000"
