@@ -15,11 +15,40 @@ env:
 
 jobs:
   # ============================================
-  # Job 1: Build and Push Docker Image
+  # Job 1: Lint & Type Check
+  # ============================================
+  lint:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      
+      - name: Install pnpm
+        run: corepack enable && corepack prepare pnpm@9.15.0 --activate
+      
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      
+      - name: Run lint
+        run: pnpm run lint
+      
+      - name: Type check
+        run: pnpm run build
+
+  # ============================================
+  # Job 2: Build and Push Docker Image
   # ============================================
   build:
     name: Build & Push Docker Image
     runs-on: ubuntu-latest
+    needs: lint
     
     outputs:
       image-tag: ${{ steps.meta.outputs.tag }}
@@ -74,12 +103,14 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch }}-latest
+          build-args: |
+            NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
           cache-from: type=registry,ref=${{ steps.meta.outputs.image }}:cache
           cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:cache,mode=max
           platforms: linux/amd64
 
   # ============================================
-  # Job 2: Deploy to VPS (Zero Downtime)
+  # Job 3: Deploy to VPS (Zero Downtime)
   # ============================================
   deploy:
     name: Deploy to VPS
@@ -122,6 +153,21 @@ jobs:
                 docker-compose.yml \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}/
       
+      - name: Save previous image tag for rollback
+        run: |
+          sshpass -p "${{ secrets.VPS_PASSWORD }}" \
+            ssh -o StrictHostKeyChecking=no \
+                -p ${{ secrets.VPS_SSH_PORT }} \
+                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
+                "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
+                 if [ -f .env ]; then \
+                   cp .env .env.rollback; \
+                   echo '✅ Saved current .env as .env.rollback'; \
+                   grep IMAGE_TAG .env.rollback || true; \
+                 else \
+                   echo '⚠️ No existing .env found (first deployment)'; \
+                 fi"
+      
       - name: Create .env file
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
@@ -130,8 +176,8 @@ jobs:
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
                 "cat > ${{ secrets.VPS_DEPLOY_PATH }}/.env << 'EOF'
           NODE_ENV=production
-          PORT=3000
-          APP_PORT=3000
+          PORT=5000
+          APP_PORT=5000
           NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}
           REGISTRY=${{ env.REGISTRY }}
           IMAGE_NAME=${{ env.IMAGE_NAME }}
@@ -150,40 +196,53 @@ jobs:
                   exit 1
                 }
       
-      - name: Deploy with zero downtime
+      - name: Deploy new image
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
                 "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
-                 docker-compose up -d --no-deps --build entrance-gateway-frontend 2>&1 || {
-                   echo '❌ Deployment failed, rolling back...'
-                   docker-compose up -d --force-recreate entrance-gateway-frontend
-                   exit 1
-                 }"
+                 docker compose up -d --no-deps frontend 2>&1"
       
-      - name: Wait for container to be healthy
+      - name: Health check and rollback on failure
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "for i in {1..30}; do \
-                   if docker ps --filter 'name=entrance-gateway-frontend' --filter 'status=running' | grep -q entrance-gateway-frontend; then \
-                     echo '✅ Container is running'; \
+                'cd '"${{ secrets.VPS_DEPLOY_PATH }}"' && \
+                 HEALTHY=false && \
+                 for i in $(seq 1 30); do \
+                   if docker ps --filter "name=entrance-gateway-frontend" --filter "status=running" | grep -q entrance-gateway-frontend; then \
                      sleep 5; \
-                     if docker exec entrance-gateway-frontend wget -q --spider http://localhost:3000 2>/dev/null; then \
-                       echo '✅ Health check passed'; \
-                       exit 0; \
+                     if docker exec entrance-gateway-frontend node -e "require('"'"'http'"'"').get('"'"'http://localhost:5000/api/health'"'"', (r) => process.exit(r.statusCode === 200 ? 0 : 1)).on('"'"'error'"'"', () => process.exit(1))" 2>/dev/null; then \
+                       echo "✅ Health check passed"; \
+                       HEALTHY=true; \
+                       break; \
                      fi; \
                    fi; \
-                   echo 'Waiting for container... (\$i/30)'; \
+                   echo "Waiting for container... ($i/30)"; \
                    sleep 2; \
-                 done; \
-                 echo '❌ Container failed to start properly'; \
-                 docker logs entrance-gateway-frontend --tail=100; \
-                 exit 1"
+                 done && \
+                 if [ "$HEALTHY" = "false" ]; then \
+                   echo "❌ Health check failed — initiating rollback"; \
+                   docker logs entrance-gateway-frontend --tail=50; \
+                   if [ -f .env.rollback ]; then \
+                     echo "🔄 Rolling back to previous image..."; \
+                     cp .env.rollback .env; \
+                     docker compose up -d --no-deps --force-recreate frontend 2>&1; \
+                     sleep 10; \
+                     if docker ps --filter "name=entrance-gateway-frontend" --filter "status=running" | grep -q entrance-gateway-frontend; then \
+                       echo "✅ Rollback successful"; \
+                     else \
+                       echo "❌ Rollback also failed"; \
+                     fi; \
+                   else \
+                     echo "⚠️ No rollback .env available (was this the first deployment?)"; \
+                   fi; \
+                   exit 1; \
+                 fi'
       
       - name: Verify deployment
         run: |

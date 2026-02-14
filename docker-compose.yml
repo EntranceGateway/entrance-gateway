@@ -1,29 +1,22 @@
-version: '3.9'
-
 services:
-  app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      cache_from:
-        - ${REGISTRY:-docker.io}/${IMAGE_NAME:-entrance-gateway-frontend}:cache
+  frontend:
     image: ${REGISTRY:-docker.io}/${IMAGE_NAME:-entrance-gateway-frontend}:${IMAGE_TAG:-latest}
     container_name: entrance-gateway-frontend
-    restart: unless-stopped
+    restart: always
     ports:
-      - "${APP_PORT:-3000}:3000"
+      - "${APP_PORT:-5000}:5000"
     environment:
       - NODE_ENV=production
-      - PORT=3000
+      - PORT=5000
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL}
     networks:
-      - app-network
+      - frontend-network
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)})"]
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 30s
     deploy:
       resources:
         limits:
@@ -37,7 +30,10 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    labels:
+      - "com.entrance-gateway.app=frontend"
+      - "com.entrance-gateway.version=${IMAGE_TAG}"
 
 networks:
-  app-network:
+  frontend-network:
     driver: bridge
