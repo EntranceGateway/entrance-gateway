@@ -113,7 +113,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "mkdir -p ${{ secrets.VPS_DEPLOY_PATH }}"
+                "mkdir -p /opt/entrance-gateway-frontend"
       
       - name: Copy docker-compose.yml
         run: |
@@ -121,7 +121,7 @@ jobs:
             scp -o StrictHostKeyChecking=no \
                 -P ${{ secrets.VPS_SSH_PORT }} \
                 docker-compose.yml \
-                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}/
+                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:/opt/entrance-gateway-frontend/
       
       - name: Save previous image tag for rollback
         run: |
@@ -129,7 +129,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
+                "cd /opt/entrance-gateway-frontend && \
                  if [ -f .env ]; then \
                    cp .env .env.rollback; \
                    echo '✅ Saved current .env as .env.rollback'; \
@@ -144,7 +144,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "cat > ${{ secrets.VPS_DEPLOY_PATH }}/.env << 'EOF'
+                "cat > /opt/entrance-gateway-frontend/.env << 'EOF'
           NODE_ENV=production
           PORT=5000
           APP_PORT=5000
@@ -160,7 +160,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
+                "cd /opt/entrance-gateway-frontend && \
                  docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ needs.build.outputs.image-tag }}" || {
                   echo "❌ Failed to pull Docker image"
                   exit 1
@@ -172,7 +172,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
+                "cd /opt/entrance-gateway-frontend && \
                  docker compose up -d --no-deps frontend 2>&1"
       
       - name: Health check and rollback on failure
@@ -181,7 +181,7 @@ jobs:
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                'cd '"${{ secrets.VPS_DEPLOY_PATH }}"' && \
+                'cd '"/opt/entrance-gateway-frontend"' && \
                  HEALTHY=false && \
                  for i in $(seq 1 30); do \
                    if docker ps --filter "name=entrance-gateway-frontend" --filter "status=running" | grep -q entrance-gateway-frontend; then \
