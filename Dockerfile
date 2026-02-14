@@ -9,7 +9,7 @@ FROM node:20-alpine AS deps
 RUN apk add --no-cache libc6-compat
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
 
 WORKDIR /app
 
@@ -25,7 +25,7 @@ RUN pnpm install --frozen-lockfile
 FROM node:20-alpine AS builder
 
 # Install pnpm
-RUN corepack enable && corepack prepare pnpm@9.15.0 --activate
+RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
 
 WORKDIR /app
 
