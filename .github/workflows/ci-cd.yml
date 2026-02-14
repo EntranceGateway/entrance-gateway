@@ -23,7 +23,7 @@ jobs:
     
     outputs:
       image-tag: ${{ steps.meta.outputs.tag }}
-      image-full: ${{ steps.meta.outputs.image-full }}
+      image-full: ${{ steps.meta.outputs.image }}
     
     steps:
       - name: Checkout code
@@ -31,10 +31,6 @@ jobs:
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
-        with:
-          driver-opts: |
-            image=moby/buildkit:latest
-            network=host
       
       - name: Log in to Docker Hub
         if: github.event_name == 'push'
@@ -50,7 +46,6 @@ jobs:
           SHORT_SHA=$(echo $GITHUB_SHA | cut -c1-7)
           TIMESTAMP=$(date +%Y%m%d-%H%M%S)
           
-          # Create semantic tag
           if [ "$BRANCH" = "main" ]; then
             TAG="prod-${SHORT_SHA}-${TIMESTAMP}"
           elif [ "$BRANCH" = "develop" ]; then
@@ -63,9 +58,7 @@ jobs:
           
           echo "tag=${TAG}" >> $GITHUB_OUTPUT
           echo "image=${IMAGE}" >> $GITHUB_OUTPUT
-          echo "image-full=${IMAGE}" >> $GITHUB_OUTPUT
           echo "branch=${BRANCH}" >> $GITHUB_OUTPUT
-          echo "short-sha=${SHORT_SHA}" >> $GITHUB_OUTPUT
           
           echo "### Build Information" >> $GITHUB_STEP_SUMMARY
           echo "- **Image**: \`${IMAGE}:${TAG}\`" >> $GITHUB_STEP_SUMMARY
@@ -81,21 +74,12 @@ jobs:
           tags: |
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}
             ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch }}-latest
-          cache-from: |
-            type=registry,ref=${{ steps.meta.outputs.image }}:cache
-            type=registry,ref=${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.branch }}-latest
+          cache-from: type=registry,ref=${{ steps.meta.outputs.image }}:cache
           cache-to: type=registry,ref=${{ steps.meta.outputs.image }}:cache,mode=max
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
           platforms: linux/amd64
-      
-      - name: Build summary
-        run: |
-          echo "✅ Docker image built and pushed successfully"
-          echo "📦 Image: ${{ steps.meta.outputs.image }}:${{ steps.meta.outputs.tag }}"
 
   # ============================================
-  # Job 2: Deploy to VPS
+  # Job 2: Deploy to VPS (Zero Downtime)
   # ============================================
   deploy:
     name: Deploy to VPS
@@ -108,30 +92,19 @@ jobs:
         uses: actions/checkout@v4
       
       - name: Install sshpass
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y sshpass
+        run: sudo apt-get update && sudo apt-get install -y sshpass
       
       - name: Test VPS connection
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
+                -o ConnectTimeout=10 \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "echo '✅ VPS connection successful' && docker --version"
-      
-      - name: Ensure Docker Compose is installed on VPS
-        run: |
-          sshpass -p "${{ secrets.VPS_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-                -p ${{ secrets.VPS_SSH_PORT }} \
-                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "if ! command -v docker-compose &> /dev/null; then \
-                   echo 'Installing docker-compose...'; \
-                   sudo curl -L \"https://github.com/docker/compose/releases/latest/download/docker-compose-\$(uname -s)-\$(uname -m)\" -o /usr/local/bin/docker-compose && \
-                   sudo chmod +x /usr/local/bin/docker-compose; \
-                 fi && \
-                 docker-compose --version"
+                "echo '✅ VPS connection successful' && docker --version" || {
+                  echo "❌ Failed to connect to VPS"
+                  exit 1
+                }
       
       - name: Create deployment directory
         run: |
@@ -149,7 +122,7 @@ jobs:
                 docker-compose.yml \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }}:${{ secrets.VPS_DEPLOY_PATH }}/
       
-      - name: Create .env file on VPS
+      - name: Create .env file
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
@@ -165,107 +138,82 @@ jobs:
           IMAGE_TAG=${{ needs.build.outputs.image-tag }}
           EOF"
       
-      - name: Pull Docker image
-        env:
-          IMAGE_NAME: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
-        run: |
-          echo "Pulling image: ${IMAGE_NAME}:${IMAGE_TAG}"
-          
-          sshpass -p "${{ secrets.VPS_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-                -p ${{ secrets.VPS_SSH_PORT }} \
-                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
-                 docker pull ${IMAGE_NAME}:${IMAGE_TAG}"
-      
-      - name: Stop and remove old containers
+      - name: Pull new Docker image
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
                 "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
-                 echo 'Stopping only entrance-gateway-frontend container...' && \
-                 docker-compose down --remove-orphans || true && \
-                 docker stop entrance-gateway-frontend 2>/dev/null || true && \
-                 docker rm entrance-gateway-frontend 2>/dev/null || true"
+                 docker pull ${{ needs.build.outputs.image-full }}:${{ needs.build.outputs.image-tag }}" || {
+                  echo "❌ Failed to pull Docker image"
+                  exit 1
+                }
       
-      - name: Remove old volumes for frontend only
-        run: |
-          sshpass -p "${{ secrets.VPS_PASSWORD }}" \
-            ssh -o StrictHostKeyChecking=no \
-                -p ${{ secrets.VPS_SSH_PORT }} \
-                ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "echo 'Removing only entrance-gateway-frontend volumes...' && \
-                 docker volume ls -q | grep -E '^entrance-gateway-frontend|entrance-gateway-frontend_' | xargs -r docker volume rm 2>/dev/null || true && \
-                 echo 'Frontend volumes cleaned up'"
-      
-      - name: Deploy or restart container
+      - name: Deploy with zero downtime
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
                 "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
-                 echo 'Deploying entrance-gateway-frontend container...' && \
-                 if docker ps -a --format '{{.Names}}' | grep -q '^entrance-gateway-frontend$'; then \
-                   echo 'Container exists, restarting...'; \
-                   docker-compose restart; \
-                 else \
-                   echo 'Container does not exist, creating new...'; \
-                   docker-compose up -d; \
-                 fi && \
-                 echo 'Deployment completed'"$'; then \
-                   echo 'Container exists, restarting...'; \
-                   docker-compose restart; \
-                 else \
-                   echo 'Container does not exist, creating new...'; \
-                   docker-compose up -d; \
-                 fi"
+                 docker-compose up -d --no-deps --build entrance-gateway-frontend 2>&1 || {
+                   echo '❌ Deployment failed, rolling back...'
+                   docker-compose up -d --force-recreate entrance-gateway-frontend
+                   exit 1
+                 }"
       
-      - name: Wait for application startup
+      - name: Wait for container to be healthy
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "echo 'Waiting for application to start...' && sleep 10"
+                "for i in {1..30}; do \
+                   if docker ps --filter 'name=entrance-gateway-frontend' --filter 'status=running' | grep -q entrance-gateway-frontend; then \
+                     echo '✅ Container is running'; \
+                     sleep 5; \
+                     if docker exec entrance-gateway-frontend wget -q --spider http://localhost:3000 2>/dev/null; then \
+                       echo '✅ Health check passed'; \
+                       exit 0; \
+                     fi; \
+                   fi; \
+                   echo 'Waiting for container... (\$i/30)'; \
+                   sleep 2; \
+                 done; \
+                 echo '❌ Container failed to start properly'; \
+                 docker logs entrance-gateway-frontend --tail=100; \
+                 exit 1"
       
-      - name: Health check
+      - name: Verify deployment
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "cd ${{ secrets.VPS_DEPLOY_PATH }} && \
-                 echo '=== Frontend Container Status ===' && \
-                 docker ps --filter 'name=entrance-gateway-frontend' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}' && \
-                 echo '' && \
-                 echo '=== Frontend Container Logs (last 50 lines) ===' && \
-                 docker logs entrance-gateway-frontend --tail=50"
+                "docker ps --filter 'name=entrance-gateway-frontend' --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'"
       
-      - name: Cleanup old frontend Docker images only
+      - name: Cleanup old images
+        if: success()
         run: |
           sshpass -p "${{ secrets.VPS_PASSWORD }}" \
             ssh -o StrictHostKeyChecking=no \
                 -p ${{ secrets.VPS_SSH_PORT }} \
                 ${{ secrets.VPS_USER }}@${{ secrets.VPS_HOST }} \
-                "echo 'Cleaning up old entrance-gateway-frontend images...' && \
-                 docker images --format '{{.Repository}}:{{.Tag}} {{.ID}} {{.CreatedAt}}' | \
-                 grep 'entrance-gateway-frontend' | \
-                 awk '{print \$2}' | \
+                "docker images '${{ env.IMAGE_NAME }}' --format '{{.ID}} {{.CreatedAt}}' | \
+                 sort -k2 -r | \
                  tail -n +4 | \
-                 xargs -r docker rmi -f 2>/dev/null || true && \
-                 echo 'Keeping latest 3 frontend images, removed older ones'"
+                 awk '{print \$1}' | \
+                 xargs -r docker rmi 2>/dev/null || true"
       
       - name: Deployment summary
-        env:
-          IMAGE_NAME: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
-          IMAGE_TAG: ${{ needs.build.outputs.image-tag }}
+        if: always()
         run: |
-          echo "### Deployment Summary" >> $GITHUB_STEP_SUMMARY
-          echo "✅ Deployment completed successfully" >> $GITHUB_STEP_SUMMARY
-          echo "- **Image**: \`${IMAGE_NAME}:${IMAGE_TAG}\`" >> $GITHUB_STEP_SUMMARY
+          if [ "${{ job.status }}" = "success" ]; then
+            echo "### ✅ Deployment Successful" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ❌ Deployment Failed" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "- **Image**: \`${{ needs.build.outputs.image-full }}:${{ needs.build.outputs.image-tag }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **VPS**: \`${{ secrets.VPS_HOST }}\`" >> $GITHUB_STEP_SUMMARY
           echo "- **Time**: \`$(date -u '+%Y-%m-%d %H:%M:%S UTC')\`" >> $GITHUB_STEP_SUMMARY
