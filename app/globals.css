@@ -99,6 +99,12 @@
   .text-error {
     color: var(--color-error);
   }
+  .text-semantic-error {
+    color: var(--color-error);
+  }
+  .text-semantic-warning {
+    color: var(--color-warning);
+  }
 
   /* Semantic Colors - Background */
   .bg-success {
@@ -109,6 +115,12 @@
   }
   .bg-error {
     background-color: var(--color-error);
+  }
+  .bg-semantic-error {
+    background-color: var(--color-error);
+  }
+  .bg-semantic-warning {
+    background-color: var(--color-warning);
   }
 
   /* Border Colors */
@@ -129,6 +141,12 @@
   }
   .border-error {
     border-color: var(--color-error);
+  }
+  .border-semantic-error {
+    border-color: var(--color-error);
+  }
+  .border-semantic-warning {
+    border-color: var(--color-warning);
   }
 
   /* Surface Colors */

@@ -20,7 +20,7 @@ export function SignInForm() {
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
 
-  // Show toast message if redirected from protected route
+  // Show toast message if redirected from protected route (only once on mount)
   useEffect(() => {
     const reason = searchParams.get('reason')
     const redirect = searchParams.get('redirect')
@@ -32,19 +32,17 @@ export function SignInForm() {
         info('Please sign in to access this page')
       }
     }
-  }, [searchParams, info])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Run only once on mount
 
-  // Validation functions
+  // Validation functions (minimal - just check if fields are filled)
   const validateEmail = (value: string): string => {
     if (!value.trim()) return 'Email is required'
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-    if (!emailRegex.test(value)) return 'Email should be valid'
     return ''
   }
 
   const validatePassword = (value: string): string => {
     if (!value) return 'Password is required'
-    if (value.length < 8) return 'Password must be at least 8 characters long'
     return ''
   }
 
@@ -52,7 +50,7 @@ export function SignInForm() {
     e.preventDefault()
     setFieldErrors({})
 
-    // Validate all fields
+    // Validate all fields (only check if empty)
     const errors: Record<string, string> = {}
     
     const emailError = validateEmail(formData.email)
@@ -63,7 +61,7 @@ export function SignInForm() {
 
     if (Object.keys(errors).length > 0) {
       setFieldErrors(errors)
-      showError('Please fix the validation errors')
+      showError('Please enter your email and password')
       return
     }
 
@@ -72,19 +70,24 @@ export function SignInForm() {
     try {
       await login(formData.email, formData.password)
       
-      success('Login successful! Redirecting...')
+      // Show success toast
+      success('Login successful!')
       
       // Check for redirect URL from query params
       const redirectUrl = searchParams.get('redirect')
       
-      if (redirectUrl) {
-        router.push(redirectUrl)
-      } else {
-        router.push('/')
-      }
+      // Delay redirect slightly to allow toast to be visible
+      setTimeout(() => {
+        if (redirectUrl) {
+          router.push(redirectUrl)
+        } else {
+          router.push('/')
+        }
+      }, 800)
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Login failed. Please check your credentials.')
-    } finally {
+      // Error handling with specific messages
+      const errorMessage = err instanceof Error ? err.message : 'Login failed. Please check your credentials.'
+      showError(errorMessage)
       setIsSubmitting(false)
     }
   }
@@ -106,10 +109,6 @@ export function SignInForm() {
               if (fieldErrors.email) {
                 setFieldErrors({ ...fieldErrors, email: '' })
               }
-            }}
-            onBlur={() => {
-              const error = validateEmail(formData.email)
-              if (error) setFieldErrors({ ...fieldErrors, email: error })
             }}
             required
             autoComplete="email"
@@ -157,10 +156,6 @@ export function SignInForm() {
                 if (fieldErrors.password) {
                   setFieldErrors({ ...fieldErrors, password: '' })
                 }
-              }}
-              onBlur={() => {
-                const error = validatePassword(formData.password)
-                if (error) setFieldErrors({ ...fieldErrors, password: error })
               }}
               placeholder="••••••••"
               className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue sm:text-sm transition-all"

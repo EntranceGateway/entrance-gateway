@@ -42,7 +42,25 @@ export async function login(email: string, password: string) {
   const data = await response.json()
   
   if (!response.ok) {
-    throw new Error(data.error || 'Login failed')
+    // Handle specific status codes
+    switch (response.status) {
+      case 400:
+        throw new Error(data.error || 'Invalid email or password format')
+      case 401:
+        throw new Error(data.error || 'Invalid email or password')
+      case 403:
+        throw new Error(data.error || 'Account is disabled. Please contact support')
+      case 404:
+        throw new Error(data.error || 'Account not found')
+      case 429:
+        throw new Error(data.error || 'Too many login attempts. Please try again later')
+      case 500:
+      case 502:
+      case 503:
+        throw new Error(data.error || 'Server error. Please try again later')
+      default:
+        throw new Error(data.error || 'Login failed. Please try again')
+    }
   }
   
   return data
@@ -72,7 +90,23 @@ export async function register(userData: {
   const data = await response.json()
   
   if (!response.ok) {
-    throw new Error(data.error || 'Registration failed')
+    // Handle specific status codes
+    switch (response.status) {
+      case 400:
+        throw new Error(data.error || 'Invalid registration data. Please check all fields')
+      case 409:
+        throw new Error(data.error || 'Email already registered. Please sign in instead')
+      case 422:
+        throw new Error(data.error || 'Validation failed. Please check your input')
+      case 429:
+        throw new Error(data.error || 'Too many registration attempts. Please try again later')
+      case 500:
+      case 502:
+      case 503:
+        throw new Error(data.error || 'Server error. Please try again later')
+      default:
+        throw new Error(data.error || 'Registration failed. Please try again')
+    }
   }
   
   return data
@@ -93,7 +127,25 @@ export async function verifyOtp(email: string, otp: string) {
   const data = await response.json()
   
   if (!response.ok) {
-    throw new Error(data.error || 'OTP verification failed')
+    // Handle specific status codes
+    switch (response.status) {
+      case 400:
+        throw new Error(data.error || 'Invalid OTP format')
+      case 401:
+        throw new Error(data.error || 'Invalid or incorrect OTP')
+      case 404:
+        throw new Error(data.error || 'Email not found or OTP expired')
+      case 410:
+        throw new Error(data.error || 'OTP has expired. Please request a new code')
+      case 429:
+        throw new Error(data.error || 'Too many verification attempts. Please try again later')
+      case 500:
+      case 502:
+      case 503:
+        throw new Error(data.error || 'Server error. Please try again later')
+      default:
+        throw new Error(data.error || 'OTP verification failed. Please try again')
+    }
   }
   
   return data
@@ -114,7 +166,21 @@ export async function resendOtp(email: string) {
   const data = await response.json()
   
   if (!response.ok) {
-    throw new Error(data.error || 'Resend OTP failed')
+    // Handle specific status codes
+    switch (response.status) {
+      case 400:
+        throw new Error(data.error || 'Invalid email address')
+      case 404:
+        throw new Error(data.error || 'Email not found')
+      case 429:
+        throw new Error(data.error || 'Too many requests. Please wait before requesting another code')
+      case 500:
+      case 502:
+      case 503:
+        throw new Error(data.error || 'Server error. Please try again later')
+      default:
+        throw new Error(data.error || 'Failed to resend OTP. Please try again')
+    }
   }
   
   return data

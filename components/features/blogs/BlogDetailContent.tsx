@@ -32,7 +32,6 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
         setBlog(response.data)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load blog')
-        console.error('Error fetching blog:', err)
       } finally {
         setIsLoading(false)
       }
@@ -40,26 +39,6 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
 
     loadBlog()
   }, [blogId, initialData])
-
-  const handleShare = (platform: string) => {
-    if (!blog) return
-
-    const url = window.location.href
-    const text = blog.title
-
-    switch (platform) {
-      case 'facebook':
-        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, '_blank')
-        break
-      case 'twitter':
-        window.open(`https://twitter.com/intent/tweet?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`, '_blank')
-        break
-      case 'copy':
-        navigator.clipboard.writeText(url)
-        alert('Link copied to clipboard!')
-        break
-    }
-  }
 
   // Loading State
   if (isLoading) {
@@ -104,26 +83,19 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
       day: 'numeric',
     }),
     readTime: `${Math.ceil(blog.content.split(' ').length / 200)} min read`,
-    image: `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`,
+    image: blog.imageName 
+      ? `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`
+      : '/placeholder-blog.jpg',
     excerpt: blog.content.substring(0, 200) + '...',
-    content: blog.content.replace(/\r\n/g, '</p><p>').replace(/\n/g, '</p><p>'),
+    content: blog.content,
   }
 
   return (
     <main className="flex-grow">
-      {/* Breadcrumb */}
-      <BlogBreadcrumb
-        items={[
-          { label: 'Home', href: '/' },
-          { label: 'Articles', href: '/blogs' },
-          { label: blog.title },
-        ]}
-      />
-
       {/* Main Content */}
       <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         {/* Article - Full Width */}
-        <BlogArticle blog={formattedBlog} onShare={handleShare} />
+        <BlogArticle blog={formattedBlog} />
       </div>
     </main>
   )

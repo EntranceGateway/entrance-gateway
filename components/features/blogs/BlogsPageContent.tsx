@@ -36,7 +36,6 @@ export function BlogsPageContent({ initialData }: BlogsPageContentProps) {
         setTotalPages(response.data.totalPages)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load blogs')
-        console.error('Error fetching blogs:', err)
       } finally {
         setIsLoading(false)
       }
@@ -89,7 +88,9 @@ export function BlogsPageContent({ initialData }: BlogsPageContentProps) {
                     id: blog.blogId.toString(),
                     title: blog.title,
                     description: blog.content.substring(0, 200) + '...',
-                    image: `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`,
+                    image: blog.imageName 
+                      ? `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`
+                      : '',
                     category: 'Article',
                     date: new Date(blog.createdDate).toLocaleDateString('en-US', {
                       year: 'numeric',
