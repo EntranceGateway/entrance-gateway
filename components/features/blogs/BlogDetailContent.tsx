@@ -17,6 +17,12 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
+  // Console log initial data
+  console.log('=== Blog Detail Page ===')
+  console.log('Blog ID:', blogId)
+  console.log('Initial Data:', initialData)
+  console.log('Blog State:', blog)
+
   // Fetch blog data (skip if we have SSR data)
   useEffect(() => {
     if (initialData) {
@@ -29,8 +35,10 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
 
       try {
         const response = await fetchBlogById(blogId)
+        console.log('Fetched Blog Response:', response)
         setBlog(response.data)
       } catch (err) {
+        console.error('Error fetching blog:', err)
         setError(err instanceof Error ? err.message : 'Failed to load blog')
       } finally {
         setIsLoading(false)
@@ -84,11 +92,18 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
     }),
     readTime: `${Math.ceil(blog.content.split(' ').length / 200)} min read`,
     image: blog.imageName 
-      ? `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`
+      ? (blog.imageName.startsWith('http') 
+          ? blog.imageName 
+          : `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`)
       : '/placeholder-blog.jpg',
-    excerpt: blog.content.substring(0, 200) + '...',
+    excerpt: '', // Remove excerpt to avoid showing raw markdown
     content: blog.content,
   }
+
+  console.log('Formatted Blog:', formattedBlog)
+  console.log('Blog Image Name (raw):', blog.imageName)
+  console.log('Blog Image URL (final):', formattedBlog.image)
+  console.log('Blog Content Length:', blog.content.length)
 
   return (
     <main className="flex-grow">

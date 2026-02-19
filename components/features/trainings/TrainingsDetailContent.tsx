@@ -338,11 +338,31 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
           <div className="lg:col-span-2 space-y-6 sm:space-y-8">
             {/* About Section */}
             <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sm:p-6 md:p-8">
-              <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-3 sm:mb-4 font-heading">
-                About this Training
-              </h2>
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6 text-brand-blue shrink-0">
+                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
+                </svg>
+                <h2 className="text-xl sm:text-2xl font-bold text-brand-navy font-heading">
+                  About this Training
+                </h2>
+              </div>
               <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
                 {training.description}
+              </p>
+            </section>
+
+            {/* Learning Highlights */}
+            <section className="bg-gradient-to-br from-brand-blue/5 to-brand-gold/5 border border-brand-blue/10 rounded-xl p-5 sm:p-6 md:p-8">
+              <div className="flex items-center gap-3 mb-3 sm:mb-4">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6 text-brand-blue shrink-0">
+                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+                </svg>
+                <h2 className="text-xl sm:text-2xl font-bold text-brand-navy font-heading">
+                  Learning Highlights
+                </h2>
+              </div>
+              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
+                Engage in interactive workshops, real-world case studies, and hands-on simulation sessions designed to enhance your practical skills and knowledge.
               </p>
             </section>
 
@@ -364,21 +384,6 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
                 </div>
               </section>
             )}
-
-            {/* Learning Highlights */}
-            <section className="bg-gradient-to-br from-brand-blue/5 to-brand-gold/5 border border-brand-blue/10 rounded-xl p-5 sm:p-6 md:p-8">
-              <div className="flex items-center gap-3 mb-3 sm:mb-4">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6 text-brand-blue shrink-0">
-                  <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
-                </svg>
-                <h2 className="text-xl sm:text-2xl font-bold text-brand-navy font-heading">
-                  Learning Highlights
-                </h2>
-              </div>
-              <p className="text-sm sm:text-base text-gray-700 leading-relaxed">
-                Engage in interactive workshops, real-world case studies, and hands-on simulation sessions designed to enhance your practical skills and knowledge.
-              </p>
-            </section>
 
             {/* Download Materials Button */}
             {training.materialsLink && (
@@ -422,8 +427,8 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
             )}
           </div>
 
-          {/* Right Column - Sidebar */}
-          <div>
+          {/* Right Column - Sidebar (Sticky) */}
+          <div className="lg:sticky lg:top-6 lg:self-start">
             <TrainingsDetailSidebar 
               training={training} 
               enrollmentStatus={enrollmentStatus}

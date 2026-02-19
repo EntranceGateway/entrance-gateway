@@ -48,26 +48,21 @@ export function BlogArticle({ blog }: BlogArticleProps) {
       {/* Featured Image */}
       {blog.image && (
         <div className="mb-8 sm:mb-10 rounded-xl sm:rounded-2xl overflow-hidden shadow-sm border border-gray-100">
-          <Image
-            src={blog.image}
-            alt={blog.title}
-            width={1200}
-            height={600}
-            className="w-full h-auto object-cover max-h-[300px] sm:max-h-[400px] md:max-h-[500px]"
-            priority
-          />
+          <div className="relative w-full" style={{ paddingBottom: '50%' }}>
+            <Image
+              src={blog.image}
+              alt={blog.title}
+              fill
+              className="object-cover"
+              priority
+              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 80vw, 1200px"
+            />
+          </div>
         </div>
       )}
 
       {/* Content */}
       <div className="max-w-none">
-        {/* Excerpt */}
-        {blog.excerpt && (
-          <p className="text-base sm:text-lg md:text-xl text-gray-600 leading-relaxed font-light mb-6 sm:mb-8 border-l-4 border-brand-gold pl-3 sm:pl-4 italic">
-            {blog.excerpt}
-          </p>
-        )}
-
         {/* Main Content - Markdown */}
         <MarkdownRenderer content={blog.content} />
       </div>

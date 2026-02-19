@@ -4,6 +4,7 @@ export interface Blog {
   blogId: number
   title: string
   content: string
+  excerpt?: string | null
   imageName: string
   contactEmail: string | null
   contactPhone: string | null

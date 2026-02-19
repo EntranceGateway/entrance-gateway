@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { CenteredSpinner } from '@/components/shared/Loading'
 import { SimplePDFViewer } from '@/components/shared/SimplePDFViewer'
-import { useResourceFile } from '@/hooks/api/useResourceFile'
 import { fetchOldQuestionById } from '@/services/client/questions.client'
 import { useToast } from '@/components/shared/Toast'
 import type { OldQuestion, OldQuestionDetailResponse } from '@/types/questions.types'
@@ -46,14 +45,8 @@ export function QuestionsDetailContent({ questionId, initialData }: QuestionsDet
     loadQuestion()
   }, [questionId, initialData, showToast])
 
-  // Fetch PDF file using resource hook (pdfFilePath contains the file name)
-  const {
-    url: pdfUrl,
-    isLoading: isPdfLoading,
-    error: pdfError,
-  } = useResourceFile(question?.pdfFilePath || null, {
-    enabled: !!question?.pdfFilePath,
-  })
+  // pdfFilePath now contains the full signed URL
+  console.log('PDF URL (from pdfFilePath):', question?.pdfFilePath)
 
   // Loading State
   if (isLoading) {
@@ -118,11 +111,11 @@ export function QuestionsDetailContent({ questionId, initialData }: QuestionsDet
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* PDF Viewer - Full width on mobile, 8 cols on desktop */}
           <div className="w-full lg:col-span-8 order-1 flex flex-col gap-6">
-            {/* PDF Viewer with Resource Hook */}
+            {/* PDF Viewer - pdfFilePath now contains the full signed URL */}
             <SimplePDFViewer
-              pdfUrl={pdfUrl}
-              isLoading={isPdfLoading}
-              error={pdfError?.message || null}
+              pdfUrl={question.pdfFilePath}
+              isLoading={false}
+              error={null}
             />
           </div>
 

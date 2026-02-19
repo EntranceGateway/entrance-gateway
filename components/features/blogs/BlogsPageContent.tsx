@@ -12,6 +12,47 @@ interface BlogsPageContentProps {
   initialData?: BlogsListResponse | null
 }
 
+// Helper function to strip markdown syntax and get plain text
+const stripMarkdown = (markdown: string): string => {
+  let text = markdown
+  
+  // Remove code blocks
+  text = text.replace(/```[\s\S]*?```/g, '')
+  
+  // Remove inline code
+  text = text.replace(/`([^`]+)`/g, '$1')
+  
+  // Remove headers
+  text = text.replace(/^#{1,6}\s+/gm, '')
+  
+  // Remove bold/italic
+  text = text.replace(/(\*\*|__)(.*?)\1/g, '$2')
+  text = text.replace(/(\*|_)(.*?)\1/g, '$2')
+  
+  // Remove links but keep text
+  text = text.replace(/\[([^\]]+)\]\([^)]+\)/g, '$1')
+  
+  // Remove images
+  text = text.replace(/!\[([^\]]*)\]\([^)]+\)/g, '')
+  
+  // Remove blockquotes
+  text = text.replace(/^>\s+/gm, '')
+  
+  // Remove horizontal rules
+  text = text.replace(/^(---|\*\*\*)$/gm, '')
+  
+  // Remove list markers
+  text = text.replace(/^[\*\-\+]\s+/gm, '')
+  text = text.replace(/^\d+\.\s+/gm, '')
+  
+  // Clean up extra whitespace
+  text = text.replace(/\n\n+/g, ' ')
+  text = text.replace(/\n/g, ' ')
+  text = text.trim()
+  
+  return text
+}
+
 export function BlogsPageContent({ initialData }: BlogsPageContentProps) {
   const [blogs, setBlogs] = useState<Blog[]>(initialData?.data.content || [])
   const [currentPage, setCurrentPage] = useState(initialData?.data.pageNumber || 0)
@@ -87,9 +128,11 @@ export function BlogsPageContent({ initialData }: BlogsPageContentProps) {
                   article={{
                     id: blog.blogId.toString(),
                     title: blog.title,
-                    description: blog.content.substring(0, 200) + '...',
+                    description: blog.excerpt || stripMarkdown(blog.content).substring(0, 150) + '...',
                     image: blog.imageName 
-                      ? `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`
+                      ? (blog.imageName.startsWith('http') 
+                          ? blog.imageName 
+                          : `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`)
                       : '',
                     category: 'Article',
                     date: new Date(blog.createdDate).toLocaleDateString('en-US', {

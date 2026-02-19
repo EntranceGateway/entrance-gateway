@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { NotesDetailSidebar } from './NotesDetailSidebar'
 import { CenteredSpinner } from '@/components/shared/Loading'
 import { SimplePDFViewer } from '@/components/shared/SimplePDFViewer'
-import { useResourceFile } from '@/hooks/api/useResourceFile'
 import { fetchNoteById } from '@/services/client/notes.client'
 import type { Note, NoteDetailResponse } from '@/types/notes.types'
 
@@ -17,6 +16,12 @@ export function NotesDetailContent({ noteId, initialData }: NotesDetailContentPr
   const [note, setNote] = useState<Note | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
+
+  // Console log initial data
+  console.log('=== Notes Detail Page ===')
+  console.log('Note ID:', noteId)
+  console.log('Initial Data:', initialData)
+  console.log('Note State:', note)
 
   // Fetch note data (skip if we have SSR data)
   useEffect(() => {
@@ -31,10 +36,11 @@ export function NotesDetailContent({ noteId, initialData }: NotesDetailContentPr
 
       try {
         const response = await fetchNoteById(noteId)
+        console.log('Fetched Note Response:', response)
         setNote(response.data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load note')
         console.error('Error fetching note:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load note')
       } finally {
         setIsLoading(false)
       }
@@ -43,14 +49,8 @@ export function NotesDetailContent({ noteId, initialData }: NotesDetailContentPr
     loadNote()
   }, [noteId, initialData])
 
-  // Fetch PDF file using resource hook (noteName contains the file name)
-  const {
-    url: pdfUrl,
-    isLoading: isPdfLoading,
-    error: pdfError,
-  } = useResourceFile(note?.noteName || null, {
-    enabled: !!note?.noteName,
-  })
+  // Console log PDF URL (noteName now contains the full signed URL)
+  console.log('PDF URL (from noteName):', note?.noteName)
 
   // Loading State
   if (isLoading) {
@@ -91,11 +91,11 @@ export function NotesDetailContent({ noteId, initialData }: NotesDetailContentPr
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* PDF Viewer - Full width on mobile, 8 cols on desktop */}
           <div className="w-full lg:col-span-8 order-1 flex flex-col gap-6">
-            {/* PDF Viewer with Resource Hook */}
+            {/* PDF Viewer - noteName now contains the full signed URL */}
             <SimplePDFViewer
-              pdfUrl={pdfUrl}
-              isLoading={isPdfLoading}
-              error={pdfError?.message || null}
+              pdfUrl={note.noteName}
+              isLoading={false}
+              error={null}
             />
 
             {/* Description Section */}

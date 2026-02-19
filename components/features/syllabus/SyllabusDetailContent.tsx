@@ -5,7 +5,6 @@ import { SimplePDFViewer } from '@/components/shared/SimplePDFViewer'
 import { SyllabusDetailSidebar } from './SyllabusDetailSidebar'
 import { SyllabusNavigation } from './SyllabusNavigation'
 import { fetchSyllabusById } from '@/services/client/syllabus.client'
-import { useResourceFile } from '@/hooks/api/useResourceFile'
 import type { SyllabusDetailResponse } from '@/types/syllabus.types'
 import { Spinner } from '@/components/shared/Loading'
 
@@ -18,6 +17,13 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
   const [syllabusData, setSyllabusData] = useState(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
+
+  // Console log initial data
+  console.log('=== Syllabus Detail Page ===')
+  console.log('Syllabus ID:', syllabusId)
+  console.log('Initial Data:', initialData)
+  console.log('Syllabus State:', syllabusData)
+  console.log('Syllabus File (direct URL):', syllabusData?.syllabusFile)
 
   // Validate syllabusId
   if (!syllabusId || syllabusId === 'undefined' || syllabusId === 'null') {
@@ -40,10 +46,8 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
     )
   }
 
-  // Fetch PDF file using resource hook
-  const { url: pdfUrl, isLoading: isPdfLoading, error: pdfError } = useResourceFile(
-    syllabusData?.syllabusFile || null
-  )
+  // syllabusFile now contains the full signed URL
+  const pdfUrl = syllabusData?.syllabusFile || null
 
   // Load syllabus if no initial data
   useEffect(() => {
@@ -56,10 +60,11 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
       try {
         console.log('Fetching syllabus with ID:', syllabusId)
         const response = await fetchSyllabusById(syllabusId)
+        console.log('Fetched Syllabus Response:', response)
         setSyllabusData(response.data)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load syllabus')
         console.error('Error fetching syllabus:', err)
+        setError(err instanceof Error ? err.message : 'Failed to load syllabus')
       } finally {
         setIsLoading(false)
       }
@@ -127,28 +132,9 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
         <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* PDF Viewer - Full width on mobile, 8 cols on desktop */}
           <div className="w-full lg:col-span-8 order-1 flex flex-col gap-6">
-            {/* PDF Viewer */}
-            {isPdfLoading ? (
-              <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-8 flex items-center justify-center min-h-[600px]">
-                <div className="text-center">
-                  <Spinner size="lg" />
-                  <p className="mt-4 text-sm text-gray-600">Loading PDF...</p>
-                </div>
-              </div>
-            ) : pdfError ? (
-              <div className="bg-error/10 border border-error text-error p-6 rounded-lg">
-                <div className="flex items-center gap-3">
-                  <svg viewBox="0 0 24 24" fill="currentColor" className="size-6 shrink-0">
-                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                  </svg>
-                  <div>
-                    <h3 className="font-bold">Failed to load PDF</h3>
-                    <p className="text-sm mt-1">{pdfError.message}</p>
-                  </div>
-                </div>
-              </div>
-            ) : pdfUrl ? (
-              <SimplePDFViewer pdfUrl={pdfUrl} />
+            {/* PDF Viewer - syllabusFile now contains the full signed URL */}
+            {pdfUrl ? (
+              <SimplePDFViewer pdfUrl={pdfUrl} isLoading={false} error={null} />
             ) : (
               <div className="bg-gray-50 border border-gray-200 text-gray-600 p-6 rounded-lg text-center">
                 <p>No PDF file available</p>

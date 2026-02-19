@@ -59,9 +59,11 @@ export function BlogsCard({ article, onReadArticle }: BlogsCardProps) {
           </h2>
 
           {/* Description */}
-          <p className="text-gray-600 text-sm sm:text-base line-clamp-2 sm:line-clamp-3 leading-relaxed">
-            {article.description}
-          </p>
+          {article.description && (
+            <p className="text-gray-600 text-sm sm:text-base line-clamp-2 sm:line-clamp-3 leading-relaxed">
+              {article.description}
+            </p>
+          )}
         </div>
 
         {/* Read Button */}
