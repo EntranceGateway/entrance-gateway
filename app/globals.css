@@ -379,6 +379,23 @@
   @apply bg-gray-100 text-brand-blue px-1.5 py-0.5 rounded text-sm font-mono;
 }
 
+/* Code blocks (pre > code) should NOT inherit inline code styles */
+.prose pre {
+  @apply bg-transparent p-0 m-0;
+}
+
+.prose pre code {
+  @apply bg-transparent text-gray-100 px-0 py-0 rounded-none text-sm;
+}
+
+.prose ol {
+  @apply list-decimal list-outside ml-6 mb-6 text-gray-700 leading-8 text-lg;
+}
+
+.prose blockquote {
+  @apply border-l-4 border-brand-gold bg-amber-50 pl-4 pr-4 py-3 italic text-gray-700 my-4 rounded-r;
+}
+
 .prose a {
   @apply text-brand-blue hover:text-brand-navy underline transition-colors;
 }

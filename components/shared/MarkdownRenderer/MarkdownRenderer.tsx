@@ -12,16 +12,16 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     // 1. Code blocks (preserve content) - must be first
     const codeBlocks: string[] = []
     html = html.replace(/```(\w+)?\n([\s\S]*?)```/g, (_, lang, code) => {
-      const placeholder = `__CODE_BLOCK_${codeBlocks.length}__`
+      const placeholder = `<!--CB:${codeBlocks.length}-->`
       const language = lang ? `<span class="text-xs text-gray-400 font-semibold uppercase tracking-wide">${lang}</span>` : ''
-      codeBlocks.push(`<div class="bg-gray-900 rounded-lg overflow-hidden my-6 shadow-md">${language ? `<div class="bg-gray-800 px-4 py-2 border-b border-gray-700 flex items-center justify-between">${language}</div>` : ''}<pre class="p-4 overflow-x-auto"><code class="text-sm font-mono text-gray-100 leading-relaxed">${escapeHtml(code.trim())}</code></pre></div>`)
+      codeBlocks.push(`<div class="bg-gray-900 rounded-lg overflow-hidden my-6 shadow-md">${language ? `<div class="bg-gray-800 px-5 py-2 border-b border-gray-700 flex items-center justify-between">${language}</div>` : ''}<pre class="p-5 overflow-x-auto"><code class="text-sm font-mono text-gray-100 leading-relaxed">${escapeHtml(code.trim())}</code></pre></div>`)
       return placeholder
     })
 
     // 2. Inline code
     const inlineCodes: string[] = []
     html = html.replace(/`([^`]+)`/g, (_, code) => {
-      const placeholder = `__INLINE_CODE_${inlineCodes.length}__`
+      const placeholder = `<!--IC:${inlineCodes.length}-->`
       inlineCodes.push(`<code class="bg-gray-100 text-red-600 px-2 py-0.5 rounded text-sm font-mono border border-gray-200">${escapeHtml(code)}</code>`)
       return placeholder
     })
@@ -29,7 +29,7 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     // 3. Tables
     const tables: string[] = []
     html = html.replace(/\n(\|.+\|)\n(\|[-:\s|]+\|)\n((?:\|.+\|\n?)+)/g, (_, header, separator, rows) => {
-      const placeholder = `__TABLE_${tables.length}__`
+      const placeholder = `<!--TB:${tables.length}-->`
       
       const headerCells = header.split('|').filter((c: string) => c.trim()).map((c: string) => 
         `<th class="px-4 py-3 text-left font-bold text-brand-navy border-b-2 border-brand-blue bg-gray-50">${c.trim()}</th>`
@@ -51,22 +51,25 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
     html = html.replace(/^## (.*?)(?:\s*\{#[\w-]+\})?\s*$/gim, '\n<h2 class="text-2xl font-bold text-brand-navy mt-10 mb-4 tracking-tight border-b-2 border-brand-gold pb-2">$1</h2>\n')
     html = html.replace(/^# (.*?)(?:\s*\{#[\w-]+\})?\s*$/gim, '\n<h1 class="text-3xl font-bold text-brand-navy mt-12 mb-6 tracking-tight">$1</h1>\n')
 
-    // 5. Horizontal rules
-    html = html.replace(/^(---|\*\*\*)$/gim, '\n<hr class="my-10 border-t-2 border-gray-300" />\n')
+    // 5. Horizontal rules (split into two patterns to avoid *** conflicting with bold/italic)
+    html = html.replace(/^---$/gm, '\n<hr class="my-10 border-t-2 border-gray-300" />\n')
+    html = html.replace(/^\*\*\*$/gm, '\n<hr class="my-10 border-t-2 border-gray-300" />\n')
 
-    // 6. Blockquotes (including multi-line)
-    html = html.replace(/^> (.+)$/gim, '<blockquote class="border-l-4 border-brand-gold bg-amber-50 pl-4 pr-4 py-3 italic text-gray-700 my-4 rounded-r">$1</blockquote>')
+    // 6. Blockquotes — merge consecutive > lines into a single blockquote
+    html = html.replace(/(^> .+$\n?)+/gm, (match) => {
+      const lines = match.trim().split('\n').map((line: string) => line.replace(/^> /, '').trim())
+      return `<blockquote class="border-l-4 border-brand-gold bg-amber-50 pl-4 pr-4 py-3 italic text-gray-700 my-4 rounded-r">${lines.join('<br />')}</blockquote>`
+    })
 
     // 7. Checkboxes
     html = html.replace(/^(□|☐)\s+(.+)$/gim, '<div class="flex items-start gap-2 mb-2 pl-4"><span class="text-gray-400 mt-0.5">☐</span><span class="text-gray-700">$2</span></div>')
     html = html.replace(/^(✅|✓)\s+(.+)$/gim, '<div class="flex items-start gap-2 mb-2 pl-4"><span class="text-green-600 mt-0.5 font-bold">✓</span><span class="text-gray-700">$2</span></div>')
 
-    // 8. Unordered lists (including nested)
-    html = html.replace(/^[\*\-]\s+(.+)$/gim, '<li class="mb-2 pl-2 text-gray-700">$1</li>')
-    html = html.replace(/(<li class="mb-2 pl-2 text-gray-700">[\s\S]*?<\/li>)/g, '\n<ul class="list-disc list-outside ml-6 mb-6 space-y-1">$1</ul>\n')
+    // 8. Unordered lists — convert bullets to <li> with a data attribute marker
+    html = html.replace(/^[\*\-]\s+(.+)$/gim, '<li data-list-type="ul" class="mb-2 pl-2 text-gray-700">$1</li>')
 
-    // 9. Ordered lists
-    html = html.replace(/^\d+\.\s+(.+)$/gim, '<li class="mb-2 pl-2 text-gray-700">$1</li>')
+    // 9. Ordered lists — convert numbered items to <li> with a data attribute marker
+    html = html.replace(/^\d+\.\s+(.+)$/gim, '<li data-list-type="ol" class="mb-2 pl-2 text-gray-700">$1</li>')
     
     // 10. Bold (must be before italic)
     html = html.replace(/\*\*(.*?)\*\*/g, '<strong class="font-bold text-gray-900">$1</strong>')
@@ -92,7 +95,17 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
       return `<a href="${href}" class="text-brand-blue hover:text-brand-navy underline decoration-2 underline-offset-2 transition-colors font-medium" ${target}>${text}</a>`
     })
 
-    // 14. Split by double newlines to create paragraphs (before restoring code blocks)
+    // 14. Group consecutive list items into <ul> or <ol> wrappers
+    html = html.replace(/(\s*<li data-list-type="ul"[^>]*>.*?<\/li>\s*)+/g, (match) => {
+      const cleaned = match.replace(/ data-list-type="ul"/g, '')
+      return `\n<ul class="list-disc list-outside ml-6 mb-6 space-y-1">${cleaned}</ul>\n`
+    })
+    html = html.replace(/(\s*<li data-list-type="ol"[^>]*>.*?<\/li>\s*)+/g, (match) => {
+      const cleaned = match.replace(/ data-list-type="ol"/g, '')
+      return `\n<ol class="list-decimal list-outside ml-6 mb-6 space-y-1">${cleaned}</ol>\n`
+    })
+
+    // 15. Split by double newlines to create paragraphs (before restoring code blocks)
     const blocks = html.split(/\n\n+/)
     html = blocks
       .map(block => {
@@ -101,8 +114,8 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
         
         // Don't wrap if already wrapped in block element or is a placeholder
         if (
-          block.match(/^<(h[1-6]|ul|ol|blockquote|pre|hr|img|div|table)/) || 
-          block.match(/__(CODE_BLOCK|TABLE|INLINE_CODE)_\d+__/)
+          block.match(/^<(h[1-6]|ul|ol|blockquote|pre|hr|img|div|table|li)/) || 
+          block.match(/<!--(CB|TB|IC):\d+-->/)
         ) {
           return block
         }
@@ -113,19 +126,19 @@ export function MarkdownRenderer({ content, className = '' }: MarkdownRendererPr
       .filter(block => block)
       .join('\n')
 
-    // 15. Restore tables (use global replace)
+    // 16. Restore tables (use global replace)
     tables.forEach((table, index) => {
-      html = html.replace(new RegExp(`__TABLE_${index}__`, 'g'), table)
+      html = html.replace(new RegExp(`<!--TB:${index}-->`, 'g'), table)
     })
 
-    // 16. Restore code blocks (use global replace)
+    // 17. Restore code blocks (use global replace)
     codeBlocks.forEach((block, index) => {
-      html = html.replace(new RegExp(`__CODE_BLOCK_${index}__`, 'g'), block)
+      html = html.replace(new RegExp(`<!--CB:${index}-->`, 'g'), block)
     })
 
-    // 17. Restore inline codes (use global replace)
+    // 18. Restore inline codes (use global replace)
     inlineCodes.forEach((code, index) => {
-      html = html.replace(new RegExp(`__INLINE_CODE_${index}__`, 'g'), code)
+      html = html.replace(new RegExp(`<!--IC:${index}-->`, 'g'), code)
     })
 
     return html
