@@ -8,18 +8,18 @@ import { fetchBlogById } from '@/services/client/blogs.client'
 import type { Blog, BlogDetailResponse } from '@/types/blogs.types'
 
 interface BlogDetailContentProps {
-  blogId: string
+  blogSlug: string
   initialData?: BlogDetailResponse | null
 }
 
-export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProps) {
+export function BlogDetailContent({ blogSlug, initialData }: BlogDetailContentProps) {
   const [blog, setBlog] = useState<Blog | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
   // Console log initial data
   console.log('=== Blog Detail Page ===')
-  console.log('Blog ID:', blogId)
+  console.log('Blog Slug/ID:', blogSlug)
   console.log('Initial Data:', initialData)
   console.log('Blog State:', blog)
 
@@ -34,7 +34,7 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
       setError(null)
 
       try {
-        const response = await fetchBlogById(blogId)
+        const response = await fetchBlogById(blogSlug)
         console.log('Fetched Blog Response:', response)
         setBlog(response.data)
       } catch (err) {
@@ -46,7 +46,7 @@ export function BlogDetailContent({ blogId, initialData }: BlogDetailContentProp
     }
 
     loadBlog()
-  }, [blogId, initialData])
+  }, [blogSlug, initialData])
 
   // Loading State
   if (isLoading) {

@@ -8,18 +8,18 @@ import { fetchNoteById } from '@/services/client/notes.client'
 import type { Note, NoteDetailResponse } from '@/types/notes.types'
 
 interface NotesDetailContentProps {
-  noteId: string
+  noteSlug: string
   initialData?: NoteDetailResponse | null
 }
 
-export function NotesDetailContent({ noteId, initialData }: NotesDetailContentProps) {
+export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContentProps) {
   const [note, setNote] = useState<Note | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
   // Console log initial data
   console.log('=== Notes Detail Page ===')
-  console.log('Note ID:', noteId)
+  console.log('Note Slug/ID:', noteSlug)
   console.log('Initial Data:', initialData)
   console.log('Note State:', note)
 
@@ -35,7 +35,7 @@ export function NotesDetailContent({ noteId, initialData }: NotesDetailContentPr
       setError(null)
 
       try {
-        const response = await fetchNoteById(noteId)
+        const response = await fetchNoteById(noteSlug)
         console.log('Fetched Note Response:', response)
         setNote(response.data)
       } catch (err) {
@@ -47,7 +47,7 @@ export function NotesDetailContent({ noteId, initialData }: NotesDetailContentPr
     }
 
     loadNote()
-  }, [noteId, initialData])
+  }, [noteSlug, initialData])
 
   // Console log PDF URL (noteName now contains the full signed URL)
   console.log('PDF URL (from noteName):', note?.noteName)

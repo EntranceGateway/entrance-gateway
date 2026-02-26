@@ -12,6 +12,8 @@ export function HomeLeadingCourses({ trainingsData = [] }: HomeLeadingCoursesPro
     
     return {
       id: training.trainingId,
+      slug: training.slug,
+      trainingId: training.trainingId,
       title: training.trainingName,
       price: `Rs. ${training.price.toLocaleString()}`,
       duration: `${training.trainingHours} hrs`,

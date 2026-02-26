@@ -9,11 +9,11 @@ import { useToast } from '@/components/shared/Toast'
 import type { Course, CourseDetailResponse } from '@/types/courses.types'
 
 interface CourseDetailContentProps {
-  courseId: string
+  courseSlug: string
   initialData?: CourseDetailResponse | null
 }
 
-export function CourseDetailContent({ courseId, initialData }: CourseDetailContentProps) {
+export function CourseDetailContent({ courseSlug, initialData }: CourseDetailContentProps) {
   const { showToast } = useToast()
   const [course, setCourse] = useState<Course | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(false)
@@ -33,7 +33,7 @@ export function CourseDetailContent({ courseId, initialData }: CourseDetailConte
         setError(null)
 
         try {
-          const response = await fetchCourseById(courseId)
+          const response = await fetchCourseById(courseSlug)
           setCourse(response.data)
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to load course'
@@ -46,7 +46,7 @@ export function CourseDetailContent({ courseId, initialData }: CourseDetailConte
 
       loadCourse()
     }
-  }, [courseId, initialData, course, showToast])
+  }, [courseSlug, initialData, course, showToast])
 
   // Loading State
   if (isLoading) {

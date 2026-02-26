@@ -12,11 +12,11 @@ import { isAuthenticated } from '@/lib/auth/client'
 import type { Training, TrainingDetailResponse, TrainingEnrollmentResponse } from '@/types/trainings.types'
 
 interface TrainingsDetailContentProps {
-  trainingId: string
+  trainingSlug: string
   initialData?: TrainingDetailResponse | null
 }
 
-export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDetailContentProps) {
+export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsDetailContentProps) {
   const [training, setTraining] = useState<Training | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
@@ -33,7 +33,7 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
         setError(null)
 
         try {
-          const response = await fetchTrainingById(trainingId)
+          const response = await fetchTrainingById(trainingSlug)
           setTraining(response.data)
         } catch (err) {
           setError(err instanceof Error ? err.message : 'Failed to load training')
@@ -53,8 +53,12 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
           return
         }
 
-        const status = await checkEnrollmentStatus(parseInt(trainingId))
-        setEnrollmentStatus(status)
+        // Use training.trainingId if available, otherwise parse slug if it's numeric
+        const trainingIdNum = training?.trainingId || (isNaN(parseInt(trainingSlug)) ? 0 : parseInt(trainingSlug))
+        if (trainingIdNum) {
+          const status = await checkEnrollmentStatus(trainingIdNum)
+          setEnrollmentStatus(status)
+        }
       } catch (err) {
         setEnrollmentStatus(null)
       } finally {
@@ -63,7 +67,7 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
     }
 
     loadData()
-  }, [trainingId, initialData])
+  }, [trainingSlug, initialData, training])
 
   const handleDownloadMaterials = () => {
     if (training?.materialsLink) {
@@ -225,7 +229,7 @@ export function TrainingsDetailContent({ trainingId, initialData }: TrainingsDet
                       </p>
                     )}
                     <Link
-                      href={`/trainings/${trainingId}/enroll`}
+                      href={`/trainings/${training.trainingId}/enroll`}
                       className="mt-3 inline-flex items-center gap-2 bg-amber-500 hover:bg-amber-600 text-white font-bold py-2 px-4 rounded-lg transition-colors text-sm"
                     >
                       Complete Payment

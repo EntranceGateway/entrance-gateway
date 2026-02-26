@@ -9,11 +9,11 @@ import { useToast } from '@/components/shared/Toast'
 import type { OldQuestion, OldQuestionDetailResponse } from '@/types/questions.types'
 
 interface QuestionsDetailContentProps {
-  questionId: string
+  questionSlug: string
   initialData?: OldQuestionDetailResponse | null
 }
 
-export function QuestionsDetailContent({ questionId, initialData }: QuestionsDetailContentProps) {
+export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsDetailContentProps) {
   const { showToast } = useToast()
   const [question, setQuestion] = useState<OldQuestion | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
@@ -31,7 +31,7 @@ export function QuestionsDetailContent({ questionId, initialData }: QuestionsDet
       setError(null)
 
       try {
-        const response = await fetchOldQuestionById(questionId)
+        const response = await fetchOldQuestionById(questionSlug)
         setQuestion(response.data)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load question'
@@ -43,7 +43,7 @@ export function QuestionsDetailContent({ questionId, initialData }: QuestionsDet
     }
 
     loadQuestion()
-  }, [questionId, initialData, showToast])
+  }, [questionSlug, initialData, showToast])
 
   // pdfFilePath now contains the full signed URL
   console.log('PDF URL (from pdfFilePath):', question?.pdfFilePath)

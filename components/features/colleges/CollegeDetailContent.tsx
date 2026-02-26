@@ -15,11 +15,11 @@ import type { College, CollegeDetailResponse } from '@/types/colleges.types'
 import type { CourseLevel } from '@/types/courses.types'
 
 interface CollegeDetailContentProps {
-  collegeId: string
+  collegeSlug: string
   initialData?: CollegeDetailResponse | null
 }
 
-export function CollegeDetailContent({ collegeId, initialData }: CollegeDetailContentProps) {
+export function CollegeDetailContent({ collegeSlug, initialData }: CollegeDetailContentProps) {
   const { showToast } = useToast()
   const [college, setCollege] = useState<College | null>(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(false) // Start as false, only set to true if we need to fetch
@@ -39,7 +39,7 @@ export function CollegeDetailContent({ collegeId, initialData }: CollegeDetailCo
         setError(null)
 
         try {
-          const response = await fetchCollegeById(collegeId)
+          const response = await fetchCollegeById(collegeSlug)
           setCollege(response.data)
         } catch (err) {
           const errorMessage = err instanceof Error ? err.message : 'Failed to load college'
@@ -52,7 +52,7 @@ export function CollegeDetailContent({ collegeId, initialData }: CollegeDetailCo
 
       loadCollege()
     }
-  }, [collegeId, initialData, college, showToast])
+  }, [collegeSlug, initialData, college, showToast])
 
   // Fetch logo and cover images using resource hook
   const { src: logoSrc } = useResourceImage(college?.logoName || null, {
