@@ -6,14 +6,13 @@ import { getTrainingById } from '@/services/server/trainings.server'
 import type { Metadata } from 'next'
 
 interface TrainingsDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: TrainingsDetailPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined') {
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Training Not Found | EntranceGateway',
       description: 'The requested training could not be found.',
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: TrainingsDetailPageProps): Pr
   }
 
   try {
-    const response = await getTrainingById(id)
+    const response = await getTrainingById(slug)
     const training = response.data
 
     return {
@@ -37,19 +36,17 @@ export async function generateMetadata({ params }: TrainingsDetailPageProps): Pr
 }
 
 export default async function TrainingsDetailPage({ params }: TrainingsDetailPageProps) {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID - show 404 if invalid
-  if (!id || id === 'undefined' || id === 'null') {
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
-  // Fetch initial data on server
-  const initialData = await getTrainingById(id).catch(() => null)
+  const initialData = await getTrainingById(slug).catch(() => null)
 
   return (
     <Suspense fallback={<CenteredSpinner size="lg" text="Loading training..." />}>
-      <TrainingsDetailContent trainingId={id} initialData={initialData} />
+      <TrainingsDetailContent trainingSlug={slug} initialData={initialData} />
     </Suspense>
   )
 }

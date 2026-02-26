@@ -4,11 +4,19 @@
 import type { SyllabusDetailResponse } from '@/types/syllabus.types'
 
 /**
- * Fetch single syllabus by ID (Client-side via proxy)
+ * Fetch single syllabus by ID or slug (Client-side via proxy)
  * Used in Client Components
  */
-export async function fetchSyllabusById(id: string): Promise<SyllabusDetailResponse> {
-  const response = await fetch(`/api/syllabus/${id}`, {
+export async function fetchSyllabusById(identifier: string): Promise<SyllabusDetailResponse> {
+  // Check if identifier is a slug (contains hyphens and letters) or numeric ID
+  const isSlug = /[a-z-]/.test(identifier)
+  const endpoint = isSlug 
+    ? `/api/syllabus/slug/${identifier}`
+    : `/api/syllabus/${identifier}`
+  
+  console.log('Fetching syllabus from:', endpoint)
+  
+  const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
       'Accept': 'application/json',

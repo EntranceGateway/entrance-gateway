@@ -6,14 +6,13 @@ import { getBlogById } from '@/services/server/blogs.server'
 import type { Metadata } from 'next'
 
 interface BlogDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: BlogDetailPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined') {
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Blog Not Found | EntranceGateway',
       description: 'The requested blog article could not be found.',
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
   }
 
   try {
-    const response = await getBlogById(id)
+    const response = await getBlogById(slug)
     const blog = response.data
 
     return {
@@ -37,19 +36,17 @@ export async function generateMetadata({ params }: BlogDetailPageProps): Promise
 }
 
 export default async function BlogDetailPage({ params }: BlogDetailPageProps) {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined' || id === 'null') {
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
-  // Fetch initial data on server
-  const initialData = await getBlogById(id).catch(() => null)
+  const initialData = await getBlogById(slug).catch(() => null)
 
   return (
     <Suspense fallback={<CenteredSpinner size="lg" text="Loading article..." />}>
-      <BlogDetailContent blogId={id} initialData={initialData} />
+      <BlogDetailContent blogSlug={slug} initialData={initialData} />
     </Suspense>
   )
 }

@@ -2,6 +2,7 @@
 
 export interface Blog {
   blogId: number
+  slug: string
   title: string
   content: string
   excerpt?: string | null

@@ -4,18 +4,19 @@ import { SyllabusDetailContent } from '@/components/features/syllabus/SyllabusDe
 import { getSyllabusById } from '@/services/server/syllabus.server'
 import type { Metadata } from 'next'
 
-export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
-  const { id } = await params
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined') {
+  // Validate slug (can be actual slug or syllabusId)
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Syllabus Not Found | EntranceGateway',
       description: 'The requested syllabus could not be found.',
     }
   }
 
-  const response = await getSyllabusById(id).catch(() => null)
+  // API accepts both slug and id
+  const response = await getSyllabusById(slug).catch(() => null)
 
   return {
     title: response?.data.syllabusTitle 
@@ -27,20 +28,20 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   }
 }
 
-export default async function SyllabusDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+export default async function SyllabusDetailPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug } = await params
   
-  // Validate ID - show 404 if invalid
-  if (!id || id === 'undefined' || id === 'null') {
+  // Validate slug (can be actual slug or syllabusId)
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
-  // Fetch syllabus data on server
-  const initialData = await getSyllabusById(id).catch(() => null)
+  // Fetch syllabus data on server - API accepts both slug and id
+  const initialData = await getSyllabusById(slug).catch(() => null)
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <SyllabusDetailContent syllabusId={id} initialData={initialData} />
+      <SyllabusDetailContent syllabusSlug={slug} initialData={initialData} />
     </Suspense>
   )
 }

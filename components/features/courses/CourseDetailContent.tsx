@@ -242,7 +242,7 @@ function CollegeCard({ college }: { college: any }) {
 
   return (
     <Link
-      href={`/colleges/${college.collegeId}`}
+      href={`/colleges/${college.slug || college.collegeId}`}
       className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-3 sm:p-4 md:p-6 group"
     >
       <div className="flex gap-2.5 sm:gap-3 md:gap-4">

@@ -2,6 +2,7 @@
 
 export interface Training {
   trainingId: number
+  slug: string
   trainingName: string
   description: string
   syllabusDescription: string

@@ -29,7 +29,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
   return (
     <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-200 transition-all duration-300 flex flex-col h-full">
       {/* Image */}
-      <Link href={`/colleges/${item.collegeId}`} className="relative h-48 overflow-hidden block">
+      <Link href={`/colleges/${item.slug || item.collegeId}`} className="relative h-48 overflow-hidden block">
         {isImageLoading ? (
           <div className="w-full h-full bg-gray-200 animate-pulse" />
         ) : displayImage ? (
@@ -64,7 +64,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
         </div>
 
         {/* College Name */}
-        <Link href={`/colleges/${item.collegeId}`}>
+        <Link href={`/colleges/${item.slug || item.collegeId}`}>
           <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-brand-blue transition-colors cursor-pointer line-clamp-2">
             {item.collegeName}
           </h3>
@@ -91,7 +91,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
         {/* Actions */}
         <div className="mt-auto flex gap-2">
           <Link
-            href={`/colleges/${item.collegeId}`}
+            href={`/colleges/${item.slug || item.collegeId}`}
             className="flex-1 bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2.5 px-4 rounded-lg transition-colors text-sm text-center"
           >
             View Details

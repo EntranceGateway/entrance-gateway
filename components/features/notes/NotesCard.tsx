@@ -54,7 +54,7 @@ export function NotesCard({ item }: NotesCardProps) {
       {/* Actions */}
       <div className="flex items-center pt-4 border-t border-gray-100 mt-auto">
         <Link
-          href={`/notes/${item.noteId}`}
+          href={`/notes/${item.slug || item.noteId}`}
           className="w-full bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-4 rounded-lg transition-colors text-sm shadow-sm text-center"
         >
           View Note

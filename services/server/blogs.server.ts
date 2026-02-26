@@ -33,11 +33,14 @@ export async function getBlogs(
 }
 
 /**
- * Fetch single blog by ID (Server-side)
+ * Fetch single blog by ID or slug (Server-side)
  * Used in Server Components for SSR
  */
-export async function getBlogById(id: string): Promise<BlogDetailResponse> {
-  return apiClient<BlogDetailResponse>(`/api/v1/blogs/${id}`, {
+export async function getBlogById(identifier: string): Promise<BlogDetailResponse> {
+  const isSlug = /[a-z-]/.test(identifier)
+  const endpoint = isSlug ? `/api/v1/blogs/slug/${identifier}` : `/api/v1/blogs/${identifier}`
+  
+  return apiClient<BlogDetailResponse>(endpoint, {
     cache: 'no-store',
   })
 }

@@ -38,14 +38,15 @@ export async function getNotes(
 }
 
 /**
- * Fetch single note by ID (Server-side)
+ * Fetch single note by ID or slug (Server-side)
  * Used in Server Components for SSR
  */
-export async function getNoteById(id: string): Promise<NoteDetailResponse> {
-  return apiClient<NoteDetailResponse>(`/api/v1/notes/${id}`, {
+export async function getNoteById(identifier: string): Promise<NoteDetailResponse> {
+  const isSlug = /[a-z-]/.test(identifier)
+  const endpoint = isSlug ? `/api/v1/notes/slug/${identifier}` : `/api/v1/notes/${identifier}`
+  
+  return apiClient<NoteDetailResponse>(endpoint, {
     cache: 'no-store',
-    // Alternative: Use tags for on-demand revalidation
-    // next: { tags: ['note', `note-${id}`] },
   })
 }
 

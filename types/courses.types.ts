@@ -20,6 +20,7 @@ export enum Affiliation {
 
 export interface Course {
   courseId: number
+  slug: string
   courseName: string
   description: string
   courseLevel: CourseLevel
@@ -31,6 +32,7 @@ export interface Course {
 
 export interface CollegeResponse {
   collegeId: number
+  slug: string
   collegeName: string
   location: string
   affiliation: string
@@ -75,6 +77,7 @@ export interface CoursesQueryParams {
 // Full Syllabus Types
 export interface Subject {
   syllabusId: number
+  slug: string
   subjectName: string
   subjectCode: string
   credits: number

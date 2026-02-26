@@ -168,7 +168,7 @@ function CourseCard({ course }: { course: Course }) {
 
   return (
     <Link
-      href={`/courses/${course.courseId}`}
+      href={`/courses/${course.slug || course.courseId}`}
       className="bg-white rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-4 sm:p-6 group"
     >
       {/* Course Name */}

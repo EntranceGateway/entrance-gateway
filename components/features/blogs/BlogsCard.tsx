@@ -3,6 +3,8 @@ import Image from 'next/image'
 
 interface Article {
   id: string
+  slug?: string
+  blogId?: number
   title: string
   description: string
   image: string
@@ -69,7 +71,7 @@ export function BlogsCard({ article, onReadArticle }: BlogsCardProps) {
         {/* Read Button */}
         <div className="mt-5 sm:mt-6 md:mt-8 flex justify-end">
           <Link
-            href={`/blogs/${article.id}`}
+            href={`/blogs/${article.slug || article.blogId || article.id}`}
             className="bg-brand-gold hover:bg-[#FFB300] text-brand-navy font-bold py-2 sm:py-2.5 px-4 sm:px-6 rounded-lg transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm shadow-sm w-full sm:w-auto justify-center"
           >
             Read Full Article

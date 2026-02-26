@@ -6,14 +6,14 @@ import { getNoteById } from '@/services/server/notes.server'
 import type { Metadata } from 'next'
 
 interface NotesDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: NotesDetailPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined') {
+  // Validate slug
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Note Not Found | EntranceGateway',
       description: 'The requested note could not be found.',
@@ -21,7 +21,7 @@ export async function generateMetadata({ params }: NotesDetailPageProps): Promis
   }
 
   try {
-    const response = await getNoteById(id)
+    const response = await getNoteById(slug)
     const note = response.data
 
     return {
@@ -37,19 +37,19 @@ export async function generateMetadata({ params }: NotesDetailPageProps): Promis
 }
 
 export default async function NotesDetailPage({ params }: NotesDetailPageProps) {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID - show 404 if invalid
-  if (!id || id === 'undefined' || id === 'null') {
+  // Validate slug - show 404 if invalid
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
   // Fetch initial data on server
-  const initialData = await getNoteById(id).catch(() => null)
+  const initialData = await getNoteById(slug).catch(() => null)
 
   return (
     <Suspense fallback={<CenteredSpinner size="lg" text="Loading note..." />}>
-      <NotesDetailContent noteId={id} initialData={initialData} />
+      <NotesDetailContent noteSlug={slug} initialData={initialData} />
     </Suspense>
   )
 }

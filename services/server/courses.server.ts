@@ -34,11 +34,14 @@ export async function getCourses(
 }
 
 /**
- * Fetch single course by ID (Server-side)
+ * Fetch single course by ID or slug (Server-side)
  * Used in Server Components for SSR
  */
-export async function getCourseById(id: string): Promise<CourseDetailResponse> {
-  return apiClient<CourseDetailResponse>(`/api/v1/courses/${id}`, {
+export async function getCourseById(identifier: string): Promise<CourseDetailResponse> {
+  const isSlug = /[a-z-]/.test(identifier)
+  const endpoint = isSlug ? `/api/v1/courses/slug/${identifier}` : `/api/v1/courses/${identifier}`
+  
+  return apiClient<CourseDetailResponse>(endpoint, {
     cache: 'no-store',
   })
 }

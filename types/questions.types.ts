@@ -2,6 +2,7 @@
 
 export interface OldQuestion {
   id: number
+  slug: string
   setName: string
   description: string
   year: number

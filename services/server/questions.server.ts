@@ -69,14 +69,18 @@ export async function getOldQuestions(filters?: OldQuestionsFilters): Promise<Ol
 }
 
 /**
- * Fetch old question by ID (server-side)
+ * Fetch old question by ID or slug (server-side)
  */
-export async function getOldQuestionById(id: string): Promise<OldQuestionDetailResponse> {
+export async function getOldQuestionById(identifier: string): Promise<OldQuestionDetailResponse> {
   try {
-    // Validate ID
-    if (!id || id === 'undefined' || id === 'null') {
-      throw new Error('Invalid question ID')
+    if (!identifier || identifier === 'undefined' || identifier === 'null') {
+      throw new Error('Invalid question identifier')
     }
+
+    const isSlug = /[a-z-]/.test(identifier)
+    const endpoint = isSlug 
+      ? `${API_BASE_URL}/api/v1/old-question-collections/slug/${identifier}`
+      : `${API_BASE_URL}/api/v1/old-question-collections/${identifier}`
 
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('accessToken')?.value
@@ -89,19 +93,15 @@ export async function getOldQuestionById(id: string): Promise<OldQuestionDetailR
       headers['Authorization'] = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/old-question-collections/${id}`,
-      {
-        method: 'GET',
-        headers,
-        cache: 'no-store',
-      }
-    )
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       
-      // Handle specific status codes
       if (response.status === 404) {
         throw new Error('Question not found')
       }
@@ -117,12 +117,10 @@ export async function getOldQuestionById(id: string): Promise<OldQuestionDetailR
 
     return response.json()
   } catch (error) {
-    // Handle network errors
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('Network error: Unable to connect to the server')
     }
     
-    // Re-throw other errors
     throw error
   }
 }

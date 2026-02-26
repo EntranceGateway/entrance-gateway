@@ -6,14 +6,13 @@ import { getOldQuestionById } from '@/services/server/questions.server'
 import type { Metadata } from 'next'
 
 interface QuestionDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: QuestionDetailPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined') {
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Question Not Found | EntranceGateway',
       description: 'The requested question could not be found.',
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: QuestionDetailPageProps): Pro
   }
 
   try {
-    const response = await getOldQuestionById(id)
+    const response = await getOldQuestionById(slug)
     const question = response.data
 
     return {
@@ -37,26 +36,23 @@ export async function generateMetadata({ params }: QuestionDetailPageProps): Pro
 }
 
 export default async function QuestionDetailPage({ params }: QuestionDetailPageProps) {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID - show 404 if invalid
-  if (!id || id === 'undefined' || id === 'null') {
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
-  // Fetch initial data on server with proper error handling
   let initialData = null
   
   try {
-    initialData = await getOldQuestionById(id)
+    initialData = await getOldQuestionById(slug)
   } catch (error) {
     console.error('Failed to fetch question details:', error)
-    // Don't throw - let client component handle the error
   }
 
   return (
     <Suspense fallback={<CenteredSpinner size="lg" text="Loading question..." />}>
-      <QuestionsDetailContent questionId={id} initialData={initialData} />
+      <QuestionsDetailContent questionSlug={slug} initialData={initialData} />
     </Suspense>
   )
 }

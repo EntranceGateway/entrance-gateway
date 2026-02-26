@@ -68,14 +68,18 @@ export async function getColleges(filters?: CollegesFilters): Promise<CollegesLi
 }
 
 /**
- * Fetch college by ID (server-side)
+ * Fetch college by ID or slug (server-side)
  */
-export async function getCollegeById(id: string): Promise<CollegeDetailResponse> {
+export async function getCollegeById(identifier: string): Promise<CollegeDetailResponse> {
   try {
-    // Validate ID
-    if (!id || id === 'undefined' || id === 'null') {
-      throw new Error('Invalid college ID')
+    if (!identifier || identifier === 'undefined' || identifier === 'null') {
+      throw new Error('Invalid college identifier')
     }
+
+    const isSlug = /[a-z-]/.test(identifier)
+    const endpoint = isSlug 
+      ? `${API_BASE_URL}/api/v1/colleges/slug/${identifier}`
+      : `${API_BASE_URL}/api/v1/colleges/${identifier}`
 
     const cookieStore = await cookies()
     const accessToken = cookieStore.get('accessToken')?.value
@@ -88,19 +92,15 @@ export async function getCollegeById(id: string): Promise<CollegeDetailResponse>
       headers['Authorization'] = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(
-      `${API_BASE_URL}/api/v1/colleges/${id}`,
-      {
-        method: 'GET',
-        headers,
-        cache: 'no-store',
-      }
-    )
+    const response = await fetch(endpoint, {
+      method: 'GET',
+      headers,
+      cache: 'no-store',
+    })
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}))
       
-      // Handle specific status codes
       if (response.status === 404) {
         throw new Error('College not found')
       }
@@ -116,12 +116,10 @@ export async function getCollegeById(id: string): Promise<CollegeDetailResponse>
 
     return response.json()
   } catch (error) {
-    // Handle network errors
     if (error instanceof TypeError && error.message.includes('fetch')) {
       throw new Error('Network error: Unable to connect to the server')
     }
     
-    // Re-throw other errors
     throw error
   }
 }

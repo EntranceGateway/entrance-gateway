@@ -2,6 +2,7 @@
 
 export interface Note {
   noteId: number
+  slug: string
   subject: string // The actual note title/name (displayed to users)
   subjectCode: string
   noteName: string // The PDF file name (used for Resource API)

@@ -54,7 +54,7 @@ export function QuestionsCard({ item }: QuestionsCardProps) {
 
       {/* Action Button */}
       <Link
-        href={`/questions/${item.id}`}
+        href={`/questions/${item.slug || item.id}`}
         className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-2 px-4 rounded-md text-sm transition-all shadow-sm flex items-center justify-center gap-2"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">

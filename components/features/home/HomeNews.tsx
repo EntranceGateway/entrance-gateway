@@ -9,6 +9,8 @@ export function HomeNews({ blogsData = [] }: HomeNewsProps) {
   // Format blogs for display
   const articles = blogsData.map((blog) => ({
     id: blog.blogId,
+    slug: blog.slug,
+    blogId: blog.blogId,
     title: blog.title,
     image: `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`,
     date: new Date(blog.createdDate).toLocaleDateString('en-US', {
@@ -57,7 +59,7 @@ export function HomeNews({ blogsData = [] }: HomeNewsProps) {
           {articles.map((article) => (
             <Link
               key={article.id}
-              href={`/blogs/${article.id}`}
+              href={`/blogs/${article.slug || article.blogId}`}
               className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col sm:flex-row p-4 sm:p-5 md:p-6 items-start sm:items-center gap-4 sm:gap-5 md:gap-6 group"
             >
               {/* Image */}

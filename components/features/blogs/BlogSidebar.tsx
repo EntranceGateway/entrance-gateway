@@ -2,6 +2,8 @@ import Link from 'next/link'
 
 interface RelatedArticle {
   id: string
+  slug?: string
+  blogId?: number
   title: string
   date: string
   image?: string | null
@@ -33,7 +35,7 @@ export function BlogSidebar({
             {relatedArticles.map((article) => (
               <Link
                 key={article.id}
-                href={`/blogs/${article.id}`}
+                href={`/blogs/${article.slug || article.blogId || article.id}`}
                 className="group flex gap-4 items-start"
               >
                 <div className="w-20 h-20 flex-shrink-0 rounded-lg overflow-hidden">

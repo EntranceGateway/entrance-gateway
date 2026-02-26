@@ -6,14 +6,13 @@ import { getCourseById } from '@/services/server/courses.server'
 import type { Metadata } from 'next'
 
 interface CourseDetailPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: CourseDetailPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID
-  if (!id || id === 'undefined') {
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Course Not Found | EntranceGateway',
       description: 'The requested course could not be found.',
@@ -21,7 +20,7 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
   }
 
   try {
-    const response = await getCourseById(id)
+    const response = await getCourseById(slug)
     const course = response.data
 
     return {
@@ -37,26 +36,23 @@ export async function generateMetadata({ params }: CourseDetailPageProps): Promi
 }
 
 export default async function CourseDetailPage({ params }: CourseDetailPageProps) {
-  const { id } = await params
+  const { slug } = await params
   
-  // Validate ID - show 404 if invalid
-  if (!id || id === 'undefined' || id === 'null') {
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
-  // Fetch initial data on server with proper error handling
   let initialData = null
   
   try {
-    initialData = await getCourseById(id)
+    initialData = await getCourseById(slug)
   } catch (error) {
     console.error('Failed to fetch course details:', error)
-    // Don't throw - let client component handle the error
   }
 
   return (
     <Suspense fallback={<CenteredSpinner size="lg" text="Loading course..." />}>
-      <CourseDetailContent courseId={id} initialData={initialData} />
+      <CourseDetailContent courseSlug={slug} initialData={initialData} />
     </Suspense>
   )
 }

@@ -2,6 +2,7 @@
 
 export interface Syllabus {
   syllabusId: number
+  slug: string
   courseId: number
   syllabusTitle: string
   syllabusFile: string

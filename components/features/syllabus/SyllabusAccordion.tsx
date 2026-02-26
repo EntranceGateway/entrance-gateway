@@ -26,10 +26,40 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
   const [expandedSemester, setExpandedSemester] = useState<string | null>(null)
   const [loadingCourse, setLoadingCourse] = useState<string | null>(null)
   const [courseData, setCourseData] = useState<Record<string, Year[]>>({})
+  const [syllabusSlugMap, setSyllabusSlugMap] = useState<Record<number, string>>({})
+
+  // Fetch syllabus list to get slug mapping
+  useEffect(() => {
+    const fetchSyllabusSlugMap = async () => {
+      try {
+        const response = await fetch('https://api.entrancegateway.com/api/v1/syllabus?page=0&size=1000')
+        const data = await response.json()
+        
+        if (data.data?.content) {
+          const slugMap: Record<number, string> = {}
+          data.data.content.forEach((item: any) => {
+            if (item.syllabusId && item.slug) {
+              slugMap[item.syllabusId] = item.slug
+            }
+          })
+          console.log('Syllabus slug map:', slugMap)
+          setSyllabusSlugMap(slugMap)
+        }
+      } catch (error) {
+        console.error('Error fetching syllabus slug map:', error)
+      }
+    }
+
+    fetchSyllabusSlugMap()
+  }, [])
 
   // Pre-populate first course's syllabus from SSR data
   useEffect(() => {
     if (firstCourseSyllabus && courses[0]) {
+      console.log('=== Syllabus List Page - First Course Syllabus ===')
+      console.log('First Course Syllabus:', firstCourseSyllabus)
+      console.log('Years:', firstCourseSyllabus.data.years)
+      
       setCourseData({
         [courses[0].id]: firstCourseSyllabus.data.years,
       })
@@ -56,7 +86,11 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
     // Fetch full syllabus if not already loaded
     if (!courseData[courseId]) {
       try {
+        console.log('Fetching full syllabus for course ID:', courseId)
         const response = await fetchFullSyllabus(parseInt(courseId))
+        console.log('Full Syllabus Response:', response)
+        console.log('Years data:', response.data.years)
+        
         setCourseData(prev => ({
           ...prev,
           [courseId]: response.data.years,
@@ -216,14 +250,23 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                             <div className="divide-y divide-gray-200">
                               {semester.subjects.map((subject, index) => {
                                 const subjectKey = subject.syllabusId || `subject-${index}`
-                                const subjectId = subject.syllabusId
+                                // Use slug from map if available, otherwise fallback to syllabusId
+                                const subjectSlug = syllabusSlugMap[subject.syllabusId]
+                                const subjectIdentifier = subjectSlug || subject.syllabusId
+                                
+                                console.log('Subject in list:', {
+                                  syllabusId: subject.syllabusId,
+                                  slug: subjectSlug,
+                                  subjectName: subject.subjectName,
+                                  identifier: subjectIdentifier
+                                })
                                 
                                 return (
                                   <Link
                                     key={subjectKey}
-                                    href={subjectId ? `/syllabus/${subjectId}` : '#'}
+                                    href={subjectIdentifier ? `/syllabus/${subjectIdentifier}` : '#'}
                                     className={`w-full px-4 py-3 hover:bg-white transition-all duration-200 text-left group block ${
-                                      !subjectId ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
+                                      !subjectIdentifier ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                                     }`}
                                   >
                                     <div className="flex items-center justify-between gap-3">
@@ -240,7 +283,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                           {subject.subjectName}
                                         </p>
                                       </div>
-                                      {subjectId && (
+                                      {subjectIdentifier && (
                                         <svg
                                           viewBox="0 0 24 24"
                                           fill="currentColor"

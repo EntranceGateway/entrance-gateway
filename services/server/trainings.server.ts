@@ -35,11 +35,14 @@ export async function getTrainings(
 }
 
 /**
- * Fetch single training by ID (Server-side)
+ * Fetch single training by ID or slug (Server-side)
  * Used in Server Components for SSR
  */
-export async function getTrainingById(id: string): Promise<TrainingDetailResponse> {
-  return apiClient<TrainingDetailResponse>(`/api/v1/trainings/${id}`, {
+export async function getTrainingById(identifier: string): Promise<TrainingDetailResponse> {
+  const isSlug = /[a-z-]/.test(identifier)
+  const endpoint = isSlug ? `/api/v1/trainings/slug/${identifier}` : `/api/v1/trainings/${identifier}`
+  
+  return apiClient<TrainingDetailResponse>(endpoint, {
     cache: 'no-store',
   })
 }

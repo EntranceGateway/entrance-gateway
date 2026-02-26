@@ -127,6 +127,8 @@ export function BlogsPageContent({ initialData }: BlogsPageContentProps) {
                   key={blog.blogId}
                   article={{
                     id: blog.blogId.toString(),
+                    slug: blog.slug,
+                    blogId: blog.blogId,
                     title: blog.title,
                     description: blog.excerpt || stripMarkdown(blog.content).substring(0, 150) + '...',
                     image: blog.imageName 

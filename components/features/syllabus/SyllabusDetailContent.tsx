@@ -9,24 +9,24 @@ import type { SyllabusDetailResponse } from '@/types/syllabus.types'
 import { Spinner } from '@/components/shared/Loading'
 
 interface SyllabusDetailContentProps {
-  syllabusId: string
+  syllabusSlug: string
   initialData?: SyllabusDetailResponse | null
 }
 
-export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetailContentProps) {
+export function SyllabusDetailContent({ syllabusSlug, initialData }: SyllabusDetailContentProps) {
   const [syllabusData, setSyllabusData] = useState(initialData?.data || null)
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
   // Console log initial data
   console.log('=== Syllabus Detail Page ===')
-  console.log('Syllabus ID:', syllabusId)
+  console.log('Syllabus Slug/ID:', syllabusSlug)
   console.log('Initial Data:', initialData)
   console.log('Syllabus State:', syllabusData)
   console.log('Syllabus File (direct URL):', syllabusData?.syllabusFile)
 
-  // Validate syllabusId
-  if (!syllabusId || syllabusId === 'undefined' || syllabusId === 'null') {
+  // Validate syllabusSlug (can be slug or id)
+  if (!syllabusSlug || syllabusSlug === 'undefined' || syllabusSlug === 'null') {
     return (
       <main className="flex-grow">
         <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -49,6 +49,11 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
   // syllabusFile now contains the full signed URL
   const pdfUrl = syllabusData?.syllabusFile || null
 
+  // Scroll to top on mount to prevent jumping to footer
+  useEffect(() => {
+    window.scrollTo(0, 0)
+  }, [])
+
   // Load syllabus if no initial data
   useEffect(() => {
     if (initialData) return
@@ -58,9 +63,10 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
       setError(null)
 
       try {
-        console.log('Fetching syllabus with ID:', syllabusId)
-        const response = await fetchSyllabusById(syllabusId)
+        console.log('Fetching syllabus with slug/id:', syllabusSlug)
+        const response = await fetchSyllabusById(syllabusSlug)
         console.log('Fetched Syllabus Response:', response)
+        console.log('Syllabus File URL:', response.data.syllabusFile)
         setSyllabusData(response.data)
       } catch (err) {
         console.error('Error fetching syllabus:', err)
@@ -71,7 +77,7 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
     }
 
     loadSyllabus()
-  }, [syllabusId, initialData])
+  }, [syllabusSlug, initialData])
 
   // Loading state
   if (isLoading) {
@@ -142,22 +148,7 @@ export function SyllabusDetailContent({ syllabusId, initialData }: SyllabusDetai
             )}
 
             {/* Navigation */}
-            <SyllabusNavigation
-              previous={{
-                label: 'Previous Subject',
-                title: 'Previous Subject',
-                href: `/syllabus/${parseInt(syllabusId) - 1}`,
-              }}
-              next={{
-                label: 'Next Subject',
-                title: 'Next Subject',
-                href: `/syllabus/${parseInt(syllabusId) + 1}`,
-              }}
-              semesterLink={{
-                label: `View Full Semester ${syllabusData.semester} Syllabus`,
-                href: `/syllabus?semester=${syllabusData.semester}`,
-              }}
-            />
+            {/* Navigation removed - slug-based navigation doesn't support prev/next */}
           </div>
 
           {/* Sidebar - Below PDF on mobile, side on desktop */}

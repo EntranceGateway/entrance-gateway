@@ -78,7 +78,7 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
       {/* Actions */}
       <div className="p-6 pt-0 space-y-3">
         <Link
-          href={`/trainings/${item.trainingId}`}
+          href={`/trainings/${item.slug || item.trainingId}`}
           className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-3 rounded-xl transition-colors text-sm shadow-sm block text-center"
         >
           View Details

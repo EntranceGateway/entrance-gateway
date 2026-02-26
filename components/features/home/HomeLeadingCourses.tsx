@@ -71,7 +71,7 @@ export function HomeLeadingCourses({ trainingsData = [] }: HomeLeadingCoursesPro
           {courses.map((course) => (
             <Link
               key={course.id}
-              href={`/trainings/${course.id}`}
+              href={`/trainings/${course.slug || course.trainingId}`}
               className="bg-white rounded-2xl overflow-hidden border border-gray-200 shadow-sm hover:shadow-lg transition-all group"
             >
               <div className="p-6">

@@ -16,6 +16,7 @@ export enum Priority {
 
 export interface College {
   collegeId: number
+  slug: string
   collegeName: string
   location: string
   affiliation: string
