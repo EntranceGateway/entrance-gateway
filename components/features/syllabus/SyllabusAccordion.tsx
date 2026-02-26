@@ -194,7 +194,11 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
               }`}
             >
               <div className="px-4 sm:px-6 py-3 space-y-4">
-                {years.map((year) => (
+                {years.map((year) => {
+                  // Sort semesters by semesterNumber
+                  const sortedSemesters = [...year.semesters].sort((a, b) => a.semesterNumber - b.semesterNumber)
+                  
+                  return (
                   <div key={year.yearNumber} className="space-y-2">
                     {/* Year Header */}
                     <div className="flex items-center gap-2 mb-2">
@@ -204,7 +208,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                     </div>
 
                     {/* Semesters */}
-                    {year.semesters.map((semester) => {
+                    {sortedSemesters.map((semester) => {
                       const semesterId = `${course.id}-${year.yearNumber}-${semester.semesterNumber}`
                       const isSemesterExpanded = expandedSemester === semesterId
 
@@ -302,7 +306,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                       )
                     })}
                   </div>
-                ))}
+                )})}
               </div>
             </div>
           </div>
