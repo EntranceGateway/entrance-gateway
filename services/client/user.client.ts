@@ -22,9 +22,8 @@ export async function fetchUserProfile(): Promise<UserResponse> {
       throw new Error('UNAUTHORIZED')
     }
     
-    // For other errors, log them
+    // For other errors, silently fail (don't log to console)
     const error = await response.json().catch(() => ({ message: 'Failed to fetch user profile' }))
-    console.error('Failed to fetch user profile:', error)
     throw new Error(error.message || 'Failed to fetch user profile')
   }
 
@@ -52,9 +51,8 @@ export async function updateUserProfile(data: UpdateUserRequest): Promise<Update
       throw new Error('UNAUTHORIZED')
     }
     
-    // For other errors, log them
+    // For other errors, silently fail (don't log to console)
     const error = await response.json().catch(() => ({ message: 'Failed to update user profile' }))
-    console.error('Failed to update user profile:', error)
     throw new Error(error.message || 'Failed to update user profile')
   }
 

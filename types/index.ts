@@ -70,3 +70,28 @@ export type {
   OldQuestionDetailResponse,
   OldQuestionsFilters,
 } from './questions.types'
+
+export type {
+  QuizPurchase,
+  MyPurchasesResponse,
+} from './enrollment.types'
+
+export type {
+  PurchaseStatus,
+  PurchaseStatusResponse,
+  PaymentRequest,
+  PaymentResponse,
+} from './payment.types'
+
+export type {
+  Quiz,
+  QuizListResponse,
+  QuizDetailResponse,
+  QuizParams,
+} from './quiz.types'
+
+export type {
+  CartItem,
+  CartSummary,
+  CartResponse,
+} from './cart.types'

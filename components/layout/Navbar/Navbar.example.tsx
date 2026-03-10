@@ -24,6 +24,7 @@ const navigationItems = [
   { label: 'Courses', href: '/courses' },
   { label: 'Blogs', href: '/blogs' },
   { label: 'Trainings', href: '/trainings' },
+  { label: 'Quiz', href: '/quiz' },
 ]
 
 export function NavbarExample() {

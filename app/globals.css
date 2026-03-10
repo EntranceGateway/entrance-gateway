@@ -12,6 +12,8 @@
   --color-brand-navy: #1A237E;
   --color-brand-blue: #0D47A1;
   --color-brand-gold: #FFC107;
+  --color-brand-lavender: #F8F5FF;
+  --color-brand-purple: #6A1B9A;
 
   /* ----------------------------------------
      Semantic Colors
@@ -398,4 +400,11 @@
 
 .prose a {
   @apply text-brand-blue hover:text-brand-navy underline transition-colors;
+}
+
+/* ----------------------------------------
+   Material Symbols Icons
+   ---------------------------------------- */
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }
