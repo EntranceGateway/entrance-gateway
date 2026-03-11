@@ -430,7 +430,7 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
                               />
                             </div>
                             <p className="text-xs md:text-sm text-gray-600 mt-3 text-center">
-                              Amount: <span className="font-bold">NPR {training.price.toLocaleString()}</span>
+                              Amount: <span className="font-bold">{training.price === 0 ? 'Free' : `NPR ${training.price.toLocaleString()}`}</span>
                             </p>
                           </div>
                         </div>
@@ -472,7 +472,7 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
                           className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
                           required
                         />
-                        <p className="text-xs text-gray-500 mt-1">Training fee: NPR {training.price.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500 mt-1">Training fee: {training.price === 0 ? 'Free' : `NPR ${training.price.toLocaleString()}`}</p>
                       </div>
 
                       <div>

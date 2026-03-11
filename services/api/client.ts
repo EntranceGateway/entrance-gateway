@@ -60,6 +60,7 @@ export async function apiClient<T>(
 
   try {
     const response = await fetch(url, {
+      credentials: 'include', // Always include cookies for cross-origin requests
       ...fetchOptions,
       headers,
       signal: controller.signal,

@@ -11,6 +11,37 @@ import type {
 import { generateUUID } from '@/lib/utils/uuid'
 
 /**
+ * Enroll in a free training
+ * Uses Next.js API proxy route: POST /api/trainings/[id]/enroll-free
+ * Backend endpoint: POST /api/v1/training-enrollments/{trainingId}/enroll-free
+ */
+export async function enrollInFreeTraining(trainingId: number): Promise<TrainingEnrollmentResponse> {
+  // Validate trainingId
+  if (!trainingId || isNaN(trainingId) || trainingId <= 0) {
+    throw new Error('Invalid training ID')
+  }
+
+  const idempotencyKey = generateUUID()
+
+  const response = await fetch(`/api/trainings/${trainingId}/enroll-free`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Accept': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+    },
+  })
+
+  const data = await response.json()
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Failed to enroll in training')
+  }
+
+  return data
+}
+
+/**
  * Fetch paginated list of trainings (Client-side via proxy)
  * Used in Client Components with useState/useEffect or React Query
  */
@@ -124,6 +155,34 @@ export async function checkEnrollmentStatus(trainingId: number): Promise<Trainin
       data: null
     }
   }
+}
+
+/**
+ * Enroll in a free training
+ * Uses the backend endpoint: POST /api/v1/training-enrollments/{trainingId}/enroll-free
+ */
+export async function enrollFree(trainingId: number): Promise<TrainingEnrollmentResponse> {
+  // Validate trainingId
+  if (!trainingId || isNaN(trainingId) || trainingId <= 0) {
+    throw new Error('Invalid training ID')
+  }
+
+  const idempotencyKey = generateUUID()
+  
+  const response = await fetch(`/api/trainings/${trainingId}/enroll-free`, {
+    method: 'POST',
+    headers: {
+      'Accept': 'application/json',
+      'Idempotency-Key': idempotencyKey,
+    },
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}))
+    throw new Error(errorData.message || 'Failed to enroll in free training')
+  }
+
+  return response.json()
 }
 
 /**

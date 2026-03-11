@@ -209,7 +209,7 @@ export function EnrollmentDetailsModal({ enrollmentData, onClose }: EnrollmentDe
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
               <div>
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-1">Amount Paid</p>
-                <p className="text-sm font-semibold text-gray-900">NPR {enrollmentData.paidAmount.toLocaleString()}</p>
+                <p className="text-sm font-semibold text-gray-900">{enrollmentData.paidAmount === 0 ? 'Free' : `NPR ${enrollmentData.paidAmount.toLocaleString()}`}</p>
               </div>
 
               <div>

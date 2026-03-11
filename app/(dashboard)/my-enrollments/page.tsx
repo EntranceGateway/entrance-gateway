@@ -2,8 +2,8 @@ import { MyEnrollmentsContent } from '@/components/features/enrollments/MyEnroll
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'My Quiz Purchases | EntranceGateway',
-  description: 'Manage and access your purchased mock tests and exam materials',
+  title: 'My Enrollments | EntranceGateway',
+  description: 'Manage and access your purchased quizzes and training enrollments',
 }
 
 export default function MyEnrollmentsPage() {

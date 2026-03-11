@@ -18,7 +18,7 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
 
   // Format price
   const formatPrice = (price: number) => {
-    return `NPR ${price.toLocaleString()}`
+    return price === 0 ? 'Free' : `NPR ${price.toLocaleString()}`
   }
 
   return (

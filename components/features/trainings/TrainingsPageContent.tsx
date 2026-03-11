@@ -15,7 +15,6 @@ export function TrainingsPageContent({ initialData }: TrainingsPageContentProps)
   const [trainings, setTrainings] = useState<Training[]>(initialData?.data.content || [])
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
-  console.log(trainings)
 
   // Load trainings from API
   useEffect(() => {
@@ -36,7 +35,6 @@ export function TrainingsPageContent({ initialData }: TrainingsPageContentProps)
         setTrainings(response.data.content)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load trainings')
-        console.error('Error fetching trainings:', err)
       } finally {
         setIsLoading(false)
       }

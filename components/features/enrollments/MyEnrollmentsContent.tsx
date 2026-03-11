@@ -1,54 +1,48 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { MyEnrollmentCard } from './MyEnrollmentCard'
+import { EnrollmentCard } from './EnrollmentCard'
 import { CenteredSpinner } from '@/components/shared/Loading'
-import { fetchMyQuizPurchases } from '@/services/client/enrollment.client'
+import { fetchMyQuizPurchases, fetchMyTrainingEnrollments } from '@/services/client/enrollment.client'
 import type { QuizPurchase } from '@/types/enrollment.types'
+import type { TrainingEnrollment } from '@/types/trainings.types'
 
-type FilterTab = 'all' | 'paid' | 'pending'
+type FilterTab = 'all' | 'quizzes' | 'trainings'
 
 export function MyEnrollmentsContent() {
   const router = useRouter()
-  const [purchases, setPurchases] = useState<QuizPurchase[]>([])
-  const [filteredPurchases, setFilteredPurchases] = useState<QuizPurchase[]>([])
+  const [quizPurchases, setQuizPurchases] = useState<QuizPurchase[]>([])
+  const [trainingEnrollments, setTrainingEnrollments] = useState<TrainingEnrollment[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<FilterTab>('all')
 
-  useEffect(() => {
-    loadPurchases()
-  }, [])
-
-  useEffect(() => {
-    filterPurchases()
-  }, [activeTab, purchases])
-
-  const loadPurchases = async () => {
+  const loadEnrollments = useCallback(async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      const response = await fetchMyQuizPurchases()
-      setPurchases(response.data)
+      const [quizResponse, trainingResponse] = await Promise.all([
+        fetchMyQuizPurchases(),
+        fetchMyTrainingEnrollments(),
+      ])
+      
+      setQuizPurchases(quizResponse.data || [])
+      setTrainingEnrollments(trainingResponse.data || [])
     } catch (err) {
-      console.error('Failed to load purchases:', err)
-      setError('Unable to load your purchases. Please try again later.')
+      setError('Unable to load your enrollments. Please try again later.')
     } finally {
       setIsLoading(false)
     }
-  }
+  }, [])
 
-  const filterPurchases = () => {
-    if (activeTab === 'all') {
-      setFilteredPurchases(purchases)
-    } else if (activeTab === 'paid') {
-      setFilteredPurchases(purchases.filter(p => p.purchaseStatus === 'PAID' || p.purchaseStatus === 'ACTIVE'))
-    } else if (activeTab === 'pending') {
-      setFilteredPurchases(purchases.filter(p => p.purchaseStatus === 'APPROVAL_PENDING' || p.purchaseStatus === 'PENDING'))
-    }
-  }
+  useEffect(() => {
+    loadEnrollments()
+  }, [loadEnrollments])
+
+  const totalCount = quizPurchases.length + trainingEnrollments.length
 
   return (
     <main className="flex-grow bg-gray-50">
@@ -56,18 +50,11 @@ export function MyEnrollmentsContent() {
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <nav className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-              <button onClick={() => router.push('/')} className="hover:text-brand-blue">
-                Dashboard
-              </button>
-              <span className="material-symbols-outlined text-xs">chevron_right</span>
-              <span className="text-brand-blue font-medium">My Quiz Purchases</span>
-            </nav>
             <h1 className="text-2xl sm:text-3xl font-bold text-brand-navy font-heading">
-              My Quiz Purchases
+              My Enrollments
             </h1>
             <p className="text-sm sm:text-base text-gray-600 mt-1">
-              Manage and access your purchased mock tests and exam materials.
+              Manage and access your purchased quizzes and training enrollments.
             </p>
           </div>
         </div>
@@ -82,34 +69,34 @@ export function MyEnrollmentsContent() {
                 : 'border-transparent text-gray-500 hover:text-brand-navy'
             }`}
           >
-            All Purchases
+            All ({totalCount})
           </button>
           <button
-            onClick={() => setActiveTab('paid')}
+            onClick={() => setActiveTab('quizzes')}
             className={`px-4 sm:px-6 py-3 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-              activeTab === 'paid'
+              activeTab === 'quizzes'
                 ? 'border-brand-gold text-brand-navy'
                 : 'border-transparent text-gray-500 hover:text-brand-navy'
             }`}
           >
-            Completed
+            Quizzes ({quizPurchases.length})
           </button>
           <button
-            onClick={() => setActiveTab('pending')}
+            onClick={() => setActiveTab('trainings')}
             className={`px-4 sm:px-6 py-3 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
-              activeTab === 'pending'
+              activeTab === 'trainings'
                 ? 'border-brand-gold text-brand-navy'
                 : 'border-transparent text-gray-500 hover:text-brand-navy'
             }`}
           >
-            Pending Approval
+            Trainings ({trainingEnrollments.length})
           </button>
         </div>
 
         {/* Loading State */}
         {isLoading && (
           <div className="py-12">
-            <CenteredSpinner size="lg" text="Loading your purchases..." />
+            <CenteredSpinner size="lg" text="Loading your enrollments..." />
           </div>
         )}
 
@@ -126,7 +113,7 @@ export function MyEnrollmentsContent() {
         )}
 
         {/* Empty State */}
-        {!isLoading && !error && filteredPurchases.length === 0 && (
+        {!isLoading && !error && totalCount === 0 && (
           <div className="text-center py-12">
             <svg
               viewBox="0 0 24 24"
@@ -142,55 +129,40 @@ export function MyEnrollmentsContent() {
               />
             </svg>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              {activeTab === 'all' && 'No purchases yet'}
-              {activeTab === 'paid' && 'No completed purchases'}
-              {activeTab === 'pending' && 'No pending purchases'}
+              No enrollments yet
             </h3>
             <p className="text-gray-500 mb-6">
-              {activeTab === 'all' && 'Start by purchasing a quiz to begin your preparation.'}
-              {activeTab === 'paid' && 'Your completed purchases will appear here.'}
-              {activeTab === 'pending' && 'Purchases awaiting approval will appear here.'}
+              Start by purchasing a quiz or enrolling in a training program.
             </p>
-            <button
-              onClick={() => router.push('/quiz')}
-              className="bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-6 rounded-lg transition-colors"
-            >
-              Browse Quizzes
-            </button>
-          </div>
-        )}
-
-        {/* Purchases Grid */}
-        {!isLoading && !error && filteredPurchases.length > 0 && (
-          <div className="grid gap-6">
-            {filteredPurchases.map((purchase) => (
-              <MyEnrollmentCard key={purchase.purchaseId} purchase={purchase} />
-            ))}
-          </div>
-        )}
-
-        {/* Help Section */}
-        {!isLoading && (
-          <div className="mt-12 bg-brand-blue/5 rounded-xl p-6 sm:p-8 border border-brand-blue/10">
-            <div className="flex items-start gap-4">
-              <span className="material-symbols-outlined text-brand-blue text-3xl shrink-0">
-                help_outline
-              </span>
-              <div>
-                <h4 className="text-lg font-bold text-brand-navy">Need help with your purchase?</h4>
-                <p className="text-gray-600 mt-2 mb-4 text-sm sm:text-base">
-                  If your transaction is pending for more than 24 hours, or you're experiencing issues 
-                  accessing your content, please reach out to our support team.
-                </p>
-                <a
-                  href="mailto:support@entrancegateway.com"
-                  className="text-brand-blue font-bold hover:underline inline-flex items-center gap-1"
-                >
-                  Contact Student Support
-                  <span className="material-symbols-outlined text-sm">open_in_new</span>
-                </a>
-              </div>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <button
+                onClick={() => router.push('/quiz')}
+                className="bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-6 rounded-lg transition-colors"
+              >
+                Browse Quizzes
+              </button>
+              <button
+                onClick={() => router.push('/trainings')}
+                className="bg-brand-blue hover:bg-brand-navy text-white font-bold py-2 px-6 rounded-lg transition-colors"
+              >
+                Browse Trainings
+              </button>
             </div>
+          </div>
+        )}
+
+        {/* Enrollments Grid */}
+        {!isLoading && !error && totalCount > 0 && (
+          <div className="grid gap-6">
+            {/* Show Quizzes */}
+            {(activeTab === 'all' || activeTab === 'quizzes') && quizPurchases.map((purchase) => (
+              <MyEnrollmentCard key={`quiz-${purchase.purchaseId}`} purchase={purchase} />
+            ))}
+            
+            {/* Show Trainings */}
+            {(activeTab === 'all' || activeTab === 'trainings') && trainingEnrollments.map((enrollment) => (
+              <EnrollmentCard key={`training-${enrollment.enrollmentId}`} enrollment={enrollment} />
+            ))}
           </div>
         )}
       </div>

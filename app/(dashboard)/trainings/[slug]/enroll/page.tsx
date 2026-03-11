@@ -6,13 +6,13 @@ import { getTrainingById } from '@/services/server/trainings.server'
 import type { Metadata } from 'next'
 
 interface TrainingEnrollmentPageProps {
-  params: Promise<{ id: string }>
+  params: Promise<{ slug: string }>
 }
 
 export async function generateMetadata({ params }: TrainingEnrollmentPageProps): Promise<Metadata> {
-  const { id } = await params
+  const { slug } = await params
   
-  if (!id || id === 'undefined') {
+  if (!slug || slug === 'undefined') {
     return {
       title: 'Training Enrollment | EntranceGateway',
       description: 'Enroll in a training program.',
@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: TrainingEnrollmentPageProps):
   }
 
   try {
-    const response = await getTrainingById(id)
+    const response = await getTrainingById(slug)
     const training = response.data
 
     return {
@@ -36,18 +36,18 @@ export async function generateMetadata({ params }: TrainingEnrollmentPageProps):
 }
 
 export default async function TrainingEnrollmentPage({ params }: TrainingEnrollmentPageProps) {
-  const { id } = await params
+  const { slug } = await params
   
-  if (!id || id === 'undefined' || id === 'null') {
+  if (!slug || slug === 'undefined' || slug === 'null') {
     notFound()
   }
 
   // Fetch training data on server
-  const initialData = await getTrainingById(id).catch(() => null)
+  const initialData = await getTrainingById(slug).catch(() => null)
 
   return (
     <Suspense fallback={<CenteredSpinner size="lg" text="Loading enrollment form..." />}>
-      <TrainingEnrollmentContent trainingId={id} initialData={initialData} />
+      <TrainingEnrollmentContent trainingId={slug} initialData={initialData} />
     </Suspense>
   )
 }

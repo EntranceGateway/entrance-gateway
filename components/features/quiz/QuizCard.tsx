@@ -7,18 +7,9 @@ interface QuizCardProps {
 }
 
 export function QuizCard({ item, onClick, onAddToCart }: QuizCardProps) {
-  // Format price with fallback
+  // Format price
   const formatPrice = (price?: number) => {
     return `NPR ${(price ?? 0).toLocaleString()}`
-  }
-
-  // Get category badge color with fallback
-  const getCategoryColor = () => {
-    const category = (item.courseName || 'General').toUpperCase()
-    if (category.includes('BCA')) return 'bg-brand-lavender text-brand-purple'
-    if (category.includes('NEB')) return 'bg-blue-50 text-brand-blue'
-    if (category.includes('CSIT')) return 'bg-gray-100 text-gray-500'
-    return 'bg-brand-lavender text-brand-purple'
   }
 
   const handleAddToCart = (e: React.MouseEvent) => {
@@ -29,59 +20,62 @@ export function QuizCard({ item, onClick, onAddToCart }: QuizCardProps) {
   return (
     <div
       onClick={onClick}
-      className="bg-white border border-gray-200 rounded-xl overflow-hidden flex flex-col transition-all duration-300 hover:shadow-lg hover:border-brand-blue/30 cursor-pointer"
+      className="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg transition-shadow cursor-pointer"
     >
       {/* Content */}
       <div className="p-6 flex-grow">
-        {/* Header: Category Badge and Price */}
-        <div className="flex justify-between items-start mb-6">
-          <span className={`${getCategoryColor()} text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider`}>
+        {/* Header: Status Badge and Category */}
+        <div className="flex justify-between items-start mb-4">
+          <span className="bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+            AVAILABLE
+          </span>
+          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {item.courseName}
           </span>
-          <div className="text-right">
-            <p className="text-xs text-gray-400 font-medium uppercase tracking-tighter">Price</p>
-            <p className="text-xl font-bold text-brand-navy">{formatPrice(item.price)}</p>
-          </div>
         </div>
 
         {/* Quiz Title */}
-        <h3 className="text-2xl font-bold text-brand-navy mb-4 font-heading leading-tight">
+        <h3 className="text-xl font-bold text-brand-navy mb-4 leading-tight">
           {item.setName}
         </h3>
 
-        {/* Quiz Details */}
-        <div className="space-y-3">
-          <div className="flex items-center text-gray-600">
-            <span className="material-symbols-outlined text-gray-400 mr-3 text-[20px]">menu_book</span>
-            <span className="text-sm font-medium">
-              {item.nosOfQuestions} {item.nosOfQuestions === 1 ? 'Question' : 'Questions'}
-            </span>
+        {/* Quiz Details Grid */}
+        <div className="grid grid-cols-3 gap-2 mb-6 py-4 border-y border-gray-100">
+          <div className="text-center">
+            <div className="text-[10px] text-gray-400 uppercase font-bold">Questions</div>
+            <div className="text-xs font-bold text-gray-800">{item.nosOfQuestions}</div>
           </div>
-          <div className="flex items-center text-gray-600">
-            <span className="material-symbols-outlined text-gray-400 mr-3 text-[20px]">schedule</span>
-            <span className="text-sm font-medium">{item.durationInMinutes} Minutes</span>
+          <div className="text-center border-x border-gray-100 px-1">
+            <div className="text-[10px] text-gray-400 uppercase font-bold">Duration</div>
+            <div className="text-xs font-bold text-gray-800">{item.durationInMinutes} Min</div>
+          </div>
+          <div className="text-center">
+            <div className="text-[10px] text-gray-400 uppercase font-bold">Price</div>
+            <div className="text-xs font-bold text-brand-blue">
+              {formatPrice(item.price)}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Action Buttons */}
-      <div className="px-6 pb-6 pt-2 flex gap-2">
+      {/* Actions */}
+      <div className="p-6 pt-0 space-y-3">
         <button
           onClick={(e) => {
             e.stopPropagation()
             onClick?.()
           }}
-          className="flex-1 bg-brand-gold text-brand-navy font-bold py-3.5 rounded-lg hover:bg-brand-gold/90 transition-colors shadow-sm active:scale-[0.98] transform uppercase text-sm tracking-wide"
+          className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-3 rounded-xl transition-colors text-sm shadow-sm"
         >
           View Details
         </button>
         {onAddToCart && (
           <button
             onClick={handleAddToCart}
-            className="flex items-center justify-center gap-1 bg-brand-blue hover:bg-brand-navy text-white font-bold py-3.5 px-4 rounded-lg transition-colors shadow-sm active:scale-[0.98] transform"
-            title="Add to Cart"
+            className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-brand-blue font-medium py-2 w-full transition-colors"
           >
             <span className="material-symbols-outlined text-[20px]">add_shopping_cart</span>
+            Add to Cart
           </button>
         )}
       </div>
@@ -92,7 +86,7 @@ export function QuizCard({ item, onClick, onAddToCart }: QuizCardProps) {
 // Card Grid Container
 export function QuizCardGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
       {children}
     </div>
   )

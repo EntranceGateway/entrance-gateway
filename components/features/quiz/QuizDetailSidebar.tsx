@@ -136,8 +136,11 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
             {purchaseStatus === 'NOT_PURCHASED' && (
               <button
                 onClick={() => {
-                  // Check if user is authenticated before redirecting
-                  const isAuth = document.cookie.includes('accessToken')
+                  // Check if user is authenticated by checking userId cookie
+                  const cookies = document.cookie.split(';')
+                  const userIdCookie = cookies.find(c => c.trim().startsWith('userId='))
+                  const isAuth = !!userIdCookie
+                  
                   if (!isAuth) {
                     sessionStorage.setItem('redirectAfterLogin', `/quiz/${quiz.slug || quiz.questionSetId}/payment`)
                     sessionStorage.setItem('loginMessage', 'Please sign in to purchase this quiz')
@@ -195,8 +198,11 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
             {(purchaseStatus === 'FAILED' || purchaseStatus === 'PAYMENT_FAILED' || purchaseStatus === 'CANCELLED') && (
               <button
                 onClick={() => {
-                  // Check if user is authenticated before redirecting
-                  const isAuth = document.cookie.includes('accessToken')
+                  // Check if user is authenticated by checking userId cookie
+                  const cookies = document.cookie.split(';')
+                  const userIdCookie = cookies.find(c => c.trim().startsWith('userId='))
+                  const isAuth = !!userIdCookie
+                  
                   if (!isAuth) {
                     sessionStorage.setItem('redirectAfterLogin', `/quiz/${quiz.slug || quiz.questionSetId}/payment`)
                     sessionStorage.setItem('loginMessage', 'Please sign in to retry payment')

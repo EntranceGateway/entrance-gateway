@@ -1,11 +1,19 @@
+'use client'
+
+import { useState } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import type { Training, TrainingEnrollmentResponse } from '@/types/trainings.types'
+import { enrollInFreeTraining } from '@/services/client/trainings.client'
+import { useToast } from '@/components/shared/Toast'
+import { useAuth } from '@/hooks/auth/useAuth'
 
 interface TrainingsDetailSidebarProps {
   training: Training
   enrollmentStatus?: TrainingEnrollmentResponse | null
   isCheckingEnrollment?: boolean
   onViewEnrollment?: () => void
+  onEnrollmentSuccess?: () => void
 }
 
 export function TrainingsDetailSidebar({ 
@@ -13,7 +21,13 @@ export function TrainingsDetailSidebar({
   enrollmentStatus,
   isCheckingEnrollment = false,
   onViewEnrollment,
+  onEnrollmentSuccess,
 }: TrainingsDetailSidebarProps) {
+  const router = useRouter()
+  const { success, error: showError } = useToast()
+  const { isLoggedIn } = useAuth()
+  const [isEnrolling, setIsEnrolling] = useState(false)
+  
   // Calculate capacity percentage
   const capacityPercentage = (training.currentParticipants / training.maxParticipants) * 100
   const availableSeats = training.maxParticipants - training.currentParticipants
@@ -25,6 +39,40 @@ export function TrainingsDetailSidebar({
   const isPaymentReceived = !!(enrollmentData && enrollmentData.status === 'PAYMENT_RECEIVED_ADMIN_APPROVAL_PENDING')
   const isPending = !!(enrollmentData && enrollmentData.status === 'PAYMENT_PENDING')
 
+  const isFree = training.price === 0
+
+  const handleFreeEnrollment = async () => {
+    // Check authentication first
+    if (!isLoggedIn) {
+      showError('Please sign in to enroll in this training')
+      // Store intended destination for redirect after login
+      sessionStorage.setItem('redirectAfterLogin', `/trainings/${training.trainingId}`)
+      router.push('/signin')
+      return
+    }
+
+    setIsEnrolling(true)
+    
+    try {
+      await enrollInFreeTraining(training.trainingId)
+      success('Successfully enrolled in training!')
+      
+      // Refresh enrollment status
+      if (onEnrollmentSuccess) {
+        onEnrollmentSuccess()
+      } else {
+        // Fallback: reload page
+        setTimeout(() => {
+          router.refresh()
+        }, 1000)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to enroll in training'
+      showError(errorMessage)
+    } finally {
+      setIsEnrolling(false)
+    }
+  }
   return (
     <aside className="lg:sticky lg:top-24">
       {/* Main Card */}
@@ -32,10 +80,16 @@ export function TrainingsDetailSidebar({
         {/* Price Header */}
         <div className="p-6 border-b border-gray-100">
           <div className="flex items-baseline gap-1">
-            <span className="text-gray-500 text-sm font-medium">NPR</span>
-            <span className="text-4xl font-bold text-brand-navy">
-              {training.price.toLocaleString()}
-            </span>
+            {training.price === 0 ? (
+              <span className="text-4xl font-bold text-brand-navy">Free</span>
+            ) : (
+              <>
+                <span className="text-gray-500 text-sm font-medium">NPR</span>
+                <span className="text-4xl font-bold text-brand-navy">
+                  {training.price.toLocaleString()}
+                </span>
+              </>
+            )}
           </div>
         </div>
 
@@ -125,6 +179,33 @@ export function TrainingsDetailSidebar({
                 <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
               </svg>
             </Link>
+          ) : isFree ? (
+            <button
+              onClick={handleFreeEnrollment}
+              disabled={isEnrolling || availableSeats <= 0}
+              className={`w-full bg-brand-gold hover:bg-[#EBB000] text-brand-navy font-bold py-4 rounded-lg shadow-md transition-all uppercase tracking-wide flex items-center justify-center gap-2 ${
+                (availableSeats <= 0 || isEnrolling) ? 'opacity-50 cursor-not-allowed' : ''
+              }`}
+            >
+              {isEnrolling ? (
+                <>
+                  <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                  </svg>
+                  <span>Enrolling...</span>
+                </>
+              ) : (
+                <>
+                  <span>{availableSeats > 0 ? 'Apply Now' : 'Training Full'}</span>
+                  {availableSeats > 0 && (
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                      <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+                    </svg>
+                  )}
+                </>
+              )}
+            </button>
           ) : (
             <Link
               href={`/trainings/${training.trainingId}/enroll`}
@@ -132,7 +213,7 @@ export function TrainingsDetailSidebar({
                 availableSeats <= 0 ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
               }`}
             >
-              <span>{availableSeats > 0 ? 'Register Now' : 'Training Full'}</span>
+              <span>{availableSeats > 0 ? 'Apply Now' : 'Training Full'}</span>
               {availableSeats > 0 && (
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
                   <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />

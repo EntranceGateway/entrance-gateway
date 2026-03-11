@@ -1,6 +1,11 @@
 import { apiClient } from '../api/client'
 import type { PaymentResponse, PaymentRequest, PaymentType, PurchaseStatusResponse } from '@/types/payment.types'
 
+/**
+ * Submit payment with proof file
+ * Uses Next.js API proxy route: POST /api/payments/submit
+ * Backend endpoint: POST /api/v1/payments/pay/{id}/{type}
+ */
 export async function submitPaymentWithProof(
   id: number,
   type: PaymentType,
@@ -17,23 +22,15 @@ export async function submitPaymentWithProof(
   
   // Add file
   formData.append('file', proofFile)
+  
+  // Add id and type for the proxy route
+  formData.append('id', id.toString())
+  formData.append('type', type)
 
-  // Get access token from cookie
-  const accessToken = getAccessToken()
-  const headers: HeadersInit = {}
-  if (accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`
-  }
-
-  const response = await fetch(
-    `${process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'}/api/v1/payments/pay/${id}/${type}`,
-    {
-      method: 'POST',
-      headers,
-      body: formData,
-      credentials: 'include',
-    }
-  )
+  const response = await fetch('/api/payments/submit', {
+    method: 'POST',
+    body: formData,
+  })
 
   if (!response.ok) {
     let errorMessage = 'Payment submission failed'
@@ -63,24 +60,26 @@ export async function submitPaymentWithProof(
   }
 }
 
+/**
+ * Check purchase status for a quiz
+ * Uses Next.js API proxy route: GET /api/payments/status/{quizId}
+ */
 export async function checkPurchaseStatus(
   quizId: number
 ): Promise<PurchaseStatusResponse> {
   try {
-    // Get access token from cookie
-    const accessToken = getAccessToken()
-    
-    return await apiClient<PurchaseStatusResponse>(
-      `/api/v1/purchases/quizzes/${quizId}/status`,
-      {
-        headers: accessToken ? {
-          'Authorization': `Bearer ${accessToken}`,
-        } : {},
-      }
-    )
+    const response = await fetch(`/api/payments/status/${quizId}`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    })
+
+    const data = await response.json()
+    return data
   } catch (error) {
-    // Silent error handling - authentication errors are expected for non-logged-in users
-    // Return default NOT_PURCHASED status without logging
+    // Silent error handling - return default NOT_PURCHASED status
     return {
       message: 'Quiz purchase status',
       data: {
@@ -91,18 +90,4 @@ export async function checkPurchaseStatus(
       },
     }
   }
-}
-
-/**
- * Get access token from cookie (client-side)
- */
-function getAccessToken(): string | null {
-  if (typeof document === 'undefined') return null
-  
-  const cookies = document.cookie.split(';')
-  const tokenCookie = cookies.find(c => c.trim().startsWith('accessToken='))
-  
-  if (!tokenCookie) return null
-  
-  return tokenCookie.split('=')[1]
 }
