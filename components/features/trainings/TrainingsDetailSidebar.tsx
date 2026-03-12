@@ -45,9 +45,8 @@ export function TrainingsDetailSidebar({
     // Check authentication first
     if (!isLoggedIn) {
       showError('Please sign in to enroll in this training')
-      // Store intended destination for redirect after login
-      sessionStorage.setItem('redirectAfterLogin', `/trainings/${training.trainingId}`)
-      router.push('/signin')
+      const currentPath = window.location.pathname
+      router.push(`/signin?reason=auth_required&redirect=${encodeURIComponent(currentPath)}`)
       return
     }
 

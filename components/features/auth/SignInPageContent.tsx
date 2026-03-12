@@ -4,8 +4,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { SignInForm } from './SignInForm'
 import { AuthSidebar } from './AuthSidebar'
+import { useToast } from '@/components/shared/Toast'
 
 export function SignInPageContent() {
+  const { info } = useToast()
+
   return (
     <div className="flex w-full h-screen overflow-hidden">
       {/* Left Sidebar - Hidden on mobile, fixed on desktop */}
@@ -48,6 +51,7 @@ export function SignInPageContent() {
             <div className="grid grid-cols-2 gap-4">
               <button
                 type="button"
+                onClick={() => info('Coming soon')}
                 className="flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
@@ -73,6 +77,7 @@ export function SignInPageContent() {
 
               <button
                 type="button"
+                onClick={() => info('Coming soon')}
                 className="flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2"
               >
                 <svg className="h-5 w-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
