@@ -129,10 +129,10 @@ export function MyEnrollmentsContent() {
               />
             </svg>
             <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              No enrollments yet
+              Not Implemented Yet
             </h3>
             <p className="text-gray-500 mb-6">
-              Start by purchasing a quiz or enrolling in a training program.
+              This feature is currently under development. Check back soon!
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button

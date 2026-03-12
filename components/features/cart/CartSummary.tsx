@@ -1,15 +1,14 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import type { CartSummary as CartSummaryType } from '@/types/cart.types'
 
 interface CartSummaryProps {
-  summary: CartSummaryType
+  totalItems: number
+  totalPrice: number
   onCheckout: () => void
-  isProcessing?: boolean
 }
 
-export function CartSummary({ summary, onCheckout, isProcessing = false }: CartSummaryProps) {
+export function CartSummary({ totalItems, totalPrice, onCheckout }: CartSummaryProps) {
   const router = useRouter()
 
   const formatPrice = (price: number) => {
@@ -24,20 +23,8 @@ export function CartSummary({ summary, onCheckout, isProcessing = false }: CartS
 
       <div className="space-y-3 sm:space-y-4 mb-6 sm:mb-8">
         <div className="flex justify-between text-sm sm:text-base text-gray-600">
-          <span>Original Price:</span>
-          <span>{formatPrice(summary.subtotal)}</span>
-        </div>
-        
-        {summary.discount > 0 && (
-          <div className="flex justify-between text-sm sm:text-base text-gray-600">
-            <span>Discount:</span>
-            <span className="text-success">-{formatPrice(summary.discount)}</span>
-          </div>
-        )}
-        
-        <div className="flex justify-between text-sm sm:text-base text-gray-600">
-          <span>Tax / Processing:</span>
-          <span>{formatPrice(summary.tax)}</span>
+          <span>Items ({totalItems}):</span>
+          <span>{formatPrice(totalPrice)}</span>
         </div>
         
         <div className="pt-3 sm:pt-4 border-t border-gray-100 flex justify-between items-end">
@@ -46,7 +33,7 @@ export function CartSummary({ summary, onCheckout, isProcessing = false }: CartS
               Total Amount
             </p>
             <p className="text-2xl sm:text-3xl font-black text-brand-navy tracking-tight font-heading">
-              {formatPrice(summary.total)}
+              {formatPrice(totalPrice)}
             </p>
           </div>
           <span className="text-[10px] font-bold text-gray-400 mb-1">NPR</span>
@@ -55,11 +42,13 @@ export function CartSummary({ summary, onCheckout, isProcessing = false }: CartS
 
       <button
         onClick={onCheckout}
-        disabled={isProcessing || summary.itemCount === 0}
+        disabled={totalItems === 0}
         className="w-full bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-3 sm:py-4 rounded-xl shadow-lg shadow-brand-gold/20 transition-all flex items-center justify-center gap-2 text-base sm:text-lg mb-3 sm:mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <span>Proceed to Payment</span>
-        <span className="material-symbols-outlined">arrow_forward</span>
+        <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+          <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+        </svg>
       </button>
 
       <p className="text-center text-[10px] sm:text-[11px] text-gray-400 leading-relaxed px-2 sm:px-4">
@@ -78,9 +67,12 @@ export function CartSummary({ summary, onCheckout, isProcessing = false }: CartS
           Secure Checkout
         </p>
         <div className="flex gap-3 sm:gap-4 opacity-40 grayscale">
-          <span className="material-symbols-outlined text-xl sm:text-2xl">credit_card</span>
-          <span className="material-symbols-outlined text-xl sm:text-2xl">account_balance</span>
-          <span className="material-symbols-outlined text-xl sm:text-2xl">shield</span>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
+            <path d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm0 14H4v-6h16v6zm0-10H4V6h16v2z" />
+          </svg>
+          <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
+            <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+          </svg>
         </div>
       </div>
     </div>

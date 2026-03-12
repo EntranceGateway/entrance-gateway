@@ -1,34 +1,38 @@
-// Shopping Cart Types
+// Cart API Types
 
 export interface CartItem {
-  id: number
-  type: 'QUIZ' | 'TRAINING' | 'COURSE'
-  name: string
-  slug: string
-  description: string
-  price: number
-  originalPrice?: number
-  category: string
-  imageUrl?: string
-  metadata: {
-    questions?: number
-    duration?: number
-    courseName?: string
-  }
+  cartItemId: number
+  quizId: number
+  quizName: string
+  quizSlug: string
+  nosOfQuestions: number
+  durationInMinutes: number
+  currentPrice: number
+  priceAtAddition: number
+  priceChanged: boolean
+  courseId: number | null
+  courseName: string | null
+  addedAt: string
 }
 
-export interface CartSummary {
-  subtotal: number
-  discount: number
-  tax: number
-  total: number
-  itemCount: number
+export interface CartData {
+  items: CartItem[]
+  totalItems: number
+  totalPrice: number
+  hasPriceChanges: boolean
 }
 
 export interface CartResponse {
   message: string
-  data: {
-    items: CartItem[]
-    summary: CartSummary
-  }
+  data: CartData
+}
+
+export interface AddToCartResponse {
+  message: string
+  data: CartItem
+}
+
+export interface RemoveFromCartResponse {
+  message: string
+  data: null
 }

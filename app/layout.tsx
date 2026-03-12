@@ -37,6 +37,16 @@ export default function RootLayout({
   return (
     <html lang="en" className="scroll-smooth" data-scroll-behavior="smooth">
       <head>
+        {/* PWA - Android */}
+        <meta name="theme-color" content="#1A237E" />
+        <link rel="manifest" href="/manifest.json" />
+
+        {/* PWA - iOS (Safari ignores manifest.json entirely) */}
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="apple-mobile-web-app-title" content="EG" />
+        <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+
         <link
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
@@ -49,6 +59,17 @@ export default function RootLayout({
           <ProgressBar />
           <ConditionalLayout>{children}</ConditionalLayout>
         </ToastProvider>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              if ('serviceWorker' in navigator) {
+                window.addEventListener('load', function() {
+                  navigator.serviceWorker.register('/sw.js').catch(function() {});
+                });
+              }
+            `,
+          }}
+        />
       </body>
     </html>
   );

@@ -1,148 +1,109 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { CartItemCard } from './CartItemCard'
 import { CartSummary } from './CartSummary'
+import { ClearCartModal } from './ClearCartModal'
 import { CenteredSpinner } from '@/components/shared/Loading'
-import type { CartItem, CartSummary as CartSummaryType } from '@/types/cart.types'
+import { getCart, removeFromCartAction, clearCartAction } from '@/services/server/cart.server'
+import { useToast } from '@/components/shared/Toast'
+import type { CartItem, CartResponse } from '@/types/cart.types'
 
-export function CartPageContent() {
+interface CartPageContentProps {
+  initialData?: CartResponse | null
+}
+
+export function CartPageContent({ initialData }: CartPageContentProps) {
   const router = useRouter()
-  const [items, setItems] = useState<CartItem[]>([])
-  const [summary, setSummary] = useState<CartSummaryType>({
-    subtotal: 0,
-    discount: 0,
-    tax: 0,
-    total: 0,
-    itemCount: 0,
-  })
-  const [isLoading, setIsLoading] = useState(true)
-  const [isProcessing, setIsProcessing] = useState(false)
+  const { success, error: showError } = useToast()
+  const [items, setItems] = useState<CartItem[]>(initialData?.data.items || [])
+  const [totalPrice, setTotalPrice] = useState(initialData?.data.totalPrice || 0)
+  const [hasPriceChanges, setHasPriceChanges] = useState(initialData?.data.hasPriceChanges || false)
+  const [isLoading, setIsLoading] = useState(!initialData)
+  const [error, setError] = useState<string | null>(null)
+  const [showClearModal, setShowClearModal] = useState(false)
 
-  useEffect(() => {
-    loadCart()
-  }, [])
-
-  const loadCart = async () => {
-    setIsLoading(true)
-    try {
-      // TODO: Replace with actual API call
-      // const response = await fetchCart()
-      
-      // Mock data for demonstration
-      await new Promise(resolve => setTimeout(resolve, 500))
-      
-      const mockItems: CartItem[] = [
-        {
-          id: 1,
-          type: 'QUIZ',
-          name: 'Medical Entrance Mock Test 1',
-          slug: 'medical-entrance-mock-1',
-          description: 'Comprehensive full-length practice exam with video solutions.',
-          price: 500.00,
-          originalPrice: 600.00,
-          category: 'Academic',
-          metadata: {
-            questions: 100,
-            duration: 60,
-            courseName: 'MBBS',
-          },
-        },
-        {
-          id: 2,
-          type: 'TRAINING',
-          name: 'Java Backend Bootcamp',
-          slug: 'java-backend-bootcamp',
-          description: '12-week intensive course on Spring Boot and Cloud architecture.',
-          price: 2999.00,
-          category: 'Professional',
-          metadata: {
-            duration: 720,
-          },
-        },
-      ]
-
-      setItems(mockItems)
-      calculateSummary(mockItems)
-    } catch (error) {
-      console.error('Failed to load cart:', error)
-    } finally {
+  const loadCart = useCallback(async () => {
+    // Skip initial load if we have SSR data
+    if (initialData && items.length === initialData.data.items.length) {
       setIsLoading(false)
-    }
-  }
-
-  const calculateSummary = (cartItems: CartItem[]) => {
-    const subtotal = cartItems.reduce((sum, item) => sum + (item.originalPrice || item.price), 0)
-    const actualTotal = cartItems.reduce((sum, item) => sum + item.price, 0)
-    const discount = subtotal - actualTotal
-    const tax = actualTotal * 0.05 // 5% tax
-    const total = actualTotal + tax
-
-    setSummary({
-      subtotal,
-      discount,
-      tax,
-      total,
-      itemCount: cartItems.length,
-    })
-  }
-
-  const handleRemoveItem = async (id: number) => {
-    try {
-      // TODO: Call API to remove item
-      // await removeFromCart(id)
-      
-      const updatedItems = items.filter(item => item.id !== id)
-      setItems(updatedItems)
-      calculateSummary(updatedItems)
-    } catch (error) {
-      console.error('Failed to remove item:', error)
-    }
-  }
-
-  const handleSaveForLater = async (id: number) => {
-    try {
-      // TODO: Call API to save for later
-      // await saveForLater(id)
-      
-      const updatedItems = items.filter(item => item.id !== id)
-      setItems(updatedItems)
-      calculateSummary(updatedItems)
-    } catch (error) {
-      console.error('Failed to save for later:', error)
-    }
-  }
-
-  const handleClearAll = async () => {
-    if (!confirm('Are you sure you want to clear all items from your cart?')) {
       return
     }
 
+    setIsLoading(true)
+    setError(null)
+    
     try {
-      // TODO: Call API to clear cart
-      // await clearCart()
+      const response = await getCart()
+      setItems(response.data.items)
+      setTotalPrice(response.data.totalPrice)
+      setHasPriceChanges(response.data.hasPriceChanges)
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load cart'
       
-      setItems([])
-      calculateSummary([])
-    } catch (error) {
-      console.error('Failed to clear cart:', error)
+      // If it's an auth error, show empty cart instead of error
+      if (errorMessage.includes('sign in') || errorMessage.includes('Unauthorized')) {
+        setItems([])
+        setTotalPrice(0)
+        setHasPriceChanges(false)
+      } else {
+        setError(errorMessage)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }, [initialData, items.length])
+
+  useEffect(() => {
+    loadCart()
+  }, [loadCart])
+
+  const handleRemoveItem = async (quizId: number) => {
+    try {
+      const result = await removeFromCartAction(quizId)
+      
+      if (result.success) {
+        success(result.message)
+        // Refresh cart data
+        await loadCart()
+      } else {
+        showError(result.message)
+      }
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to remove item')
     }
   }
 
-  const handleCheckout = async () => {
-    setIsProcessing(true)
+  const handleClearAll = () => {
+    setShowClearModal(true)
+  }
+
+  const handleConfirmClear = async () => {
+    setShowClearModal(false)
+    
     try {
-      // TODO: Implement checkout logic
-      // await initiateCheckout()
+      const result = await clearCartAction()
       
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      router.push('/checkout')
-    } catch (error) {
-      console.error('Checkout failed:', error)
-    } finally {
-      setIsProcessing(false)
+      if (result.success) {
+        success(result.message)
+        // Refresh cart data
+        await loadCart()
+      } else {
+        showError(result.message)
+      }
+    } catch (err) {
+      showError(err instanceof Error ? err.message : 'Failed to clear cart')
     }
+  }
+
+  const handleCancelClear = () => {
+    setShowClearModal(false)
+  }
+
+  const handleCheckout = () => {
+    // TODO: Implement bulk payment checkout
+    router.push('/checkout')
   }
 
   if (isLoading) {
@@ -163,24 +124,34 @@ export function CartPageContent() {
         {/* Header */}
         <div className="flex flex-col gap-2 mb-6 sm:mb-8">
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-brand-navy tracking-tight font-heading">
-            Enrollment Cart
+            Shopping Cart
           </h1>
           <p className="text-gray-500 text-sm sm:text-base lg:text-lg">
-            Review your selected courses and professional certifications.
+            Review your selected quizzes before checkout.
           </p>
         </div>
+
+        {/* Error State */}
+        {error && (
+          <div className="bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg mb-6">
+            <div className="flex items-center gap-3">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-6 shrink-0">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+              <p className="text-sm">{error}</p>
+            </div>
+          </div>
+        )}
 
         {items.length === 0 ? (
           /* Empty Cart State */
           <div className="text-center py-12 sm:py-16">
-            <div className="inline-flex items-center justify-center w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gray-100 mb-4 sm:mb-6">
-              <span className="material-symbols-outlined text-gray-400 text-4xl sm:text-5xl">
-                shopping_cart
-              </span>
-            </div>
+            <svg viewBox="0 0 24 24" fill="currentColor" className="size-16 sm:size-20 mx-auto text-gray-300 mb-4 sm:mb-6">
+              <path d="M7 18c-1.1 0-1.99.9-1.99 2S5.9 22 7 22s2-.9 2-2-.9-2-2-2zM1 2v2h2l3.6 7.59-1.35 2.45c-.16.28-.25.61-.25.96 0 1.1.9 2 2 2h12v-2H7.42c-.14 0-.25-.11-.25-.25l.03-.12.9-1.63h7.45c.75 0 1.41-.41 1.75-1.03l3.58-6.49c.08-.14.12-.31.12-.48 0-.55-.45-1-1-1H5.21l-.94-2H1zm16 16c-1.1 0-1.99.9-1.99 2s.89 2 1.99 2 2-.9 2-2-.9-2-2-2z" />
+            </svg>
             <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-2">Your cart is empty</h3>
             <p className="text-sm sm:text-base text-gray-500 mb-4 sm:mb-6 px-4">
-              Start adding courses and quizzes to your cart to begin your learning journey.
+              Start adding quizzes to your cart to begin your learning journey.
             </p>
             <button
               onClick={() => router.push('/quiz')}
@@ -206,13 +177,27 @@ export function CartPageContent() {
                 </button>
               </div>
 
+              {/* Price Change Warning */}
+              {hasPriceChanges && (
+                <div className="bg-amber-50 border border-amber-200 text-amber-900 p-4 rounded-lg">
+                  <div className="flex items-start gap-3">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 shrink-0 mt-0.5">
+                      <path d="M1 21h22L12 2 1 21zm12-3h-2v-2h2v2zm0-4h-2v-4h2v4z" />
+                    </svg>
+                    <div>
+                      <p className="text-sm font-semibold">Price changes detected</p>
+                      <p className="text-xs mt-1">Some items in your cart have changed price since you added them.</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Items List */}
               {items.map((item) => (
                 <CartItemCard
-                  key={item.id}
+                  key={item.cartItemId}
                   item={item}
                   onRemove={handleRemoveItem}
-                  onSaveForLater={handleSaveForLater}
                 />
               ))}
             </div>
@@ -220,22 +205,22 @@ export function CartPageContent() {
             {/* Summary Sidebar */}
             <div className="lg:col-span-1">
               <CartSummary
-                summary={summary}
+                totalItems={items.length}
+                totalPrice={totalPrice}
                 onCheckout={handleCheckout}
-                isProcessing={isProcessing}
               />
 
-              {/* Money Back Guarantee */}
+              {/* Secure Checkout Badge */}
               <div className="mt-4 sm:mt-6 p-3 sm:p-4 rounded-xl border border-gray-200 bg-white flex items-center gap-3">
-                <span className="material-symbols-outlined text-brand-blue text-2xl sm:text-3xl flex-shrink-0">
-                  verified_user
-                </span>
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-6 sm:size-7 text-brand-blue flex-shrink-0">
+                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm0 10.99h7c-.53 4.12-3.28 7.79-7 8.94V12H5V6.3l7-3.11v8.8z" />
+                </svg>
                 <div>
                   <p className="text-xs sm:text-sm font-bold text-brand-navy leading-none">
-                    30-Day Money Back
+                    Secure Checkout
                   </p>
                   <p className="text-[10px] sm:text-xs text-gray-500 mt-1">
-                    Guaranteed satisfaction on all courses.
+                    Your payment information is protected.
                   </p>
                 </div>
               </div>
@@ -243,6 +228,15 @@ export function CartPageContent() {
           </div>
         )}
       </div>
+
+      {/* Clear Cart Confirmation Modal */}
+      {showClearModal && (
+        <ClearCartModal
+          itemCount={items.length}
+          onConfirm={handleConfirmClear}
+          onCancel={handleCancelClear}
+        />
+      )}
     </main>
   )
 }

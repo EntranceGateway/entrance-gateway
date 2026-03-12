@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { QuizHeader } from './QuizHeader'
 import { QuizCard, QuizCardGrid } from './QuizCard'
 import { QuizDetailSidebar } from './QuizDetailSidebar'
@@ -8,6 +9,9 @@ import { QuizPaymentForm } from './QuizPaymentForm'
 import { CardGridSkeleton } from '@/components/shared/Loading'
 import { fetchQuizzes } from '@/services/client/quiz.client'
 import { checkPurchaseStatus } from '@/services/client/payment.client'
+import { addToCartAction } from '@/services/server/cart.server'
+import { useToast } from '@/components/shared/Toast'
+import { useAuth } from '@/hooks/auth/useAuth'
 import type { Quiz, QuizListResponse } from '@/types/quiz.types'
 import type { PurchaseStatus } from '@/types/payment.types'
 
@@ -16,6 +20,9 @@ interface QuizPageContentProps {
 }
 
 export function QuizPageContent({ initialData }: QuizPageContentProps) {
+  const router = useRouter()
+  const { success, error: showError } = useToast()
+  const { isLoggedIn } = useAuth()
   const [quizzes, setQuizzes] = useState<Quiz[]>(
     initialData?.data?.content || []
   )
@@ -50,8 +57,7 @@ export function QuizPageContent({ initialData }: QuizPageContentProps) {
           setError('Invalid response format')
         }
       } catch (err) {
-        // Don't leak internal error details
-        console.error('Error loading quizzes:', err)
+        // Silent error - don't leak internal error details
         setError('Unable to load quizzes. Please try again later.')
       } finally {
         setIsLoading(false)
@@ -76,16 +82,35 @@ export function QuizPageContent({ initialData }: QuizPageContentProps) {
     }
   }
 
-  const handleAddToCart = (quiz: Quiz) => {
-    // TODO: Implement add to cart functionality
-    // For now, just show a success message
-    alert(`Added "${quiz.setName}" to cart!`)
-    
-    // In production, this would:
-    // 1. Call API to add item to cart
-    // 2. Update cart count in header
-    // 3. Show toast notification
-    // 4. Optionally redirect to cart page
+  const handleAddToCart = async (quiz: Quiz) => {
+    // Check if user is logged in
+    if (!isLoggedIn) {
+      showError('Please sign in to add items to cart')
+      sessionStorage.setItem('redirectAfterLogin', '/quiz')
+      router.push('/signin')
+      return
+    }
+
+    // Check if quiz is free
+    if (quiz.price === 0) {
+      showError('Free quizzes do not need to be added to cart')
+      return
+    }
+
+    try {
+      const result = await addToCartAction(quiz.questionSetId)
+      
+      if (result.success) {
+        success(result.message)
+        // Trigger cart count refresh
+        window.dispatchEvent(new Event('cartUpdated'))
+      } else {
+        showError(result.message)
+      }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to add item to cart'
+      showError(errorMessage)
+    }
   }
 
   const handleCloseSidebar = () => {

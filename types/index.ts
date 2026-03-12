@@ -92,6 +92,8 @@ export type {
 
 export type {
   CartItem,
-  CartSummary,
+  CartData,
   CartResponse,
+  AddToCartResponse,
+  RemoveFromCartResponse,
 } from './cart.types'
