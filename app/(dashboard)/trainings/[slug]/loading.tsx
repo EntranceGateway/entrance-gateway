@@ -50,15 +50,7 @@ export default function TrainingsDetailLoading() {
               </div>
             </div>
 
-            {/* Who Should Attend Skeleton */}
-            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 animate-pulse">
-              <div className="h-8 w-56 bg-gray-200 rounded mb-4" />
-              <div className="space-y-3">
-                <div className="h-4 w-full bg-gray-200 rounded" />
-                <div className="h-4 w-full bg-gray-200 rounded" />
-                <div className="h-4 w-2/3 bg-gray-200 rounded" />
-              </div>
-            </div>
+
           </div>
 
           {/* Right Column - Sidebar Skeleton */}

@@ -404,16 +404,7 @@ export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsD
               </section>
             )}
 
-            {/* Who Should Attend Section */}
-            <section className="bg-white rounded-xl border border-gray-200 shadow-sm p-5 sm:p-6 md:p-8">
-              <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-3 sm:mb-4 font-heading">
-                Who Should Attend?
-              </h2>
-              <p className="text-sm sm:text-base text-gray-600 leading-relaxed">
-                This training is ideal for professionals looking to enhance their skills in {training.trainingCategory.toLowerCase()}. 
-                Whether you're a beginner or have some experience, this program will help you advance your career.
-              </p>
-            </section>
+
 
             {/* Remarks Section */}
             {training.remarks && (
