@@ -23,6 +23,13 @@ export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsD
   const [enrollmentStatus, setEnrollmentStatus] = useState<TrainingEnrollmentResponse | null>(null)
   const [isCheckingEnrollment, setIsCheckingEnrollment] = useState(true)
   const [isEnrollmentModalOpen, setIsEnrollmentModalOpen] = useState(false)
+  const [isSyllabusDrawerOpen, setIsSyllabusDrawerOpen] = useState(false)
+
+  // Lock body scroll when drawer is open
+  useEffect(() => {
+    document.body.style.overflow = isSyllabusDrawerOpen ? 'hidden' : ''
+    return () => { document.body.style.overflow = '' }
+  }, [isSyllabusDrawerOpen])
 
   // Fetch training data and enrollment status
   useEffect(() => {
@@ -370,21 +377,38 @@ export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsD
               </p>
             </section>
 
-            {/* Course Syllabus - Scrollable Card */}
+            {/* Course Syllabus Card */}
             {training.syllabusDescription && (
-              <section className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
-                <div className="p-5 sm:p-6 md:p-8 border-b border-gray-100">
-                  <div className="flex items-center gap-3">
-                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6 text-brand-blue shrink-0">
-                      <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
-                    </svg>
-                    <h2 className="text-xl sm:text-2xl font-bold text-brand-navy font-heading">
-                      Course Syllabus
-                    </h2>
+              <section
+                onClick={() => setIsSyllabusDrawerOpen(true)}
+                className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden cursor-pointer hover:border-brand-blue/30 hover:shadow-md transition-all group"
+              >
+                <div className="p-5 sm:p-6 md:p-8">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6 text-brand-blue shrink-0">
+                        <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                      </svg>
+                      <h2 className="text-xl sm:text-2xl font-bold text-brand-navy font-heading">
+                        Course Syllabus
+                      </h2>
+                    </div>
+                    <div className="flex items-center gap-2 text-brand-blue group-hover:text-brand-navy transition-colors">
+                      <span className="text-sm font-medium hidden sm:inline">View Full Syllabus</span>
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z" />
+                      </svg>
+                    </div>
                   </div>
-                </div>
-                <div className="max-h-96 overflow-y-auto p-5 sm:p-6 md:p-8 bg-gray-50">
-                  <MarkdownRenderer content={training.syllabusDescription} />
+                  <div className="mt-4 max-h-32 overflow-hidden relative">
+                    <div className="text-sm text-gray-600 line-clamp-4">
+                      <MarkdownRenderer content={training.syllabusDescription} />
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-white to-transparent" />
+                  </div>
+                  <p className="mt-3 text-sm font-medium text-brand-blue group-hover:text-brand-navy transition-colors">
+                    Tap to read full syllabus →
+                  </p>
                 </div>
               </section>
             )}
@@ -433,6 +457,46 @@ export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsD
           </div>
         </div>
       </div>
+
+      {/* Syllabus Full-Screen Drawer */}
+      {isSyllabusDrawerOpen && training.syllabusDescription && (
+        <div className="fixed inset-0 z-50">
+          {/* Backdrop */}
+          <div
+            className="absolute inset-0 bg-black/50"
+            onClick={() => setIsSyllabusDrawerOpen(false)}
+          />
+          {/* Drawer */}
+          <div className="absolute inset-0 bg-white overflow-hidden flex flex-col animate-slide-in">
+            {/* Sticky Header */}
+            <div className="sticky top-0 z-10 bg-brand-navy px-4 sm:px-6 py-4 flex items-center justify-between shadow-md">
+              <div className="flex items-center gap-3">
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 sm:size-6 text-brand-gold shrink-0">
+                  <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
+                </svg>
+                <h2 className="text-lg sm:text-xl font-bold text-white font-heading truncate">
+                  Course Syllabus
+                </h2>
+              </div>
+              <button
+                onClick={() => setIsSyllabusDrawerOpen(false)}
+                className="p-2 rounded-lg text-white/80 hover:text-white hover:bg-white/10 transition-colors"
+                aria-label="Close syllabus"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
+                  <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                </svg>
+              </button>
+            </div>
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-4 sm:p-6 md:p-8 lg:px-16 lg:py-10 bg-gray-50">
+              <div className="max-w-3xl mx-auto">
+                <MarkdownRenderer content={training.syllabusDescription} />
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Enrollment Details Modal */}
       {isEnrollmentModalOpen && enrollmentData && (
