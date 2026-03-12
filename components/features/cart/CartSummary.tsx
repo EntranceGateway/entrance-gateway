@@ -53,11 +53,11 @@ export function CartSummary({ totalItems, totalPrice, onCheckout }: CartSummaryP
 
       <p className="text-center text-[10px] sm:text-[11px] text-gray-400 leading-relaxed px-2 sm:px-4">
         By proceeding, you agree to the EntranceGateway{' '}
-        <button onClick={() => router.push('/terms')} className="underline hover:text-brand-blue">
+        <button onClick={() => router.push('/terms')} className="underline hover:text-brand-blue cursor-pointer">
           Terms of Service
         </button>{' '}
         and{' '}
-        <button onClick={() => router.push('/privacy')} className="underline hover:text-brand-blue">
+        <button onClick={() => router.push('/privacy')} className="underline hover:text-brand-blue cursor-pointer">
           Privacy Policy
         </button>.
       </p>

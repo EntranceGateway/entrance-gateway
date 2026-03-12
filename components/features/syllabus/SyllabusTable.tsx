@@ -62,15 +62,15 @@ export function SyllabusTable({ data, onItemClick }: SyllabusTableProps) {
                   key={item.id}
                   onClick={() => onItemClick?.(item.id)}
                   className={cn(
-                    'transition-colors group cursor-pointer',
-                    'hover:bg-blue-50/30',
+                    'transition-all duration-200 group cursor-pointer',
+                    'hover:bg-blue-50 hover:shadow-md hover:scale-[1.01]',
                     index % 2 === 1 && 'bg-gray-50'
                   )}
                 >
-                  <td className="px-6 py-4 font-mono text-gray-600 font-medium">
+                  <td className="px-6 py-4 font-mono text-gray-600 font-medium group-hover:text-brand-blue transition-colors">
                     {item.code}
                   </td>
-                  <td className="px-6 py-4 font-semibold text-brand-navy text-base">
+                  <td className="px-6 py-4 font-semibold text-brand-navy text-base group-hover:text-brand-blue transition-colors">
                     {item.name}
                   </td>
                   <td className="px-6 py-4">

@@ -30,7 +30,6 @@ export function SyllabusPageContent({ initialData, firstCourseSyllabus }: Syllab
         setCourses(response.data.content)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Failed to load courses')
-        console.error('Error fetching courses:', err)
       } finally {
         setIsLoading(false)
       }

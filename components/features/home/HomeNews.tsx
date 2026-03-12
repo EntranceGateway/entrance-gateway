@@ -1,4 +1,5 @@
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Blog } from '@/types/blogs.types'
 
 interface HomeNewsProps {
@@ -12,7 +13,8 @@ export function HomeNews({ blogsData = [] }: HomeNewsProps) {
     slug: blog.slug,
     blogId: blog.blogId,
     title: blog.title,
-    image: `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`,
+    // imageName already contains the full URL from Cloudflare R2
+    image: blog.imageName,
     date: new Date(blog.createdDate).toLocaleDateString('en-US', {
       day: 'numeric',
       month: 'short',
@@ -63,12 +65,22 @@ export function HomeNews({ blogsData = [] }: HomeNewsProps) {
               className="bg-white rounded-xl shadow-sm hover:shadow-lg transition-all border border-gray-100 flex flex-col sm:flex-row p-4 sm:p-5 md:p-6 items-start sm:items-center gap-4 sm:gap-5 md:gap-6 group"
             >
               {/* Image */}
-              <div className="w-full sm:w-1/3 flex-shrink-0">
-                <img
-                  alt={article.title}
-                  className="rounded-lg object-cover h-48 sm:h-28 md:h-32 w-full"
-                  src={article.image}
-                />
+              <div className="w-full sm:w-1/3 flex-shrink-0 relative h-48 sm:h-28 md:h-32 bg-gray-100 rounded-lg overflow-hidden">
+                {article.image ? (
+                  <Image
+                    src={article.image}
+                    alt={article.title}
+                    fill
+                    className="rounded-lg object-cover"
+                    sizes="(max-width: 640px) 100vw, 33vw"
+                  />
+                ) : (
+                  <div className="w-full h-full bg-gray-100 rounded-lg flex items-center justify-center">
+                    <svg viewBox="0 0 24 24" fill="currentColor" className="size-8 sm:size-10 text-gray-300">
+                      <path d="M21 19V5c0-1.1-.9-2-2-2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2zM8.5 13.5l2.5 3.01L14.5 12l4.5 6H5l3.5-4.5z" />
+                    </svg>
+                  </div>
+                )}
               </div>
               
               {/* Content */}

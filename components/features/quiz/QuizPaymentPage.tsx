@@ -171,7 +171,7 @@ export function QuizPaymentPage({ slug }: QuizPaymentPageProps) {
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         {/* Breadcrumbs */}
         <div className="flex items-center gap-2 mb-6 text-sm font-medium text-gray-500">
-          <button onClick={() => router.push('/quiz')} className="hover:text-brand-blue">
+          <button onClick={() => router.push('/quiz')} className="hover:text-brand-blue cursor-pointer">
             Quizzes
           </button>
           <span className="material-symbols-outlined text-sm">chevron_right</span>

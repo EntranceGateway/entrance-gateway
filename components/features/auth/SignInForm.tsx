@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { FormInput } from '@/components/shared/Form/FormInput'
+import { PasswordInput } from '@/components/shared/Form/PasswordInput'
 import { Spinner } from '@/components/shared/Loading'
 import { login } from '@/lib/auth/client'
 import { useToast } from '@/components/shared/Toast'
@@ -125,42 +126,29 @@ export function SignInForm() {
 
         {/* Password */}
         <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-              Password
-            </label>
-            <div className="text-sm">
+          <PasswordInput
+            id="password"
+            name="password"
+            label="Password"
+            rightLabel={
               <Link
                 href="/forgot-password"
                 className="font-medium text-brand-blue hover:text-brand-navy transition-colors"
               >
                 Forgot Password?
               </Link>
-            </div>
-          </div>
-          <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
-                <path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z" />
-              </svg>
-            </div>
-            <input
-              id="password"
-              name="password"
-              type="password"
-              autoComplete="current-password"
-              required
-              value={formData.password}
-              onChange={(e) => {
-                setFormData({ ...formData, password: e.target.value })
-                if (fieldErrors.password) {
-                  setFieldErrors({ ...fieldErrors, password: '' })
-                }
-              }}
-              placeholder="••••••••"
-              className="block w-full pl-10 pr-3 py-3 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-blue/20 focus:border-brand-blue sm:text-sm transition-all"
-            />
-          </div>
+            }
+            placeholder="••••••••"
+            value={formData.password}
+            onChange={(e) => {
+              setFormData({ ...formData, password: e.target.value })
+              if (fieldErrors.password) {
+                setFieldErrors({ ...fieldErrors, password: '' })
+              }
+            }}
+            required
+            autoComplete="current-password"
+          />
           {fieldErrors.password && (
             <p className="mt-1 text-xs text-semantic-error">{fieldErrors.password}</p>
           )}

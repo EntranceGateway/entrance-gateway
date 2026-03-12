@@ -42,11 +42,10 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
               slugMap[item.syllabusId] = item.slug
             }
           })
-          console.log('Syllabus slug map:', slugMap)
           setSyllabusSlugMap(slugMap)
         }
       } catch (error) {
-        console.error('Error fetching syllabus slug map:', error)
+        // Silent error - slug map is optional
       }
     }
 
@@ -56,10 +55,6 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
   // Pre-populate first course's syllabus from SSR data
   useEffect(() => {
     if (firstCourseSyllabus && courses[0]) {
-      console.log('=== Syllabus List Page - First Course Syllabus ===')
-      console.log('First Course Syllabus:', firstCourseSyllabus)
-      console.log('Years:', firstCourseSyllabus.data.years)
-      
       setCourseData({
         [courses[0].id]: firstCourseSyllabus.data.years,
       })
@@ -86,17 +81,14 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
     // Fetch full syllabus if not already loaded
     if (!courseData[courseId]) {
       try {
-        console.log('Fetching full syllabus for course ID:', courseId)
         const response = await fetchFullSyllabus(parseInt(courseId))
-        console.log('Full Syllabus Response:', response)
-        console.log('Years data:', response.data.years)
         
         setCourseData(prev => ({
           ...prev,
           [courseId]: response.data.years,
         }))
       } catch (error) {
-        console.error('Error fetching syllabus:', error)
+        // Silent error - will show empty state
       }
     }
 
@@ -148,7 +140,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
             {/* Course Header */}
             <button
               onClick={() => handleCourseClick(course.id)}
-              className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 text-left"
+              className="w-full px-4 sm:px-6 py-4 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 text-left cursor-pointer"
             >
               <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
                 <div className="shrink-0 w-10 h-10 sm:w-12 sm:h-12 bg-brand-navy/10 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
@@ -217,7 +209,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                           {/* Semester Header */}
                           <button
                             onClick={() => handleSemesterClick(semesterId)}
-                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 text-left"
+                            className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50 transition-colors duration-200 text-left cursor-pointer"
                           >
                             <div className="flex items-center gap-3 min-w-0 flex-1">
                               <div className="shrink-0 w-8 h-8 bg-brand-blue/10 rounded-lg flex items-center justify-center transition-transform duration-300 hover:scale-110">
@@ -258,18 +250,11 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                 const subjectSlug = syllabusSlugMap[subject.syllabusId]
                                 const subjectIdentifier = subjectSlug || subject.syllabusId
                                 
-                                console.log('Subject in list:', {
-                                  syllabusId: subject.syllabusId,
-                                  slug: subjectSlug,
-                                  subjectName: subject.subjectName,
-                                  identifier: subjectIdentifier
-                                })
-                                
                                 return (
                                   <Link
                                     key={subjectKey}
                                     href={subjectIdentifier ? `/syllabus/${subjectIdentifier}` : '#'}
-                                    className={`w-full px-4 py-3 hover:bg-white transition-all duration-200 text-left group block ${
+                                    className={`w-full px-4 py-3 hover:bg-white transition-all duration-200 text-left group block cursor-pointer ${
                                       !subjectIdentifier ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                                     }`}
                                   >

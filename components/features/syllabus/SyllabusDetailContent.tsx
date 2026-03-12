@@ -18,13 +18,6 @@ export function SyllabusDetailContent({ syllabusSlug, initialData }: SyllabusDet
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
-  // Console log initial data
-  console.log('=== Syllabus Detail Page ===')
-  console.log('Syllabus Slug/ID:', syllabusSlug)
-  console.log('Initial Data:', initialData)
-  console.log('Syllabus State:', syllabusData)
-  console.log('Syllabus File (direct URL):', syllabusData?.syllabusFile)
-
   // Validate syllabusSlug (can be slug or id)
   if (!syllabusSlug || syllabusSlug === 'undefined' || syllabusSlug === 'null') {
     return (
@@ -63,13 +56,9 @@ export function SyllabusDetailContent({ syllabusSlug, initialData }: SyllabusDet
       setError(null)
 
       try {
-        console.log('Fetching syllabus with slug/id:', syllabusSlug)
         const response = await fetchSyllabusById(syllabusSlug)
-        console.log('Fetched Syllabus Response:', response)
-        console.log('Syllabus File URL:', response.data.syllabusFile)
         setSyllabusData(response.data)
       } catch (err) {
-        console.error('Error fetching syllabus:', err)
         setError(err instanceof Error ? err.message : 'Failed to load syllabus')
       } finally {
         setIsLoading(false)

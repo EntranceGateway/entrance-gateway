@@ -17,9 +17,10 @@ interface SyllabusCardProps {
 export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
   return (
     <div
+      onClick={() => onClick?.(item.id)}
       className={cn(
-        'bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all',
-        'hover:shadow-md hover:border-brand-blue/30'
+        'bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-200 group cursor-pointer',
+        'hover:shadow-xl hover:border-brand-blue hover:-translate-y-1 hover:scale-[1.02]'
       )}
     >
       {/* Header: Code and Badge */}
@@ -40,7 +41,7 @@ export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
       </div>
 
       {/* Subject Name */}
-      <h3 className="font-semibold text-brand-navy text-base leading-tight mb-3">
+      <h3 className="font-semibold text-brand-navy text-base leading-tight mb-3 group-hover:text-brand-blue transition-colors">
         {item.name}
       </h3>
 

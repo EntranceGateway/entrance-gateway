@@ -1,20 +1,26 @@
 'use client'
 
-import { useState, InputHTMLAttributes } from 'react'
+import { useState, InputHTMLAttributes, ReactNode } from 'react'
 import { cn } from '@/lib/utils/cn'
 
 interface PasswordInputProps extends Omit<InputHTMLAttributes<HTMLInputElement>, 'type'> {
   label: string
+  rightLabel?: ReactNode
 }
 
-export function PasswordInput({ id, label, className, ...props }: PasswordInputProps) {
+export function PasswordInput({ id, label, rightLabel, className, ...props }: PasswordInputProps) {
   const [showPassword, setShowPassword] = useState(false)
 
   return (
     <div className="space-y-1">
-      <label htmlFor={id} className="block text-sm font-semibold text-gray-700">
-        {label}
-      </label>
+      {label && (
+        <div className="flex items-center justify-between mb-1.5">
+          <label htmlFor={id} className="block text-sm font-semibold text-gray-700">
+            {label}
+          </label>
+          {rightLabel && <div className="text-sm">{rightLabel}</div>}
+        </div>
+      )}
       <div className="relative">
         <input
           id={id}
