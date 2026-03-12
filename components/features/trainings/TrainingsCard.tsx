@@ -83,17 +83,22 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
         >
           View Details
         </Link>
-        {item.materialsLink && (
-          <button
-            onClick={() => onDownloadSyllabus?.(item.trainingId)}
-            className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-brand-blue font-medium py-2 w-full transition-colors"
-          >
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
-              <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
-            </svg>
-            Download Syllabus
-          </button>
-        )}
+        {/* Always reserve space for download button to maintain consistent card height */}
+        <div className="h-10 flex items-center justify-center">
+          {item.materialsLink ? (
+            <button
+              onClick={() => onDownloadSyllabus?.(item.trainingId)}
+              className="flex items-center justify-center gap-2 text-sm text-gray-500 hover:text-brand-blue font-medium transition-colors"
+            >
+              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5">
+                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z" />
+              </svg>
+              Download Syllabus
+            </button>
+          ) : (
+            <div className="h-10" />
+          )}
+        </div>
       </div>
     </div>
   )
