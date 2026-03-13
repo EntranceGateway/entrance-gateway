@@ -66,6 +66,7 @@ export async function submitPaymentWithProof(
  */
 export async function submitBulkPaymentWithProof(
   quizIds: number[],
+  quizPrices: number[],
   paymentData: PaymentRequest,
   proofFile: File
 ): Promise<PaymentResponse> {
@@ -74,18 +75,31 @@ export async function submitBulkPaymentWithProof(
     throw new Error('No quizzes provided for payment')
   }
   
-  // Submit payment for each quiz sequentially
+  if (quizPrices.length !== quizIds.length) {
+    throw new Error('Quiz IDs and prices count mismatch')
+  }
+  
+  // Submit payment for each quiz sequentially with its individual price
   // Note: This is a workaround since the backend doesn't have a bulk payment endpoint
-  // We submit the same payment proof for all quizzes
+  // We submit the same payment proof for all quizzes but with individual prices
   
   const results: PaymentResponse[] = []
   
-  for (const quizId of quizIds) {
+  for (let i = 0; i < quizIds.length; i++) {
+    const quizId = quizIds[i]
+    const quizPrice = quizPrices[i]
+    
     try {
+      // Create payment request with individual quiz price
+      const individualPaymentData = {
+        ...paymentData,
+        amount: quizPrice,
+      }
+      
       const result = await submitPaymentWithProof(
         quizId,
         'QUIZ',
-        paymentData,
+        individualPaymentData,
         proofFile
       )
       results.push(result)

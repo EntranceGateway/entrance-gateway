@@ -24,6 +24,19 @@ export function SignInPageContent() {
               <Image src="/eg-logo.jpg" alt="EntranceGateway" width={180} height={50} className="h-10 w-auto" priority />
             </div>
 
+            {/* Back Button */}
+            <div className="mb-6">
+              <Link 
+                href="/"
+                className="inline-flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-brand-blue transition-colors"
+              >
+                <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
+                  <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z" />
+                </svg>
+                Back to Home
+              </Link>
+            </div>
+
             {/* Header */}
             <div className="text-center sm:text-left">
               <h2 className="text-3xl font-bold tracking-tight text-brand-navy font-heading">

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { Spinner } from '@/components/shared/Loading'
 import { submitBulkPaymentWithProof } from '@/services/client/payment.client'
-import { getCart } from '@/services/server/cart.server'
+import { getCart, clearCartAction } from '@/services/server/cart.server'
 import { useToast } from '@/components/shared/Toast'
 import type { CartItem } from '@/types/cart.types'
 
@@ -44,11 +44,13 @@ export function CartPaymentPage() {
         
         // Defensive check for response.data
         if (!response?.data) {
-          setError('Failed to load cart data')
+          showError('Unable to load cart. Please try again.')
+          router.push('/cart')
           return
         }
         
         if (response.data.items.length === 0) {
+          showError('Your cart is empty')
           router.push('/cart')
           return
         }
@@ -57,7 +59,9 @@ export function CartPaymentPage() {
         setTotalAmount(response.data.totalPrice)
       } catch (err) {
         const errorMessage = err instanceof Error ? err.message : 'Failed to load cart'
-        setError(errorMessage)
+        console.error('Cart loading error:', err)
+        showError('Unable to load cart items')
+        router.push('/cart')
       } finally {
         setIsLoading(false)
       }
@@ -66,16 +70,18 @@ export function CartPaymentPage() {
     if (!authLoading && isLoggedIn) {
       loadCart()
     }
-  }, [authLoading, isLoggedIn, router])
+  }, [authLoading, isLoggedIn, router, showError])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
+        showError('File size must be less than 5MB')
         setError('File size must be less than 5MB')
         return
       }
       if (!['image/jpeg', 'image/png'].includes(file.type)) {
+        showError('Only JPG and PNG files are allowed')
         setError('Only JPG and PNG files are allowed')
         return
       }
@@ -87,14 +93,19 @@ export function CartPaymentPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    if (cartItems.length === 0) return
+    if (cartItems.length === 0) {
+      showError('Your cart is empty')
+      return
+    }
     
     // Validation
     if (!transactionRef.trim()) {
+      showError('Transaction reference is required')
       setError('Transaction reference is required')
       return
     }
     if (!receiptFile) {
+      showError('Payment receipt is required')
       setError('Payment receipt is required')
       return
     }
@@ -104,45 +115,62 @@ export function CartPaymentPage() {
 
     try {
       const paymentRequest = {
-        amount: totalAmount,
+        amount: totalAmount, // This will be overridden per quiz
         paymentMethod: 'BANK_TRANSFER' as const,
         transactionReference: transactionRef,
         remarks: remarks || `Payment for ${cartItems.length} quiz(zes)`,
       }
 
-      // Extract quiz IDs from cart items
+      // Extract quiz IDs and prices from cart items
       const quizIds = cartItems.map(item => item.quizId)
+      const quizPrices = cartItems.map(item => item.currentPrice)
 
       await submitBulkPaymentWithProof(
         quizIds,
+        quizPrices,
         paymentRequest,
         receiptFile
       )
       
-      success('Payment submitted successfully!')
+      // Clear cart after successful payment
+      try {
+        await clearCartAction()
+      } catch (clearError) {
+        // Silent error - log but don't fail
+        console.error('Failed to clear cart after payment:', clearError)
+      }
       
-      // Redirect to success page
-      router.push('/cart/payment/success')
+      success('Payment submitted successfully! Redirecting...')
+      
+      // Small delay to show success message
+      setTimeout(() => {
+        router.push('/cart/payment/success')
+      }, 1000)
     } catch (err) {
-      let errorMessage = 'Failed to submit payment proof. Please try again.'
+      console.error('Payment submission error:', err)
+      
+      let errorMessage = 'Failed to submit payment. Please try again.'
       
       if (err instanceof Error) {
         const message = err.message.toLowerCase()
         
         if (message.includes('network') || message.includes('fetch')) {
-          errorMessage = 'Network error. Please check your connection and try again.'
-        } else if (message.includes('unauthorized') || message.includes('authentication')) {
+          errorMessage = 'Network error. Please check your connection.'
+        } else if (message.includes('unauthorized') || message.includes('authentication') || message.includes('session')) {
           errorMessage = 'Session expired. Please log in again.'
+          setTimeout(() => router.push('/signin'), 2000)
         } else if (message.includes('file') || message.includes('upload')) {
           errorMessage = 'Failed to upload receipt. Please try a different file.'
-        } else {
+        } else if (message.includes('amount') || message.includes('price')) {
+          errorMessage = 'Payment amount validation failed. Please refresh and try again.'
+        } else if (err.message && err.message.length < 100) {
+          // Use API error message if it's reasonable length
           errorMessage = err.message
         }
       }
       
       setError(errorMessage)
       showError(errorMessage)
-      console.error('Payment submission error:', err)
     } finally {
       setIsProcessing(false)
     }
@@ -169,10 +197,16 @@ export function CartPaymentPage() {
       <main className="flex-grow bg-gray-50">
         <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
-            <p className="text-error mb-4">{error}</p>
+            <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-4">
+              <svg viewBox="0 0 24 24" fill="currentColor" className="w-8 h-8 text-red-600">
+                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Unable to Load Cart</h3>
+            <p className="text-gray-600 mb-6">{error}</p>
             <button
               onClick={() => router.push('/cart')}
-              className="text-brand-blue hover:underline"
+              className="bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-6 rounded-lg transition-colors"
             >
               Back to Cart
             </button>
@@ -185,15 +219,6 @@ export function CartPaymentPage() {
   return (
     <main className="flex-grow bg-gray-50">
       <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
-        {/* Breadcrumbs */}
-        <div className="flex items-center gap-2 mb-6 text-sm font-medium text-gray-500">
-          <button onClick={() => router.push('/cart')} className="hover:text-brand-blue cursor-pointer">
-            Cart
-          </button>
-          <span className="material-symbols-outlined text-sm" aria-hidden="true">chevron_right</span>
-          <span className="text-brand-blue">Payment Submission</span>
-        </div>
-
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="text-2xl sm:text-3xl font-heading font-bold text-brand-navy mb-2">
@@ -367,8 +392,11 @@ export function CartPaymentPage() {
 
                   {/* Error Message */}
                   {error && (
-                    <div className="p-4 bg-error/10 border border-error rounded-lg">
-                      <p className="text-error text-sm">{error}</p>
+                    <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-start gap-3">
+                      <svg viewBox="0 0 24 24" fill="currentColor" className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5">
+                        <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
+                      </svg>
+                      <p className="text-red-800 text-sm flex-1">{error}</p>
                     </div>
                   )}
 

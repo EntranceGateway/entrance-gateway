@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { MyEnrollmentCard } from './MyEnrollmentCard'
 import { EnrollmentCard } from './EnrollmentCard'
-import { CenteredSpinner } from '@/components/shared/Loading'
+import { EnrollmentCardSkeletonGrid } from './EnrollmentCardSkeleton'
 import { fetchMyQuizPurchases, fetchMyTrainingEnrollments } from '@/services/client/enrollment.client'
 import type { QuizPurchase } from '@/types/enrollment.types'
 import type { TrainingEnrollment } from '@/types/trainings.types'
@@ -95,9 +95,7 @@ export function MyEnrollmentsContent() {
 
         {/* Loading State */}
         {isLoading && (
-          <div className="py-12">
-            <CenteredSpinner size="lg" text="Loading your enrollments..." />
-          </div>
+          <EnrollmentCardSkeletonGrid count={3} />
         )}
 
         {/* Error State */}

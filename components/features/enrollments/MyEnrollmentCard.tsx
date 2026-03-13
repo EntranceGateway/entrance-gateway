@@ -47,9 +47,9 @@ export function MyEnrollmentCard({ purchase }: MyEnrollmentCardProps) {
     })
   }
 
-  const handleAction = () => {
+  const handleAction = async () => {
     if (purchase.purchaseStatus === 'PAID' || purchase.purchaseStatus === 'ACTIVE') {
-      router.push(`/quiz/${purchase.quizSlug}/start`)
+      router.push(`/quiz/${purchase.quizId}/start`)
     } else if (purchase.purchaseStatus === 'FAILED' || purchase.purchaseStatus === 'PAYMENT_FAILED') {
       router.push(`/quiz/${purchase.quizSlug}/payment`)
     } else {
@@ -61,12 +61,12 @@ export function MyEnrollmentCard({ purchase }: MyEnrollmentCardProps) {
     if (purchase.purchaseStatus === 'PAID' || purchase.purchaseStatus === 'ACTIVE') {
       return {
         label: 'Start Quiz',
-        className: 'w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg bg-brand-gold hover:bg-yellow-400 text-brand-navy font-semibold text-xs sm:text-sm transition-colors'
+        className: 'w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg bg-brand-gold hover:bg-yellow-400 text-brand-navy font-semibold text-xs sm:text-sm transition-colors cursor-pointer'
       }
     } else if (purchase.purchaseStatus === 'FAILED' || purchase.purchaseStatus === 'PAYMENT_FAILED') {
       return {
         label: 'Retry Payment',
-        className: 'w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs sm:text-sm transition-colors'
+        className: 'w-full py-2 sm:py-2.5 px-3 sm:px-4 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-xs sm:text-sm transition-colors cursor-pointer'
       }
     }
     return null

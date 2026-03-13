@@ -51,6 +51,23 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
           rel="stylesheet"
         />
+
+        {/* KaTeX — LaTeX math rendering for quiz questions */}
+        <link
+          rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.css"
+          crossOrigin="anonymous"
+        />
+        <script
+          defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/katex.min.js"
+          crossOrigin="anonymous"
+        />
+        <script
+          defer
+          src="https://cdn.jsdelivr.net/npm/katex@0.16.21/dist/contrib/auto-render.min.js"
+          crossOrigin="anonymous"
+        />
       </head>
       <body
         className={`${inter.variable} ${roboto.variable} antialiased`}

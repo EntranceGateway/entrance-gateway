@@ -37,7 +37,7 @@ export function QuizPaymentPage({ slug }: QuizPaymentPageProps) {
   useEffect(() => {
     // TODO: Fetch quiz details by slug
     // For now, using mock data
-    setTimeout(() => {
+    const timer = setTimeout(() => {
       setQuiz({
         questionSetId: 2,
         slug: 'bca-i-9cf270',
@@ -51,6 +51,7 @@ export function QuizPaymentPage({ slug }: QuizPaymentPageProps) {
       })
       setIsLoading(false)
     }, 500)
+    return () => clearTimeout(timer)
   }, [slug])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

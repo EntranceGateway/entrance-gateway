@@ -187,7 +187,7 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
             {(purchaseStatus === 'PAID' || purchaseStatus === 'ACTIVE') && (
               <button
                 onClick={() => {
-                  window.location.href = `/quiz/${quiz.slug || quiz.questionSetId}/start`
+                  window.location.href = `/quiz/${quiz.questionSetId}/start`
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
               >
