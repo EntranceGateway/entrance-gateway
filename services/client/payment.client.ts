@@ -61,6 +61,45 @@ export async function submitPaymentWithProof(
 }
 
 /**
+ * Submit bulk payment for multiple quizzes with proof file
+ * Submits payment for all quizzes in the cart
+ */
+export async function submitBulkPaymentWithProof(
+  quizIds: number[],
+  paymentData: PaymentRequest,
+  proofFile: File
+): Promise<PaymentResponse> {
+  // Handle empty array
+  if (!quizIds || quizIds.length === 0) {
+    throw new Error('No quizzes provided for payment')
+  }
+  
+  // Submit payment for each quiz sequentially
+  // Note: This is a workaround since the backend doesn't have a bulk payment endpoint
+  // We submit the same payment proof for all quizzes
+  
+  const results: PaymentResponse[] = []
+  
+  for (const quizId of quizIds) {
+    try {
+      const result = await submitPaymentWithProof(
+        quizId,
+        'QUIZ',
+        paymentData,
+        proofFile
+      )
+      results.push(result)
+    } catch (error) {
+      // If any payment fails, throw error
+      throw new Error(`Failed to submit payment for quiz ${quizId}: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    }
+  }
+  
+  // Return the last result (all should be similar)
+  return results[results.length - 1]
+}
+
+/**
  * Check purchase status for a quiz
  * Uses Next.js API proxy route: GET /api/payments/status/{quizId}
  */

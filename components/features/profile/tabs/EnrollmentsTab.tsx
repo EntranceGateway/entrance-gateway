@@ -54,14 +54,85 @@ export function EnrollmentsTab({ data, onPageChange }: EnrollmentsTabProps) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-4 p-4">
+        {data.content.map((enrollment) => (
+          <div
+            key={enrollment.enrollmentId}
+            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <h3 className="font-semibold text-brand-navy text-sm flex-1">
+                {enrollment?.trainingName || 'N/A'}
+              </h3>
+              <span
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(
+                  enrollment?.status || 'ACTIVE'
+                )}`}
+              >
+                <span className="size-1.5 rounded-full bg-current"></span>
+                {enrollment?.status || 'ACTIVE'}
+              </span>
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Payment:</span>
+                <span className="font-semibold text-gray-900">
+                  NPR {(enrollment?.paidAmount ?? 0).toLocaleString()}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-500">Enrolled:</span>
+                <span className="text-gray-900">
+                  {enrollment?.enrollmentDate ? new Date(enrollment.enrollmentDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }) : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="pt-2">
+                <div className="flex justify-between items-center mb-1">
+                  <span className="text-gray-500">Progress:</span>
+                  <span className="text-xs font-bold text-gray-900">
+                    {enrollment?.progressPercentage || 0}%
+                  </span>
+                </div>
+                <div 
+                  className="w-full h-2 bg-gray-100 rounded-full overflow-hidden"
+                  role="progressbar"
+                  aria-valuenow={enrollment?.progressPercentage || 0}
+                  aria-valuemin={0}
+                  aria-valuemax={100}
+                  aria-label={`Training progress: ${enrollment?.progressPercentage || 0}%`}
+                >
+                  <div
+                    className={`h-full ${
+                      enrollment?.status === 'COMPLETED'
+                        ? 'bg-green-500'
+                        : 'bg-blue-500'
+                    }`}
+                    style={{ width: `${enrollment?.progressPercentage || 0}%` }}
+                  ></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Training Name</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Enrollment Date</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Status</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Progress</th>
+              <th className="px-6 py-4">Training Name</th>
+              <th className="px-6 py-4">Enrollment Date</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4">Progress</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -70,7 +141,7 @@ export function EnrollmentsTab({ data, onPageChange }: EnrollmentsTabProps) {
                 key={enrollment.enrollmentId}
                 className={`hover:bg-gray-50/50 ${index % 2 === 1 ? 'bg-gray-50/30' : ''}`}
               >
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="font-semibold text-brand-navy text-sm">
                     {enrollment?.trainingName || 'N/A'}
                   </p>
@@ -78,14 +149,14 @@ export function EnrollmentsTab({ data, onPageChange }: EnrollmentsTabProps) {
                     Payment: NPR {(enrollment?.paidAmount ?? 0).toLocaleString()}
                   </p>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {enrollment?.enrollmentDate ? new Date(enrollment.enrollmentDate).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
                   }) : 'N/A'}
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <span
                     className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(
                       enrollment?.status || 'ACTIVE'
@@ -95,8 +166,15 @@ export function EnrollmentsTab({ data, onPageChange }: EnrollmentsTabProps) {
                     {enrollment?.status || 'ACTIVE'}
                   </span>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
-                  <div className="w-full max-w-[100px] h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                <td className="px-6 py-4">
+                  <div 
+                    className="w-full max-w-[100px] h-1.5 bg-gray-100 rounded-full overflow-hidden"
+                    role="progressbar"
+                    aria-valuenow={enrollment?.progressPercentage || 0}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Training progress: ${enrollment?.progressPercentage || 0}%`}
+                  >
                     <div
                       className={`h-full ${
                         enrollment?.status === 'COMPLETED'
@@ -115,11 +193,14 @@ export function EnrollmentsTab({ data, onPageChange }: EnrollmentsTabProps) {
           </tbody>
         </table>
       </div>
-      <Pagination
-        currentPage={data.currentPage}
-        totalPages={data.totalPages}
-        onPageChange={onPageChange}
-      />
+      
+      <div className="p-4">
+        <Pagination
+          currentPage={data.currentPage}
+          totalPages={data.totalPages}
+          onPageChange={onPageChange}
+        />
+      </div>
     </>
   )
 }

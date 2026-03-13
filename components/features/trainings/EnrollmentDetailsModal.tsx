@@ -185,7 +185,14 @@ export function EnrollmentDetailsModal({ enrollmentData, onClose }: EnrollmentDe
               <div className="sm:col-span-2">
                 <p className="text-xs text-gray-500 uppercase tracking-wide mb-2">Progress</p>
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <div className="flex-1 bg-gray-200 rounded-full h-2 sm:h-2.5">
+                  <div 
+                    className="flex-1 bg-gray-200 rounded-full h-2 sm:h-2.5"
+                    role="progressbar"
+                    aria-valuenow={enrollmentData.progressPercentage}
+                    aria-valuemin={0}
+                    aria-valuemax={100}
+                    aria-label={`Enrollment progress: ${enrollmentData.progressPercentage}%`}
+                  >
                     <div
                       className="bg-brand-blue h-2 sm:h-2.5 rounded-full transition-all"
                       style={{ width: `${enrollmentData.progressPercentage}%` }}

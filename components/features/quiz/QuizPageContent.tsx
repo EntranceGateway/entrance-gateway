@@ -104,6 +104,9 @@ export function QuizPageContent({ initialData }: QuizPageContentProps) {
         success(result.message)
         // Trigger cart count refresh
         window.dispatchEvent(new Event('cartUpdated'))
+        
+        // Redirect to quiz payment page
+        router.push(`/quiz/${quiz.slug}/payment`)
       } else {
         showError(result.message)
       }

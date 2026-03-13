@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, FormEvent } from 'react'
-import { ProfileSidebar } from './ProfileSidebar'
+import { ProfileSidebar, type ProfileSidebarTab } from './ProfileSidebar'
 import { ProfileHeader } from './ProfileHeader'
 import { PersonalInfoForm } from './PersonalInfoForm'
 import { EducationalBackgroundForm } from './EducationalBackgroundForm'
@@ -14,7 +14,7 @@ interface ProfilePageContentProps {
 }
 
 export function ProfilePageContent({ initialData }: ProfilePageContentProps) {
-  const [activeTab, setActiveTab] = useState<'profile' | 'security'>('profile')
+  const [activeTab, setActiveTab] = useState<ProfileSidebarTab>('profile')
   const [userData, setUserData] = useState<User>(initialData.data)
   const [originalData, setOriginalData] = useState<User>(initialData.data)
   const [isSaving, setIsSaving] = useState(false)

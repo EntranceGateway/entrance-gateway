@@ -41,14 +41,68 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-4 p-4">
+        {data.content.map((attempt) => (
+          <div
+            key={attempt.attemptId}
+            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-semibold text-brand-navy text-sm">
+                  {attempt?.questionSetName || 'N/A'}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">ID: {attempt?.questionSetId || 'N/A'}</p>
+              </div>
+              {attempt?.isCorrect !== undefined ? (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
+                    attempt.isCorrect
+                      ? 'bg-green-100 text-green-700 border-green-200'
+                      : 'bg-red-100 text-red-700 border-red-200'
+                  }`}
+                >
+                  <span className="size-1.5 rounded-full bg-current"></span>
+                  {attempt.isCorrect ? 'CORRECT' : 'INCORRECT'}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400">N/A</span>
+              )}
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              <div>
+                <p className="text-gray-500 mb-1">Question:</p>
+                <p className="text-gray-900 line-clamp-3">
+                  {attempt?.questionText || 'N/A'}
+                </p>
+              </div>
+              
+              <div className="flex justify-between pt-2 border-t border-gray-100">
+                <span className="text-gray-500">Attempted:</span>
+                <span className="text-gray-900">
+                  {attempt?.attemptDate ? new Date(attempt.attemptDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }) : 'N/A'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Quiz Name</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Question</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Result</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Attempted At</th>
+              <th className="px-6 py-4">Quiz Name</th>
+              <th className="px-6 py-4">Question</th>
+              <th className="px-6 py-4">Result</th>
+              <th className="px-6 py-4">Attempted At</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -57,18 +111,18 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
                 key={attempt.attemptId}
                 className={`hover:bg-gray-50/50 ${index % 2 === 1 ? 'bg-gray-50/30' : ''}`}
               >
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="font-semibold text-brand-navy text-sm">
                     {attempt?.questionSetName || 'N/A'}
                   </p>
                   <p className="text-xs text-gray-500">ID: {attempt?.questionSetId || 'N/A'}</p>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="text-sm text-gray-600 line-clamp-2 max-w-md">
                     {attempt?.questionText || 'N/A'}
                   </p>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   {attempt?.isCorrect !== undefined ? (
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${
@@ -84,7 +138,7 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
                     <span className="text-sm text-gray-400">N/A</span>
                   )}
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {attempt?.attemptDate ? new Date(attempt.attemptDate).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
@@ -96,11 +150,14 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
           </tbody>
         </table>
       </div>
-      <Pagination
-        currentPage={data.currentPage}
-        totalPages={data.totalPages}
-        onPageChange={onPageChange}
-      />
+      
+      <div className="p-4">
+        <Pagination
+          currentPage={data.currentPage}
+          totalPages={data.totalPages}
+          onPageChange={onPageChange}
+        />
+      </div>
     </>
   )
 }

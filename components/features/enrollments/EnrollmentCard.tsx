@@ -131,7 +131,14 @@ export function EnrollmentCard({ enrollment }: EnrollmentCardProps) {
                 <span>Course Progress</span>
                 <span>{enrollment.progressPercentage}%</span>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
+              <div 
+                className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2"
+                role="progressbar"
+                aria-valuenow={enrollment.progressPercentage}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-label={`Course progress: ${enrollment.progressPercentage}%`}
+              >
                 <div
                   className="bg-brand-blue h-1.5 sm:h-2 rounded-full transition-all duration-300"
                   style={{ width: `${enrollment.progressPercentage}%` }}

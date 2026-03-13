@@ -7,11 +7,12 @@ export const metadata: Metadata = {
 }
 
 interface PageProps {
-  params: {
+  params: Promise<{
     slug: string
-  }
+  }>
 }
 
-export default function PaymentSuccessPage({ params }: PageProps) {
-  return <QuizPaymentSuccess slug={params.slug} />
+export default async function PaymentSuccessPage({ params }: PageProps) {
+  const { slug } = await params
+  return <QuizPaymentSuccess slug={slug} />
 }

@@ -102,8 +102,10 @@ export function CartPageContent({ initialData }: CartPageContentProps) {
   }
 
   const handleCheckout = () => {
-    // TODO: Implement bulk payment checkout
-    router.push('/checkout')
+    // Redirect to cart payment page for bulk payment
+    if (items.length > 0) {
+      router.push('/cart/payment')
+    }
   }
 
   if (isLoading) {

@@ -55,15 +55,78 @@ export function PurchasesTab({ data, onPageChange }: PurchasesTabProps) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-4 p-4">
+        {data.content.map((purchase) => (
+          <div
+            key={purchase.purchaseId}
+            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-semibold text-brand-navy text-sm">
+                  {purchase?.setName || purchase?.trainingName || 'N/A'}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">
+                  {purchase?.setId ? `Quiz ID: ${purchase.setId}` : purchase?.trainingId ? `Training ID: ${purchase.trainingId}` : ''}
+                </p>
+              </div>
+              {purchase?.purchaseStatus ? (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(
+                    purchase.purchaseStatus
+                  )}`}
+                >
+                  <span className="size-1.5 rounded-full bg-current"></span>
+                  {purchase.purchaseStatus}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400">N/A</span>
+              )}
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-gray-500">Amount:</span>
+                <span className="font-bold text-brand-navy">
+                  {purchase?.amount !== undefined && purchase.amount !== null
+                    ? `NPR ${purchase.amount.toLocaleString()}`
+                    : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-500">Purchase Date:</span>
+                <span className="text-gray-900">
+                  {purchase?.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }) : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="pt-2 border-t border-gray-100">
+                <p className="text-xs text-gray-500">Transaction ID:</p>
+                <p className="text-xs font-mono text-gray-600 break-all mt-1">
+                  {purchase?.transactionId || 'N/A'}
+                </p>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Item</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Transaction ID</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Amount</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Purchase Date</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Status</th>
+              <th className="px-6 py-4">Item</th>
+              <th className="px-6 py-4">Transaction ID</th>
+              <th className="px-6 py-4">Amount</th>
+              <th className="px-6 py-4">Purchase Date</th>
+              <th className="px-6 py-4">Status</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -72,7 +135,7 @@ export function PurchasesTab({ data, onPageChange }: PurchasesTabProps) {
                 key={purchase.purchaseId}
                 className={`hover:bg-gray-50/50 ${index % 2 === 1 ? 'bg-gray-50/30' : ''}`}
               >
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="font-semibold text-brand-navy text-sm">
                     {purchase?.setName || purchase?.trainingName || 'N/A'}
                   </p>
@@ -80,26 +143,26 @@ export function PurchasesTab({ data, onPageChange }: PurchasesTabProps) {
                     {purchase?.setId ? `Quiz ID: ${purchase.setId}` : purchase?.trainingId ? `Training ID: ${purchase.trainingId}` : ''}
                   </p>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="text-xs font-mono text-gray-600 break-all max-w-[200px]">
                     {purchase?.transactionId || 'N/A'}
                   </p>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="text-sm font-bold text-brand-navy">
                     {purchase?.amount !== undefined && purchase.amount !== null
                       ? `NPR ${purchase.amount.toLocaleString()}`
                       : 'N/A'}
                   </p>
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {purchase?.purchaseDate ? new Date(purchase.purchaseDate).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
                   }) : 'N/A'}
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   {purchase?.purchaseStatus ? (
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(
@@ -118,11 +181,14 @@ export function PurchasesTab({ data, onPageChange }: PurchasesTabProps) {
           </tbody>
         </table>
       </div>
-      <Pagination
-        currentPage={data.currentPage}
-        totalPages={data.totalPages}
-        onPageChange={onPageChange}
-      />
+      
+      <div className="p-4">
+        <Pagination
+          currentPage={data.currentPage}
+          totalPages={data.totalPages}
+          onPageChange={onPageChange}
+        />
+      </div>
     </>
   )
 }

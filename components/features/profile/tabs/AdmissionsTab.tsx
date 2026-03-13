@@ -56,14 +56,78 @@ export function AdmissionsTab({ data, onPageChange }: AdmissionsTabProps) {
 
   return (
     <>
-      <div className="overflow-x-auto">
+      {/* Mobile/Tablet Card View */}
+      <div className="lg:hidden space-y-4 p-4">
+        {data.content.map((admission) => (
+          <div
+            key={admission.admissionId}
+            className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex-1">
+                <h3 className="font-semibold text-brand-navy text-sm">
+                  {admission?.collegeName || 'N/A'}
+                </h3>
+                <p className="text-xs text-gray-500 mt-1">{admission?.courseName || 'N/A'}</p>
+              </div>
+              {admission?.status ? (
+                <span
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(
+                    admission.status
+                  )}`}
+                >
+                  <span className="size-1.5 rounded-full bg-current"></span>
+                  {admission.status}
+                </span>
+              ) : (
+                <span className="text-sm text-gray-400">N/A</span>
+              )}
+            </div>
+            
+            <div className="space-y-2 text-sm">
+              {admission?.remarks && (
+                <div className="pb-2 border-b border-gray-100">
+                  <p className="text-xs text-gray-400 italic">{admission.remarks}</p>
+                </div>
+              )}
+              
+              <div className="flex justify-between">
+                <span className="text-gray-500">Applied:</span>
+                <span className="text-gray-900">
+                  {admission?.applicationDate ? new Date(admission.applicationDate).toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric',
+                  }) : 'N/A'}
+                </span>
+              </div>
+              
+              <div className="flex justify-between">
+                <span className="text-gray-500">Approval Date:</span>
+                <span className="text-gray-900">
+                  {admission?.approvalDate
+                    ? new Date(admission.approvalDate).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })
+                    : '-'}
+                </span>
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Desktop Table View */}
+      <div className="hidden lg:block overflow-x-auto">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50 text-gray-500 uppercase text-[10px] font-bold tracking-widest">
-              <th className="px-4 sm:px-6 py-3 sm:py-4">College & Course</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Applied At</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Status</th>
-              <th className="px-4 sm:px-6 py-3 sm:py-4">Approval Date</th>
+              <th className="px-6 py-4">College & Course</th>
+              <th className="px-6 py-4">Applied At</th>
+              <th className="px-6 py-4">Status</th>
+              <th className="px-6 py-4">Approval Date</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -72,7 +136,7 @@ export function AdmissionsTab({ data, onPageChange }: AdmissionsTabProps) {
                 key={admission.admissionId}
                 className={`hover:bg-gray-50/50 ${index % 2 === 1 ? 'bg-gray-50/30' : ''}`}
               >
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   <p className="font-semibold text-brand-navy text-sm">
                     {admission?.collegeName || 'N/A'}
                   </p>
@@ -81,14 +145,14 @@ export function AdmissionsTab({ data, onPageChange }: AdmissionsTabProps) {
                     <p className="text-xs text-gray-400 mt-1 italic">{admission.remarks}</p>
                   )}
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {admission?.applicationDate ? new Date(admission.applicationDate).toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',
                     year: 'numeric',
                   }) : 'N/A'}
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4">
+                <td className="px-6 py-4">
                   {admission?.status ? (
                     <span
                       className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold border ${getStatusColor(
@@ -102,7 +166,7 @@ export function AdmissionsTab({ data, onPageChange }: AdmissionsTabProps) {
                     <span className="text-sm text-gray-400">N/A</span>
                   )}
                 </td>
-                <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-gray-600">
+                <td className="px-6 py-4 text-sm text-gray-600">
                   {admission?.approvalDate
                     ? new Date(admission.approvalDate).toLocaleDateString('en-US', {
                         month: 'short',
@@ -116,11 +180,14 @@ export function AdmissionsTab({ data, onPageChange }: AdmissionsTabProps) {
           </tbody>
         </table>
       </div>
-      <Pagination
-        currentPage={data.currentPage}
-        totalPages={data.totalPages}
-        onPageChange={onPageChange}
-      />
+      
+      <div className="p-4">
+        <Pagination
+          currentPage={data.currentPage}
+          totalPages={data.totalPages}
+          onPageChange={onPageChange}
+        />
+      </div>
     </>
   )
 }
