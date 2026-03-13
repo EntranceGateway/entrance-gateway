@@ -1,37 +1,4 @@
-// User API Types - Matching backend response structure
-
-export interface User {
-  userId: number
-  fullname: string
-  email: string
-  contact: string
-  address: string
-  dob: string // ISO date string (YYYY-MM-DD)
-  interested: string // Course interest (e.g., "ioe", "medical", "csit")
-  latestQualification: string // e.g., "class11", "class12", "+2"
-  isVerified: boolean
-  role: 'USER' | 'ADMIN'
-}
-
-export interface UserResponse {
-  message: string
-  data: User
-}
-
-export interface UpdateUserRequest {
-  fullname: string
-  email: string
-  contact: string
-  address: string
-  dob: string
-  interested: string
-  latestQualification: string
-}
-
-export interface UpdateUserResponse {
-  message: string
-  data: User
-}
+// History API Types - Paginated user activity history
 
 // Pagination Types
 export interface PaginationInfo {
@@ -112,36 +79,42 @@ export interface AdmissionHistory {
   remarks?: string
 }
 
-// Full User Profile with Paginated Relations
-export interface UserProfileFull {
+// User History Data (includes basic user info + history)
+export interface UserHistoryData {
   userId: number
   fullname: string
-  email: string
-  contact: string
-  address: string
-  dob: string
-  interested: string
-  latestQualification: string
-  isVerified: boolean
-  role: 'USER' | 'ADMIN'
+  email?: string
+  contact?: string
+  address?: string
+  dob?: string
+  interested?: string
+  latestQualification?: string
+  isVerified?: boolean
+  role?: 'USER' | 'ADMIN'
   totalEnrollments: number
   totalQuizAttempts: number
   totalPurchases: number
   totalAdmissions: number
   isPaginated: boolean
-  enrollmentsPaginated: PaginatedResponse<TrainingEnrollmentHistory>
-  quizAttemptsPaginated: PaginatedResponse<QuizAttemptHistory>
-  purchasesPaginated: PaginatedResponse<PurchaseHistory>
-  admissionsPaginated: PaginatedResponse<AdmissionHistory>
+  // Non-paginated arrays (when isPaginated: false)
+  enrollments?: TrainingEnrollmentHistory[]
+  quizAttempts?: QuizAttemptHistory[]
+  purchases?: PurchaseHistory[]
+  admissions?: AdmissionHistory[]
+  // Paginated responses (when isPaginated: true)
+  enrollmentsPaginated?: PaginatedResponse<TrainingEnrollmentHistory> | null
+  quizAttemptsPaginated?: PaginatedResponse<QuizAttemptHistory> | null
+  purchasesPaginated?: PaginatedResponse<PurchaseHistory> | null
+  admissionsPaginated?: PaginatedResponse<AdmissionHistory> | null
 }
 
-export interface UserProfileFullResponse {
+export interface UserHistoryResponse {
   message: string
-  data: UserProfileFull
+  data: UserHistoryData
 }
 
-// Query Parameters for Paginated Profile
-export interface UserProfileQueryParams {
+// Query Parameters for Paginated History
+export interface HistoryQueryParams {
   enrollmentsPage?: number
   enrollmentsSize?: number
   quizAttemptsPage?: number
@@ -150,10 +123,4 @@ export interface UserProfileQueryParams {
   purchasesSize?: number
   admissionsPage?: number
   admissionsSize?: number
-}
-
-// Error response type
-export interface ApiErrorResponse {
-  message: string
-  data: null
 }
