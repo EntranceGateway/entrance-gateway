@@ -1,12 +1,14 @@
 import type { Quiz } from '@/types/quiz.types'
+import type { PurchaseStatus } from '@/types/payment.types'
 
 interface QuizCardProps {
   item: Quiz
   onClick?: () => void
   onAddToCart?: (quiz: Quiz) => void
+  purchaseStatus?: PurchaseStatus
 }
 
-export function QuizCard({ item, onClick, onAddToCart }: QuizCardProps) {
+export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCardProps) {
   // Format price
   const formatPrice = (price?: number) => {
     return `NPR ${(price ?? 0).toLocaleString()}`
@@ -15,6 +17,71 @@ export function QuizCard({ item, onClick, onAddToCart }: QuizCardProps) {
   const handleAddToCart = (e: React.MouseEvent) => {
     e.stopPropagation()
     onAddToCart?.(item)
+  }
+
+  // Get status badge based on purchase status
+  const getStatusBadge = () => {
+    if (!purchaseStatus || purchaseStatus === 'NOT_PURCHASED') {
+      return (
+        <span className="bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          AVAILABLE
+        </span>
+      )
+    }
+    
+    if (purchaseStatus === 'PAID' || purchaseStatus === 'ACTIVE' || purchaseStatus === 'PAYMENT_VERIFIED') {
+      return (
+        <span className="bg-green-100 text-green-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          PURCHASED
+        </span>
+      )
+    }
+    
+    if (purchaseStatus === 'PENDING') {
+      return (
+        <span className="bg-blue-100 text-blue-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          PENDING
+        </span>
+      )
+    }
+    
+    if (purchaseStatus === 'PAYMENT_RECEIVED_ADMIN_APPROVAL_PENDING' || purchaseStatus === 'APPROVAL_PENDING') {
+      return (
+        <span className="bg-amber-100 text-amber-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          APPROVAL PENDING
+        </span>
+      )
+    }
+    
+    if (purchaseStatus === 'FAILED' || purchaseStatus === 'PAYMENT_FAILED' || purchaseStatus === 'ABORTED') {
+      return (
+        <span className="bg-red-100 text-red-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          FAILED
+        </span>
+      )
+    }
+
+    if (purchaseStatus === 'CANCELLED' || purchaseStatus === 'CANCELLED_BY_ADMIN') {
+      return (
+        <span className="bg-gray-100 text-gray-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          CANCELLED
+        </span>
+      )
+    }
+    
+    if (purchaseStatus === 'ERROR') {
+      return (
+        <span className="bg-orange-100 text-orange-700 text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          UNKNOWN
+        </span>
+      )
+    }
+    
+    return (
+      <span className="bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+        AVAILABLE
+      </span>
+    )
   }
 
   return (
@@ -26,9 +93,7 @@ export function QuizCard({ item, onClick, onAddToCart }: QuizCardProps) {
       <div className="p-6 flex-grow">
         {/* Header: Status Badge and Category */}
         <div className="flex justify-between items-start mb-4">
-          <span className="bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
-            AVAILABLE
-          </span>
+          {getStatusBadge()}
           <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {item.courseName}
           </span>

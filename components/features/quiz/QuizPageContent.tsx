@@ -17,9 +17,10 @@ import type { PurchaseStatus } from '@/types/payment.types'
 
 interface QuizPageContentProps {
   initialData?: QuizListResponse | null
+  purchaseStatuses?: Record<number, string>
 }
 
-export function QuizPageContent({ initialData }: QuizPageContentProps) {
+export function QuizPageContent({ initialData, purchaseStatuses = {} }: QuizPageContentProps) {
   const router = useRouter()
   const { success, error: showError } = useToast()
   const { isLoggedIn } = useAuth()
@@ -70,15 +71,22 @@ export function QuizPageContent({ initialData }: QuizPageContentProps) {
   const handleQuizClick = async (quiz: Quiz) => {
     setSelectedQuiz(quiz)
     setIsSidebarOpen(true)
-    setPurchaseStatus('NOT_PURCHASED') // Reset to default
-
-    // Check purchase status - errors are handled silently
-    try {
-      const statusResponse = await checkPurchaseStatus(quiz.questionSetId)
-      setPurchaseStatus(statusResponse.data.status)
-    } catch (err) {
-      // Silent error - already logged in service, keep default NOT_PURCHASED status
-      // This ensures the UI always shows a valid state even if the API fails
+    
+    // Use SSR data if available, otherwise fetch from API
+    const ssrStatus = purchaseStatuses[quiz.questionSetId]
+    if (ssrStatus) {
+      setPurchaseStatus(ssrStatus as PurchaseStatus)
+    } else {
+      setPurchaseStatus('NOT_PURCHASED') // Reset to default
+      
+      // Fetch from API if SSR data not available
+      try {
+        const statusResponse = await checkPurchaseStatus(quiz.questionSetId)
+        setPurchaseStatus(statusResponse.data.status)
+      } catch (err) {
+        // Silent error - already logged in service, keep default NOT_PURCHASED status
+        // This ensures the UI always shows a valid state even if the API fails
+      }
     }
   }
 
@@ -181,6 +189,7 @@ export function QuizPageContent({ initialData }: QuizPageContentProps) {
                 item={quiz} 
                 onClick={() => handleQuizClick(quiz)}
                 onAddToCart={handleAddToCart}
+                purchaseStatus={(purchaseStatuses[quiz.questionSetId] as PurchaseStatus) || 'NOT_PURCHASED'}
               />
             ))}
           </QuizCardGrid>

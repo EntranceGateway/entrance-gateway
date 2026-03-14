@@ -5,7 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Navbar } from './Navbar'
 import { fetchUserProfile } from '@/services/client/user.client'
-import { logout } from '@/lib/auth/client'
+import { logout, refreshToken } from '@/lib/auth/client'
 import type { User } from '@/types/user.types'
 
 /**
@@ -47,6 +47,17 @@ export function NavbarExample() {
       const response = await fetchUserProfile()
       setUserData(response.data)
     } catch (error) {
+      // If 401, try refreshing the token and retry once
+      if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+        try {
+          await refreshToken()
+          const retryResponse = await fetchUserProfile()
+          setUserData(retryResponse.data)
+          return
+        } catch {
+          // Refresh also failed — user is truly not authenticated
+        }
+      }
       setUserData(null)
     } finally {
       setIsLoadingUser(false)

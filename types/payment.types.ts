@@ -6,12 +6,17 @@ export type PurchaseStatus =
   | 'NOT_PURCHASED'
   | 'PENDING'
   | 'PAID'
+  | 'UNPAID'
   | 'APPROVAL_PENDING'
   | 'FAILED'
   | 'PAYMENT_RECEIVED_ADMIN_APPROVAL_PENDING'
   | 'ACTIVE'
   | 'PAYMENT_FAILED'
   | 'CANCELLED'
+  | 'CANCELLED_BY_ADMIN'
+  | 'ABORTED'
+  | 'PAYMENT_VERIFIED'
+  | 'ERROR'
 
 export interface PaymentRequest {
   amount: number

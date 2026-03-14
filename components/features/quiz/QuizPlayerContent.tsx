@@ -1,7 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useToast } from '@/components/shared/Toast'
+import { submitQuizAttempt } from '@/services/client/quizAttempt.client'
+import type { QuizAttemptResult } from '@/services/client/quizAttempt.client'
 import type { QuizQuestion } from '@/types/quiz-player.types'
 
 /* ------------------------------------------------------------------ */
@@ -32,7 +34,6 @@ function useRenderMath(deps: unknown[]) {
   useEffect(() => {
     const el = containerRef.current
     if (!el || !window.renderMathInElement) return
-    // small delay so DOM has painted
     const id = requestAnimationFrame(() => {
       window.renderMathInElement?.(el, KATEX_OPTIONS)
     })
@@ -70,22 +71,24 @@ const LETTERS = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H']
 interface QuizPlayerContentProps {
   questions: QuizQuestion[]
   quizTitle: string
+  questionSetId: number
   onExit: () => void
 }
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
-export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerContentProps) {
+export function QuizPlayerContent({ questions, quizTitle, questionSetId, onExit }: QuizPlayerContentProps) {
   const total = questions.length
-  const { success, info } = useToast()
+  const { success, error: showError, info } = useToast()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [selectedOptionId, setSelectedOptionId] = useState<number | null>(null)
-  const [isSubmitted, setIsSubmitted] = useState(false)
   // map questionId → chosen optionId
   const [answers, setAnswers] = useState<Record<number, number>>({})
-  const [score, setScore] = useState(0)
   const [showResults, setShowResults] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [serverResult, setServerResult] = useState<QuizAttemptResult | null>(null)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   // Guard against empty questions array
   if (total === 0) {
@@ -104,66 +107,78 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
   const progress = ((currentIndex + 1) / total) * 100
 
   // Render LaTeX each time the question changes
-  const mathRef = useRenderMath([currentIndex, isSubmitted, selectedOptionId])
-
-  /* ---------- total possible score ---------- */
-  const totalMarks = questions.reduce((s, qn) => s + qn.marks, 0)
-  const pct = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0
+  const mathRef = useRenderMath([currentIndex, selectedOptionId])
 
   /* ---------- handlers ---------- */
 
   const handleSelect = (optionId: number) => {
-    if (isSubmitted) return
     setSelectedOptionId(optionId)
   }
 
-  const handleSubmit = useCallback(() => {
-    if (selectedOptionId === null) {
-      info('Please select an option before submitting')
-      return
+  const handleNextOrFinish = useCallback(() => {
+    // Save answer for current question (null means skipped)
+    const updatedAnswers = { ...answers }
+    if (selectedOptionId !== null) {
+      updatedAnswers[q.questionId] = selectedOptionId
+    } else {
+      delete updatedAnswers[q.questionId] // ensure it's removed if they unselected
     }
-    setIsSubmitted(true)
-    setAnswers((prev) => ({ ...prev, [q.questionId]: selectedOptionId }))
+    setAnswers(updatedAnswers)
 
-    const correct = q.options.find((o) => o.correct)
-    if (correct && correct.optionId === selectedOptionId) {
-      setScore((s) => s + q.marks)
-    }
-  }, [selectedOptionId, q, info])
-
-  const handleNext = useCallback(() => {
     if (currentIndex < total - 1) {
       setCurrentIndex((i) => i + 1)
-      setSelectedOptionId(null)
-      setIsSubmitted(false)
+      const nextQ = questions[currentIndex + 1]
+      const savedAnswer = updatedAnswers[nextQ.questionId]
+      setSelectedOptionId(savedAnswer ?? null)
     } else {
+      // Last question — submit to API
       setShowResults(true)
-      const pctScore = totalMarks > 0 ? Math.round((score / totalMarks) * 100) : 0
-      if (pctScore >= 70) {
-        success(`🎉 Quiz complete! You scored ${score}/${totalMarks} (${pctScore}%)`)
-      } else {
-        info(`Quiz complete! You scored ${score}/${totalMarks} (${pctScore}%)`)
-      }
+      setIsSubmitting(true)
+      setSubmitError(null)
+
+      const questionAnswers = questions.map((qn) => ({
+        questionId: qn.questionId,
+        selectedOptionId: updatedAnswers[qn.questionId] ?? null,
+      }))
+
+      submitQuizAttempt({ questionSetId, questionAnswers })
+        .then((response) => {
+          setServerResult(response.data)
+          if (response.data.percentage >= 70) {
+            success(`🎉 ${response.data.status}! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
+          } else {
+            info(`Quiz complete! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
+          }
+        })
+        .catch((err) => {
+          const msg = err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.'
+          setSubmitError(msg)
+          showError(msg)
+        })
+        .finally(() => {
+          setIsSubmitting(false)
+        })
     }
-  }, [currentIndex, total, score, totalMarks, success, info])
+  }, [selectedOptionId, q, currentIndex, total, questions, answers, questionSetId, info, success, showError])
 
   const handleBack = useCallback(() => {
     if (currentIndex > 0) {
+      // Save current selection before going back (if user picked something)
+      if (selectedOptionId !== null) {
+        setAnswers((prev) => ({ ...prev, [q.questionId]: selectedOptionId }))
+      }
       const prevIndex = currentIndex - 1
       setCurrentIndex(prevIndex)
       const prevQ = questions[prevIndex]
       const prevAnswer = answers[prevQ.questionId]
       setSelectedOptionId(prevAnswer ?? null)
-      setIsSubmitted(prevAnswer !== undefined)
     }
-  }, [currentIndex, questions, answers])
+  }, [currentIndex, questions, answers, selectedOptionId, q])
 
   const handleRestart = () => {
     setCurrentIndex(0)
     setSelectedOptionId(null)
-    setIsSubmitted(false)
     setAnswers({})
-    setScore(0)
     setShowResults(false)
   }
 
@@ -173,10 +188,31 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
     return () => { document.body.style.overflow = '' }
   }, [])
 
-
-
   /* ---------- results screen ---------- */
   if (showResults) {
+    // Use server results if available, otherwise calculate client-side as fallback
+    const totalMarks = questions.reduce((s, qn) => s + qn.marks, 0)
+    let clientScore = 0
+    let clientCorrect = 0
+    questions.forEach((qn) => {
+      const chosen = answers[qn.questionId]
+      if (chosen === undefined) return
+      const correctOpt = qn.options.find((o) => o.correct)
+      if (correctOpt && correctOpt.optionId === chosen) {
+        clientScore += qn.marks
+        clientCorrect++
+      }
+    })
+    const answeredCount = Object.keys(answers).length
+    const clientIncorrect = answeredCount - clientCorrect
+
+    // Prefer server results
+    const correctCount = serverResult?.correctAnswers ?? clientCorrect
+    const incorrectCount = serverResult?.wrongAnswers ?? clientIncorrect
+    const skippedCount = serverResult?.skippedAnswers ?? (total - answeredCount)
+    const score = serverResult?.totalScore ?? clientScore
+    const pct = serverResult?.percentage ?? (totalMarks > 0 ? Math.round((clientScore / totalMarks) * 100) : 0)
+
     const feedback =
       pct >= 90 ? { emoji: '🏆', msg: 'Outstanding!', color: 'text-yellow-500' } :
       pct >= 70 ? { emoji: '🎉', msg: 'Great job!', color: 'text-green-600' } :
@@ -185,70 +221,183 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
                   { emoji: '💪', msg: 'Don\'t give up!', color: 'text-red-500' }
 
     return (
-      <div className="fixed inset-0 z-[60] bg-gray-50 flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden animate-slide-in">
-          {/* Header ribbon */}
-          <div className="bg-brand-navy p-6 text-center">
-            <span className="text-5xl">{feedback.emoji}</span>
-            <h2 className="text-white text-2xl font-bold font-heading mt-3">{feedback.msg}</h2>
-            <p className="text-white/70 text-sm mt-1">{quizTitle}</p>
-          </div>
+      <div className="fixed inset-0 z-[60] bg-gray-50 flex flex-col">
+        {/* Header */}
+        <header className="bg-brand-navy px-4 py-4 text-center shrink-0">
+          <span className="text-4xl">{feedback.emoji}</span>
+          <h2 className="text-white text-xl font-bold font-heading mt-2">{feedback.msg}</h2>
+          <p className="text-white/70 text-sm mt-1">{quizTitle}</p>
+        </header>
 
-          <div className="p-6 space-y-6 text-center">
-            {/* Score circle */}
-            <div className="mx-auto size-32 rounded-full border-4 border-brand-blue flex flex-col items-center justify-center">
-              <span className="text-3xl font-bold text-brand-navy">{score}/{totalMarks}</span>
-              <span className="text-xs text-gray-500 mt-1">Score</span>
-            </div>
-
-            {/* Percentage bar */}
-            <div>
-              <div className="flex justify-between text-sm mb-1">
-                <span className="text-gray-500">Accuracy</span>
-                <span className={`font-bold ${feedback.color}`}>{pct}%</span>
+        {/* Scrollable content */}
+        <div className="flex-1 overflow-y-auto">
+          <div className="max-w-2xl mx-auto px-3 sm:px-4 py-4 sm:py-6">
+            {/* Submitting indicator */}
+            {isSubmitting && (
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6 text-center">
+                <div className="animate-spin size-6 border-2 border-brand-blue border-t-transparent rounded-full mx-auto mb-2" />
+                <p className="text-sm text-blue-700 font-medium">Submitting your quiz...</p>
               </div>
-              <div className="w-full bg-gray-200 rounded-full h-2.5">
+            )}
+
+            {/* Submit error */}
+            {submitError && (
+              <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
+                <p className="text-sm text-red-700">{submitError}</p>
+              </div>
+            )}
+
+            {/* Score summary */}
+            <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-6">
+              <div className="flex items-center justify-center flex-wrap gap-4 sm:gap-6 mb-4">
+                <div className="text-center">
+                  <span className="text-2xl sm:text-3xl font-bold text-brand-navy">{score}</span>
+                  <p className="text-xs text-gray-500 mt-1">Score</p>
+                </div>
+                <div className="w-px h-10 sm:h-12 bg-gray-200" />
+                <div className="text-center">
+                  <span className={`text-2xl sm:text-3xl font-bold ${feedback.color}`}>{pct}%</span>
+                  <p className="text-xs text-gray-500 mt-1">Accuracy</p>
+                </div>
+                {serverResult?.rank && (
+                  <>
+                    <div className="w-px h-10 sm:h-12 bg-gray-200" />
+                    <div className="text-center">
+                      <span className="text-2xl sm:text-3xl font-bold text-brand-blue">#{serverResult.rank}</span>
+                      <p className="text-xs text-gray-500 mt-1">Rank</p>
+                    </div>
+                  </>
+                )}
+              </div>
+
+              {/* Progress bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2.5 mb-4">
                 <div
                   className="h-2.5 rounded-full bg-brand-blue transition-all duration-700"
                   style={{ width: `${pct}%` }}
                 />
               </div>
+
+              {/* Server status badge */}
+              {serverResult?.status && (
+                <div className="text-center mb-4">
+                  <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-bold ${
+                    serverResult.status === 'PASS'
+                      ? 'bg-green-100 text-green-700'
+                      : 'bg-red-100 text-red-700'
+                  }`}>
+                    {serverResult.status}
+                  </span>
+                  {serverResult.percentile > 0 && (
+                    <p className="text-xs text-gray-500 mt-2">You scored better than {serverResult.percentile}% of participants</p>
+                  )}
+                </div>
+              )}
+
+              {/* Stats */}
+              <div className="grid grid-cols-3 gap-2 sm:gap-3 text-sm">
+                <div className="bg-green-50 rounded-lg p-2 sm:p-3 text-center">
+                  <p className="text-green-700 font-bold text-base sm:text-lg">{correctCount}</p>
+                  <p className="text-green-600 text-[10px] sm:text-xs">Correct</p>
+                </div>
+                <div className="bg-red-50 rounded-lg p-2 sm:p-3 text-center">
+                  <p className="text-red-700 font-bold text-base sm:text-lg">{incorrectCount}</p>
+                  <p className="text-red-600 text-[10px] sm:text-xs">Incorrect</p>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-2 sm:p-3 text-center">
+                  <p className="text-gray-700 font-bold text-base sm:text-lg">{skippedCount}</p>
+                  <p className="text-gray-600 text-[10px] sm:text-xs">Skipped</p>
+                </div>
+              </div>
             </div>
 
-            {/* Stats */}
-            {(() => {
-              const answeredCount = Object.keys(answers).length
-              const correctCount = questions.filter(qn => {
-                const chosen = answers[qn.questionId]
-                if (chosen === undefined) return false
-                return qn.options.find(o => o.correct)?.optionId === chosen
-              }).length
-              const incorrectCount = answeredCount - correctCount
-              return (
-                <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="bg-green-50 rounded-lg p-3">
-                    <p className="text-green-700 font-bold text-lg">{correctCount}</p>
-                    <p className="text-green-600 text-xs">Correct</p>
+            {/* Question-by-question review */}
+            <h3 className="text-lg font-bold text-brand-navy mb-4 font-heading">Question Review</h3>
+            <div className="space-y-4">
+              {questions.map((qn, qIdx) => {
+                const userAnswer = answers[qn.questionId]
+                const correctOpt = qn.options.find((o) => o.correct)
+                const isCorrect = userAnswer !== undefined && correctOpt?.optionId === userAnswer
+                const isSkipped = userAnswer === undefined
+
+                return (
+                  <div key={qn.questionId} className="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+                    {/* Question header */}
+                    <div className={`px-3 sm:px-4 py-2.5 sm:py-3 flex items-start gap-2 ${
+                      isSkipped ? 'bg-gray-50' : isCorrect ? 'bg-green-50' : 'bg-red-50'
+                    }`}>
+                      <span className={`size-5 sm:size-6 rounded-full flex items-center justify-center text-[10px] sm:text-xs font-bold text-white shrink-0 mt-0.5 ${
+                        isSkipped ? 'bg-gray-400' : isCorrect ? 'bg-green-500' : 'bg-red-500'
+                      }`}>
+                        {isSkipped ? '–' : isCorrect ? '✓' : '✗'}
+                      </span>
+                      <span className="text-xs sm:text-sm font-semibold text-gray-800 shrink-0">Q{qIdx + 1}.</span>
+                      <span className="text-xs sm:text-sm text-gray-700 flex-1 break-words">{qn.question}</span>
+                      <span className="text-[10px] sm:text-xs font-medium text-gray-500 shrink-0">{qn.marks} {qn.marks === 1 ? 'mk' : 'mks'}</span>
+                    </div>
+
+                    {/* Options review */}
+                    <div className="px-3 sm:px-4 py-2 sm:py-3 space-y-1.5 sm:space-y-2">
+                      {qn.options.map((opt, oIdx) => {
+                        const letter = LETTERS[oIdx] ?? '•'
+                        const isUserChoice = userAnswer === opt.optionId
+                        const isCorrectOption = opt.correct
+
+                        let optStyle = 'border-gray-100 text-gray-600'
+                        if (isCorrectOption) {
+                          optStyle = 'border-green-300 bg-green-50 text-green-800'
+                        } else if (isUserChoice && !isCorrectOption) {
+                          optStyle = 'border-red-300 bg-red-50 text-red-800'
+                        }
+
+                        return (
+                          <div
+                            key={opt.optionId}
+                            className={`flex items-center gap-2 px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-lg border text-xs sm:text-sm ${optStyle}`}
+                          >
+                            <span className={`size-6 rounded-full flex items-center justify-center text-xs font-bold shrink-0 ${
+                              isCorrectOption
+                                ? 'bg-green-500 text-white'
+                                : isUserChoice
+                                  ? 'bg-red-500 text-white'
+                                  : 'bg-gray-100 text-gray-500'
+                            }`}>
+                              {isCorrectOption ? '✓' : isUserChoice ? '✗' : letter}
+                            </span>
+                            <span className="flex-1">{opt.optionText}</span>
+                            {isUserChoice && (
+                              <span className="text-xs font-medium opacity-70">Your answer</span>
+                            )}
+                          </div>
+                        )
+                      })}
+                    </div>
                   </div>
-                  <div className="bg-red-50 rounded-lg p-3">
-                    <p className="text-red-700 font-bold text-lg">{incorrectCount}</p>
-                    <p className="text-red-600 text-xs">Incorrect</p>
-                  </div>
-                </div>
-              )
-            })()}
+                )
+              })}
+            </div>
 
             {/* Actions */}
-            <div className="flex gap-3">
+            <div className="flex gap-3 mt-6 pb-4">
               <button
                 onClick={handleRestart}
-                className="flex-1 py-3 rounded-lg border-2 border-brand-blue text-brand-blue font-bold text-sm hover:bg-brand-blue/5 transition-colors cursor-pointer"
+                disabled={isSubmitting}
+                className={`flex-1 py-3 rounded-lg border-2 border-brand-blue text-brand-blue font-bold text-sm transition-colors ${
+                  isSubmitting 
+                    ? 'opacity-50 cursor-not-allowed' 
+                    : 'hover:bg-brand-blue/5 cursor-pointer'
+                }`}
               >
                 Restart
               </button>
               <button
                 onClick={onExit}
-                className="flex-1 py-3 rounded-lg bg-brand-navy text-white font-bold text-sm hover:bg-brand-blue transition-colors cursor-pointer"
+                disabled={isSubmitting}
+                className={`flex-1 py-3 rounded-lg bg-brand-navy text-white font-bold text-sm transition-colors ${
+                  isSubmitting
+                    ? 'opacity-50 cursor-not-allowed'
+                    : 'hover:bg-brand-blue cursor-pointer'
+                }`}
               >
                 Exit Quiz
               </button>
@@ -261,7 +410,8 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
 
   /* ---------- question screen ---------- */
   const cat = catColor(q.categoryName)
-  const correctOption = q.options.find((o) => o.correct)
+  // Count how many questions have been answered so far
+  const answeredSoFar = Object.keys(answers).length
 
   return (
     <div className="fixed inset-0 z-[60] bg-gray-50 flex flex-col" ref={mathRef}>
@@ -281,12 +431,12 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
           {quizTitle}
         </h1>
 
-        {/* Live score */}
+        {/* Answered count */}
         <div className="flex items-center gap-1.5 bg-brand-gold/15 px-3 py-1.5 rounded-full">
           <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 text-brand-gold">
-            <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z" />
+            <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
           </svg>
-          <span className="text-sm font-bold text-brand-navy">{score}</span>
+          <span className="text-sm font-bold text-brand-navy">{answeredSoFar}/{total}</span>
         </div>
       </header>
 
@@ -335,59 +485,31 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
               </div>
             )}
 
-            {/* Options */}
+            {/* Options — NO correct/incorrect reveal */}
             <div className="space-y-3">
               {q.options.map((opt, idx) => {
                 const letter = LETTERS[idx] ?? '•'
                 const isSelected = selectedOptionId === opt.optionId
-                const isCorrectOpt = opt.correct
-                const isWrongSelected = isSubmitted && isSelected && !isCorrectOpt
 
-                let optClass = 'border-gray-200 hover:border-brand-blue/40 hover:bg-blue-50/40 cursor-pointer'
-
-                if (isSelected && !isSubmitted) {
-                  optClass = 'border-brand-blue bg-blue-50 ring-2 ring-brand-blue/20 cursor-pointer'
-                }
-                if (isSubmitted) {
-                  if (isCorrectOpt) {
-                    optClass = 'border-green-500 bg-green-50'
-                  } else if (isWrongSelected) {
-                    optClass = 'border-red-500 bg-red-50'
-                  } else {
-                    optClass = 'border-gray-200 opacity-60'
-                  }
-                }
+                const optClass = isSelected
+                  ? 'border-brand-blue bg-blue-50 ring-2 ring-brand-blue/20 cursor-pointer'
+                  : 'border-gray-200 hover:border-brand-blue/40 hover:bg-blue-50/40 cursor-pointer'
 
                 return (
                   <button
                     key={opt.optionId}
                     onClick={() => handleSelect(opt.optionId)}
-                    disabled={isSubmitted}
                     className={`w-full text-left flex items-start gap-3 p-3.5 rounded-xl border-2 transition-all duration-150 ${optClass}`}
                   >
                     {/* Letter circle */}
                     <span
                       className={`shrink-0 size-8 rounded-full flex items-center justify-center text-sm font-bold transition-colors ${
-                        isSubmitted && isCorrectOpt
-                          ? 'bg-green-500 text-white'
-                          : isWrongSelected
-                            ? 'bg-red-500 text-white'
-                            : isSelected
-                              ? 'bg-brand-blue text-white'
-                              : 'bg-gray-100 text-gray-600'
+                        isSelected
+                          ? 'bg-brand-blue text-white'
+                          : 'bg-gray-100 text-gray-600'
                       }`}
                     >
-                      {isSubmitted && isCorrectOpt ? (
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
-                          <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                        </svg>
-                      ) : isWrongSelected ? (
-                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
-                          <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-                        </svg>
-                      ) : (
-                        letter
-                      )}
+                      {letter}
                     </span>
 
                     {/* Option content */}
@@ -415,14 +537,14 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
       {/* ===== FOOTER NAV ===== */}
       <footer className="bg-white border-t border-gray-200 px-4 py-3 shrink-0 shadow-[0_-2px_8px_rgba(0,0,0,0.04)]">
         <div className="max-w-2xl mx-auto flex items-center justify-between gap-3">
-          {/* Back */}
+          {/* Back — allows changing answer */}
           <button
             onClick={handleBack}
             disabled={currentIndex === 0}
             className={`flex items-center gap-1.5 px-4 py-2.5 rounded-lg text-sm font-semibold transition-colors ${
               currentIndex === 0
                 ? 'text-gray-300 cursor-not-allowed'
-                : 'text-gray-600 hover:bg-gray-100'
+                : 'text-gray-600 hover:bg-gray-100 cursor-pointer'
             }`}
           >
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
@@ -436,30 +558,16 @@ export function QuizPlayerContent({ questions, quizTitle, onExit }: QuizPlayerCo
             {currentIndex + 1} of {total}
           </span>
 
-          {/* Submit / Next */}
-          {!isSubmitted ? (
-            <button
-              onClick={handleSubmit}
-              disabled={selectedOptionId === null}
-              className={`flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold transition-all ${
-                selectedOptionId === null
-                  ? 'bg-gray-200 text-gray-400 cursor-not-allowed'
-                  : 'bg-brand-navy text-white hover:bg-brand-blue shadow-md'
-              }`}
-            >
-              Submit
-            </button>
-          ) : (
-            <button
-              onClick={handleNext}
-              className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold bg-brand-blue text-white hover:bg-brand-navy shadow-md transition-all"
-            >
-              {currentIndex === total - 1 ? 'See Results' : 'Next'}
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
-                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
-              </svg>
-            </button>
-          )}
+          {/* Next / Finish */}
+          <button
+            onClick={handleNextOrFinish}
+            className="flex items-center gap-1.5 px-5 py-2.5 rounded-lg text-sm font-bold bg-brand-navy text-white hover:bg-brand-blue shadow-md cursor-pointer transition-all"
+          >
+            {currentIndex === total - 1 ? 'Finish' : 'Next'}
+            <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
+              <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z" />
+            </svg>
+          </button>
         </div>
       </footer>
     </div>

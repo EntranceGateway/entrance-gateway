@@ -54,6 +54,18 @@ export async function POST() {
       maxAge: 60 * 60 * 24 * 7,
       path: '/',
     })
+
+    // Re-set userId cookie so client-side isAuthenticated() stays correct
+    const existingUserId = cookieStore.get('userId')?.value
+    if (existingUserId) {
+      cookieStore.set('userId', existingUserId, {
+        httpOnly: false,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7,
+        path: '/',
+      })
+    }
     
     return NextResponse.json({
       success: true,
