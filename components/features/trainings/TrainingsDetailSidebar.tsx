@@ -32,6 +32,19 @@ export function TrainingsDetailSidebar({
   const capacityPercentage = (training.currentParticipants / training.maxParticipants) * 100
   const availableSeats = training.maxParticipants - training.currentParticipants
 
+  // Calculate discounted price with validation
+  // Semantic: null = no discount offered, 0 = discount exists but is 0%, 1-100 = valid discount
+  const validOfferPercentage = training.offerPercentage !== null 
+    && training.offerPercentage > 0 
+    && training.offerPercentage <= 100
+    ? training.offerPercentage
+    : null
+  
+  const hasDiscount = validOfferPercentage !== null
+  const discountedPrice = hasDiscount 
+    ? training.price - (training.price * validOfferPercentage / 100)
+    : training.price
+
   // Check enrollment status - be defensive about null/undefined
   const isEnrolled = !!(enrollmentStatus?.data && enrollmentStatus.data !== null)
   const enrollmentData = enrollmentStatus?.data
@@ -78,18 +91,35 @@ export function TrainingsDetailSidebar({
       <div className="bg-white rounded-xl border border-gray-200 shadow-lg overflow-hidden">
         {/* Price Header */}
         <div className="p-6 border-b border-gray-100">
-          <div className="flex items-baseline gap-1">
-            {training.price === 0 ? (
-              <span className="text-4xl font-bold text-brand-navy">Free</span>
-            ) : (
-              <>
-                <span className="text-gray-500 text-sm font-medium">NPR</span>
-                <span className="text-4xl font-bold text-brand-navy">
-                  {training.price.toLocaleString()}
+          {training.price === 0 ? (
+            <div className="flex items-baseline gap-1">
+              <span className="text-4xl font-bold text-green-600">Free</span>
+            </div>
+          ) : hasDiscount ? (
+            <div className="space-y-1">
+              <div className="flex items-center gap-3">
+                <span className="text-2xl font-semibold text-gray-400 line-through">
+                  NPR {training.price.toLocaleString()}
                 </span>
-              </>
-            )}
-          </div>
+                <span className="bg-green-100 text-green-700 text-xs font-bold px-2 py-1 rounded-full">
+                  {validOfferPercentage}% OFF
+                </span>
+              </div>
+              <div className="flex items-baseline gap-1">
+                <span className="text-gray-500 text-sm font-medium">NPR</span>
+                <span className="text-4xl font-bold text-green-600">
+                  {Math.round(discountedPrice).toLocaleString()}
+                </span>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-baseline gap-1">
+              <span className="text-gray-500 text-sm font-medium">NPR</span>
+              <span className="text-4xl font-bold text-brand-navy">
+                {training.price.toLocaleString()}
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Details */}

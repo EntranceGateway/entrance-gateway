@@ -16,6 +16,7 @@ export interface Training {
   currentParticipants: number
   trainingCategory: string
   price: number
+  offerPercentage: number | null // Discount percentage: null = no discount offered, 0 = discount exists but 0%, 1-100 = valid discount percentage
   certificateProvided: boolean
   materialsLink: string | null
   remarks: string | null

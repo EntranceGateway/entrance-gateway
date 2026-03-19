@@ -89,17 +89,6 @@ export function storeAuthTokens(tokens: LoginResponse['data'] | RefreshTokenResp
   if (typeof window === 'undefined') return
   
   try {
-    // Console log the JWT tokens
-    console.group('🔐 JWT Tokens Stored')
-    console.log('Access Token:', tokens.accessToken)
-    console.log('Refresh Token:', tokens.refreshToken)
-    console.log('Token Type:', tokens.tokenType)
-    console.log('Expires In:', tokens.expiresIn, 'seconds')
-    if ('userId' in tokens) {
-      console.log('User ID:', tokens.userId)
-    }
-    console.groupEnd()
-    
     // Store tokens
     localStorage.setItem('accessToken', tokens.accessToken)
     localStorage.setItem('refreshToken', tokens.refreshToken)
@@ -136,7 +125,6 @@ export function getAuthTokens(): LoginResponse['data'] | null {
     const userId = localStorage.getItem('userId')
     
     if (!accessToken || !refreshToken || !userId) {
-      console.warn('⚠️ JWT Tokens not found in localStorage')
       return null
     }
     
@@ -147,15 +135,7 @@ export function getAuthTokens(): LoginResponse['data'] | null {
       expiresIn: expiresIn ? parseInt(expiresIn) : 900,
       userId: parseInt(userId),
     }
-    
-    // Console log the retrieved tokens
-    console.group('🔓 JWT Tokens Retrieved')
-    console.log('Access Token:', accessToken)
-    console.log('Refresh Token:', refreshToken)
-    console.log('Token Type:', tokens.tokenType)
-    console.log('User ID:', tokens.userId)
-    console.groupEnd()
-    
+
     return tokens
   } catch (error) {
     console.error('Failed to get auth tokens:', error)
@@ -220,15 +200,11 @@ export async function refreshTokenIfNeeded(): Promise<boolean> {
   
   // Check if token is expired or about to expire
   if (!isTokenExpired()) {
-    console.log('✅ Token is still valid, no refresh needed')
     return true
   }
-  
-  console.log('🔄 Token expired or expiring soon, refreshing...')
-  
+
   // If already refreshing, wait for completion
   if (isRefreshing) {
-    console.log('⏳ Token refresh already in progress, waiting...')
     return new Promise((resolve) => {
       subscribeTokenRefresh((token) => {
         resolve(!!token)
@@ -240,12 +216,7 @@ export async function refreshTokenIfNeeded(): Promise<boolean> {
   
   try {
     const response = await refreshAccessToken(tokens.refreshToken)
-    
-    console.group('✨ Token Refreshed Successfully')
-    console.log('New Access Token:', response.data.accessToken)
-    console.log('New Refresh Token:', response.data.refreshToken)
-    console.groupEnd()
-    
+
     // Update tokens in localStorage
     storeAuthTokens(response.data)
     
@@ -255,7 +226,7 @@ export async function refreshTokenIfNeeded(): Promise<boolean> {
     isRefreshing = false
     return true
   } catch (error) {
-    console.error('❌ Token refresh failed:', error)
+      // Token refresh failed
     isRefreshing = false
     
     // Refresh failed, clear tokens and redirect to login
@@ -282,23 +253,14 @@ export async function refreshTokenIfNeeded(): Promise<boolean> {
 export async function getValidAccessToken(): Promise<string | null> {
   if (typeof window === 'undefined') return null
   
-  console.log('🔍 Getting valid access token...')
-  
   // Try to refresh token if needed
   const isValid = await refreshTokenIfNeeded()
   if (!isValid) {
-    console.warn('⚠️ Failed to get valid access token')
     return null
   }
-  
+
   const tokens = getAuthTokens()
-  const accessToken = tokens?.accessToken || null
-  
-  if (accessToken) {
-    console.log('✅ Valid access token obtained')
-  }
-  
-  return accessToken
+  return tokens?.accessToken || null
 }
 
 /**
@@ -309,8 +271,6 @@ export function clearAuthTokens(): void {
   if (typeof window === 'undefined') return
   
   try {
-    console.log('🗑️ Clearing all JWT tokens from localStorage')
-    
     localStorage.removeItem('accessToken')
     localStorage.removeItem('refreshToken')
     localStorage.removeItem('tokenType')
@@ -321,8 +281,6 @@ export function clearAuthTokens(): void {
     
     // Clear any cached user data
     sessionStorage.removeItem('redirectAfterLogin')
-    
-    console.log('✅ All tokens cleared successfully')
   } catch (error) {
     console.error('Failed to clear auth tokens:', error)
   }

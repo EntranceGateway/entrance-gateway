@@ -7,6 +7,7 @@ import { fetchTrainingById, enrollWithPayment, checkEnrollmentStatus } from '@/s
 import { fetchUserProfile } from '@/services/client/user.client'
 import { CenteredSpinner } from '@/components/shared/Loading'
 import { useToast } from '@/components/shared/Toast'
+import { logger } from '@/lib/logger'
 import type { Training, TrainingDetailResponse } from '@/types/trainings.types'
 import type { User } from '@/types/user.types'
 
@@ -66,10 +67,25 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
         setTraining(trainingResponse.data)
         setUserData(userResponse.data)
         
-        // Set initial payment amount
+        // Calculate discounted price if offer exists with validation
+        const basePrice = trainingResponse.data.price
+        const offerPercentage = trainingResponse.data.offerPercentage ?? 0
+        
+        // Validate offerPercentage is within bounds (0-100)
+        // Semantic: null = no discount offered, 0 = discount exists but is 0%, 1-100 = valid discount
+        const validOfferPercentage = typeof offerPercentage === 'number' && offerPercentage >= 0 && offerPercentage <= 100
+          ? offerPercentage
+          : 0
+        
+        const hasDiscount = trainingResponse.data.offerPercentage !== null && validOfferPercentage > 0
+        const discountedPrice = hasDiscount 
+          ? basePrice - (basePrice * validOfferPercentage / 100)
+          : basePrice
+        
+        // Set initial payment amount (use discounted price)
         setPaymentData(prev => ({
           ...prev,
-          amount: trainingResponse.data.price
+          amount: discountedPrice
         }))
 
         // Check enrollment status
@@ -87,8 +103,10 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
           }
         }
       } catch (err) {
-        const message = err instanceof Error ? err.message : 'Failed to load data'
+        logger.error('[TrainingEnrollmentContent] Load data error:', err)
+        const message = err instanceof Error ? err.message : 'Failed to load enrollment form'
         setError(message)
+        showToast(message, 'error')
       } finally {
         setIsLoading(false)
       }
@@ -100,59 +118,56 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
-    console.log('=== handleSubmit START ===')
-    console.log('trainingId:', trainingId)
-    console.log('training:', training)
-    console.log('userData:', userData)
-    
     if (!training || !userData) {
-      console.log('❌ Missing training or userData')
+      logger.error('[handleSubmit] Missing training or userData')
+      showToast('Unable to submit enrollment. Please refresh the page.', 'error')
       return
     }
 
     // Parse and validate trainingId
-    console.log('Parsing trainingId for submission:', trainingId)
     const numericId = parseInt(trainingId)
-    console.log('Parsed numericId:', numericId)
     
     if (isNaN(numericId) || numericId <= 0) {
-      console.error('❌ Invalid training ID in submit')
+      logger.error('[handleSubmit] Invalid training ID:', trainingId)
       showToast('Invalid training ID', 'error')
       return
     }
 
-    console.log('✅ Training ID valid for submission:', numericId)
-
     // Validation
-    if (!paymentData.amount || paymentData.amount <= 0) {
-      console.log('❌ Invalid amount')
+    if (typeof paymentData.amount !== 'number' || paymentData.amount < 0) {
       showToast('Please enter a valid payment amount', 'error')
       return
     }
-    if (!paymentData.remarks.trim()) {
-      console.log('❌ Missing remarks')
-      showToast('Please enter payment remarks', 'error')
-      return
-    }
-    if (!paymentData.proofFile) {
-      console.log('❌ Missing proof file')
-      showToast('Please upload payment proof', 'error')
-      return
-    }
+    
+    // For paid trainings, require payment proof and remarks
+    if (paymentData.amount > 0) {
+      if (!paymentData.remarks.trim()) {
+        showToast('Please enter payment remarks', 'error')
+        return
+      }
+      if (!paymentData.proofFile) {
+        showToast('Please upload payment proof', 'error')
+        return
+      }
 
-    console.log('✅ All validations passed')
-    console.log('Payment data:', {
-      amount: paymentData.amount,
-      paymentMethod: paymentData.paymentMethod,
-      transactionReference: paymentData.transactionReference,
-      remarks: paymentData.remarks,
-      proofFileName: paymentData.proofFile.name
-    })
+      // Validate file size (5MB max)
+      const maxSize = 5 * 1024 * 1024 // 5MB
+      if (paymentData.proofFile.size > maxSize) {
+        showToast('Payment proof file must be less than 5MB', 'error')
+        return
+      }
+
+      // Validate file type
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'application/pdf']
+      if (!allowedTypes.includes(paymentData.proofFile.type)) {
+        showToast('Payment proof must be JPG, PNG, or PDF', 'error')
+        return
+      }
+    }
 
     setIsSubmitting(true)
 
     try {
-      console.log('Calling enrollWithPayment with numericId:', numericId)
       await enrollWithPayment(numericId, {
         amount: paymentData.amount,
         paymentMethod: paymentData.paymentMethod,
@@ -161,26 +176,14 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
         proofFile: paymentData.proofFile
       })
       
-      console.log('✅ Enrollment successful')
       showToast('Enrollment submitted successfully! Pending admin approval.', 'success')
       setShowSuccess(true)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Submission failed'
-      console.error('=== handleSubmit ERROR ===')
-      console.error('Error:', err)
-      console.error('Message:', message)
-      console.error('========================')
-      
-      if (message.includes('already enrolled')) {
-        showToast('You already have a pending enrollment.', 'warning')
-      } else if (message.includes('capacity') || message.includes('full')) {
-        showToast('Training has reached maximum capacity', 'error')
-      } else {
-        showToast(message, 'error')
-      }
+      logger.error('[handleSubmit] Enrollment error:', err)
+      const message = err instanceof Error ? err.message : 'Failed to submit enrollment'
+      showToast(message, 'error')
     } finally {
       setIsSubmitting(false)
-      console.log('=== handleSubmit END ===')
     }
   }
 
@@ -222,6 +225,23 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
   }
 
   const availableSeats = training.maxParticipants - training.currentParticipants
+  
+  // Calculate discounted price with validation
+  const basePrice = training.price
+  const offerPercentage = training.offerPercentage ?? 0
+  
+  // Validate offerPercentage is within bounds (0-100)
+  // null = no discount offered, 0 = discount exists but is 0%, 1-100 = valid discount
+  const validOfferPercentage = typeof offerPercentage === 'number' && offerPercentage >= 0 && offerPercentage <= 100
+    ? offerPercentage
+    : 0
+  
+  // Only show discount UI if offerPercentage is explicitly set (not null) and > 0
+  const hasDiscount = training.offerPercentage !== null && validOfferPercentage > 0
+  
+  const discountedPrice = hasDiscount 
+    ? basePrice - (basePrice * validOfferPercentage / 100)
+    : basePrice
 
   return (
     <main className="flex-grow bg-gray-50">
@@ -356,197 +376,230 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
                   </div>
 
                   {/* Payment Method */}
-                  <div>
-                    <h2 className="text-base md:text-lg font-bold text-brand-navy mb-3 md:mb-4 font-heading">
-                      Payment Information
-                    </h2>
-                    
-                    <div className="space-y-4">
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2 md:mb-3">
-                          Select Payment Method
-                        </label>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                          <button
-                            type="button"
-                            onClick={() => setPaymentData(prev => ({ ...prev, paymentMethod: 'FONE_PAY_QR' }))}
-                            className={`p-3 md:p-4 border-2 rounded-lg transition-all text-left ${
-                              paymentData.paymentMethod === 'FONE_PAY_QR'
-                                ? 'border-brand-blue bg-brand-blue/5'
-                                : 'border-gray-300 hover:border-brand-blue/50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`size-5 rounded-full border-2 flex items-center justify-center ${
-                                paymentData.paymentMethod === 'FONE_PAY_QR' ? 'border-brand-blue' : 'border-gray-300'
-                              }`}>
-                                {paymentData.paymentMethod === 'FONE_PAY_QR' && (
-                                  <div className="size-3 rounded-full bg-brand-blue" />
-                                )}
+                  {training.price > 0 && (
+                    <div>
+                      <h2 className="text-base md:text-lg font-bold text-brand-navy mb-3 md:mb-4 font-heading">
+                        Payment Information
+                      </h2>
+                      
+                      <div className="space-y-4">
+                        <div>
+                          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-2 md:mb-3">
+                            Select Payment Method
+                          </label>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              onClick={() => setPaymentData(prev => ({ ...prev, paymentMethod: 'FONE_PAY_QR' }))}
+                              className={`p-3 md:p-4 border-2 rounded-lg transition-all text-left ${
+                                paymentData.paymentMethod === 'FONE_PAY_QR'
+                                  ? 'border-brand-blue bg-brand-blue/5'
+                                  : 'border-gray-300 hover:border-brand-blue/50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`size-5 rounded-full border-2 flex items-center justify-center ${
+                                  paymentData.paymentMethod === 'FONE_PAY_QR' ? 'border-brand-blue' : 'border-gray-300'
+                                }`}>
+                                  {paymentData.paymentMethod === 'FONE_PAY_QR' && (
+                                    <div className="size-3 rounded-full bg-brand-blue" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-sm md:text-base text-gray-900">FonePay QR</p>
+                                  <p className="text-xs text-gray-500">Scan QR code to pay</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-bold text-sm md:text-base text-gray-900">FonePay QR</p>
-                                <p className="text-xs text-gray-500">Scan QR code to pay</p>
-                              </div>
-                            </div>
-                          </button>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setPaymentData(prev => ({ ...prev, paymentMethod: 'BANK_TRANSFER' }))}
-                            className={`p-3 md:p-4 border-2 rounded-lg transition-all text-left ${
-                              paymentData.paymentMethod === 'BANK_TRANSFER'
-                                ? 'border-brand-blue bg-brand-blue/5'
-                                : 'border-gray-300 hover:border-brand-blue/50'
-                            }`}
-                          >
-                            <div className="flex items-center gap-3">
-                              <div className={`size-5 rounded-full border-2 flex items-center justify-center ${
-                                paymentData.paymentMethod === 'BANK_TRANSFER' ? 'border-brand-blue' : 'border-gray-300'
-                              }`}>
-                                {paymentData.paymentMethod === 'BANK_TRANSFER' && (
-                                  <div className="size-3 rounded-full bg-brand-blue" />
-                                )}
+                            <button
+                              type="button"
+                              onClick={() => setPaymentData(prev => ({ ...prev, paymentMethod: 'BANK_TRANSFER' }))}
+                              className={`p-3 md:p-4 border-2 rounded-lg transition-all text-left ${
+                                paymentData.paymentMethod === 'BANK_TRANSFER'
+                                  ? 'border-brand-blue bg-brand-blue/5'
+                                  : 'border-gray-300 hover:border-brand-blue/50'
+                              }`}
+                            >
+                              <div className="flex items-center gap-3">
+                                <div className={`size-5 rounded-full border-2 flex items-center justify-center ${
+                                  paymentData.paymentMethod === 'BANK_TRANSFER' ? 'border-brand-blue' : 'border-gray-300'
+                                }`}>
+                                  {paymentData.paymentMethod === 'BANK_TRANSFER' && (
+                                    <div className="size-3 rounded-full bg-brand-blue" />
+                                  )}
+                                </div>
+                                <div>
+                                  <p className="font-bold text-sm md:text-base text-gray-900">Bank Transfer</p>
+                                  <p className="text-xs text-gray-500">Direct bank deposit</p>
+                                </div>
                               </div>
-                              <div>
-                                <p className="font-bold text-sm md:text-base text-gray-900">Bank Transfer</p>
-                                <p className="text-xs text-gray-500">Direct bank deposit</p>
-                              </div>
-                            </div>
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* Payment Instructions */}
-                      {paymentData.paymentMethod === 'FONE_PAY_QR' && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <div className="flex flex-col items-center">
-                            <h3 className="font-bold text-sm md:text-base text-brand-navy mb-2">Scan QR Code</h3>
-                            <div className="bg-white p-3 rounded-lg shadow-sm">
-                              <img
-                                src="/image.png"
-                                alt="FonePay QR"
-                                className="w-48 h-48 md:w-56 md:h-56 object-contain"
-                              />
-                            </div>
-                            <p className="text-xs md:text-sm text-gray-600 mt-3 text-center">
-                              Amount: <span className="font-bold">{training.price === 0 ? 'Free' : `NPR ${training.price.toLocaleString()}`}</span>
-                            </p>
+                            </button>
                           </div>
                         </div>
-                      )}
 
-                      {paymentData.paymentMethod === 'BANK_TRANSFER' && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                          <h3 className="font-bold text-sm md:text-base text-brand-navy mb-3">Bank Details</h3>
-                          <div className="space-y-2 bg-white rounded-lg p-3">
-                            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b">
-                              <span className="text-xs md:text-sm text-gray-600">Account Number:</span>
-                              <span className="font-mono font-bold text-sm md:text-base">34201010000602</span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b">
-                              <span className="text-xs md:text-sm text-gray-600">Account Name:</span>
-                              <span className="font-semibold text-xs md:text-sm">Samasta Groups Private Limited</span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b">
-                              <span className="text-xs md:text-sm text-gray-600">Bank:</span>
-                              <span className="font-semibold text-sm md:text-base">Global IME</span>
-                            </div>
-                            <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2">
-                              <span className="text-xs md:text-sm text-gray-600">Branch:</span>
-                              <span className="font-semibold text-sm md:text-base">Ekantakuna</span>
+                        {/* Payment Instructions */}
+                        {paymentData.paymentMethod === 'FONE_PAY_QR' && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div className="flex flex-col items-center">
+                              <h3 className="font-bold text-sm md:text-base text-brand-navy mb-2">Scan QR Code</h3>
+                              <div className="bg-white p-3 rounded-lg shadow-sm">
+                                <img
+                                  src="/image.png"
+                                  alt="FonePay QR"
+                                  className="w-48 h-48 md:w-56 md:h-56 object-contain"
+                                />
+                              </div>
+                              <p className="text-xs md:text-sm text-gray-600 mt-3 text-center">
+                                Amount: {hasDiscount ? (
+                                  <>
+                                    <span className="line-through text-gray-400 mr-2">NPR {basePrice.toLocaleString()}</span>
+                                    <span className="font-bold text-green-600">NPR {discountedPrice.toLocaleString()}</span>
+                                  </>
+                                ) : (
+                                  <span className="font-bold">NPR {basePrice.toLocaleString()}</span>
+                                )}
+                              </p>
                             </div>
                           </div>
-                        </div>
-                      )}
-
-                      {/* Payment Fields */}
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-                          Amount (NPR) <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="number"
-                          value={paymentData.amount}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                          className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
-                          required
-                        />
-                        <p className="text-xs text-gray-500 mt-1">Training fee: {training.price === 0 ? 'Free' : `NPR ${training.price.toLocaleString()}`}</p>
-                      </div>
-
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-                          Transaction Reference (Optional)
-                        </label>
-                        <input
-                          type="text"
-                          value={paymentData.transactionReference}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, transactionReference: e.target.value }))}
-                          className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
-                          placeholder="e.g., FP20260201123456"
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-                          Payment Remarks <span className="text-red-600">*</span>
-                        </label>
-                        <textarea
-                          value={paymentData.remarks}
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, remarks: e.target.value }))}
-                          rows={3}
-                          className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
-                          placeholder={`Paid via ${paymentData.paymentMethod === 'FONE_PAY_QR' ? 'FonePay' : 'bank transfer'} on ${new Date().toISOString().split('T')[0]}`}
-                          required
-                        />
-                      </div>
-
-                      <div>
-                        <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
-                          Payment Proof <span className="text-red-600">*</span>
-                        </label>
-                        <input
-                          type="file"
-                          accept="image/*,.pdf"
-                          onChange={(e) => setPaymentData(prev => ({ ...prev, proofFile: e.target.files?.[0] || null }))}
-                          className="hidden"
-                          id="payment-proof"
-                          required
-                        />
-                        <label
-                          htmlFor="payment-proof"
-                          className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-blue-50 transition-all"
-                        >
-                          {paymentData.proofFile ? (
-                            <div className="flex items-center gap-2 text-sm">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-green-600">
-                                <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
-                              </svg>
-                              <span className="font-medium">{paymentData.proofFile.name}</span>
-                            </div>
-                          ) : (
-                            <div className="text-center">
-                              <svg viewBox="0 0 24 24" fill="currentColor" className="size-8 text-gray-400 mx-auto mb-2">
-                                <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
-                              </svg>
-                              <p className="text-xs md:text-sm font-medium text-gray-700">Upload payment proof</p>
-                              <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF - Max 5MB</p>
-                            </div>
-                          )}
-                        </label>
-                        {paymentData.proofFile && (
-                          <button
-                            type="button"
-                            onClick={() => setPaymentData(prev => ({ ...prev, proofFile: null }))}
-                            className="mt-2 text-xs text-red-600 hover:text-red-700"
-                          >
-                            Remove file
-                          </button>
                         )}
+
+                        {paymentData.paymentMethod === 'BANK_TRANSFER' && (
+                          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <h3 className="font-bold text-sm md:text-base text-brand-navy mb-3">Bank Details</h3>
+                            <div className="space-y-2 bg-white rounded-lg p-3">
+                              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b">
+                                <span className="text-xs md:text-sm text-gray-600">Account Number:</span>
+                                <span className="font-mono font-bold text-sm md:text-base">34201010000602</span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b">
+                                <span className="text-xs md:text-sm text-gray-600">Account Name:</span>
+                                <span className="font-semibold text-xs md:text-sm">Samasta Groups Private Limited</span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2 border-b">
+                                <span className="text-xs md:text-sm text-gray-600">Bank:</span>
+                                <span className="font-semibold text-sm md:text-base">Global IME</span>
+                              </div>
+                              <div className="flex flex-col sm:flex-row sm:justify-between gap-1 py-2">
+                                <span className="text-xs md:text-sm text-gray-600">Branch:</span>
+                                <span className="font-semibold text-sm md:text-base">Ekantakuna</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Payment Fields */}
+                        <div>
+                          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+                            Amount (NPR) <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="number"
+                            value={paymentData.amount}
+                            disabled
+                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg bg-gray-50 text-gray-600 cursor-not-allowed"
+                            required
+                          />
+                          {hasDiscount ? (
+                            <p className="text-xs text-gray-500 mt-1">
+                              Original price: <span className="line-through">NPR {basePrice.toLocaleString()}</span>
+                              {' '}<span className="text-green-600 font-medium">({validOfferPercentage}% discount applied)</span>
+                            </p>
+                          ) : (
+                            <p className="text-xs text-gray-500 mt-1">Training fee: NPR {basePrice.toLocaleString()}</p>
+                          )}
+                        </div>
+
+                        <div>
+                          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+                            Transaction Reference (Optional)
+                          </label>
+                          <input
+                            type="text"
+                            value={paymentData.transactionReference}
+                            onChange={(e) => setPaymentData(prev => ({ ...prev, transactionReference: e.target.value }))}
+                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
+                            placeholder="e.g., FP20260201123456"
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+                            Payment Remarks <span className="text-red-600">*</span>
+                          </label>
+                          <textarea
+                            value={paymentData.remarks}
+                            onChange={(e) => setPaymentData(prev => ({ ...prev, remarks: e.target.value }))}
+                            rows={3}
+                            className="w-full px-3 md:px-4 py-2 text-sm md:text-base border border-gray-300 rounded-lg focus:ring-2 focus:ring-brand-blue"
+                            placeholder={`Paid via ${paymentData.paymentMethod === 'FONE_PAY_QR' ? 'FonePay' : 'bank transfer'} on ${new Date().toISOString().split('T')[0]}`}
+                            required
+                          />
+                        </div>
+
+                        <div>
+                          <label className="block text-xs md:text-sm font-medium text-gray-700 mb-1">
+                            Payment Proof <span className="text-red-600">*</span>
+                          </label>
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/jpg,image/png,application/pdf"
+                            onChange={(e) => setPaymentData(prev => ({ ...prev, proofFile: e.target.files?.[0] || null }))}
+                            className="hidden"
+                            id="payment-proof"
+                            required
+                          />
+                          <label
+                            htmlFor="payment-proof"
+                            className="flex items-center justify-center w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-lg cursor-pointer hover:border-brand-blue hover:bg-blue-50 transition-all"
+                          >
+                            {paymentData.proofFile ? (
+                              <div className="flex items-center gap-2 text-sm">
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-green-600">
+                                  <path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z" />
+                                </svg>
+                                <span className="font-medium">{paymentData.proofFile.name}</span>
+                              </div>
+                            ) : (
+                              <div className="text-center">
+                                <svg viewBox="0 0 24 24" fill="currentColor" className="size-8 text-gray-400 mx-auto mb-2">
+                                  <path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z" />
+                                </svg>
+                                <p className="text-xs md:text-sm font-medium text-gray-700">Upload payment proof</p>
+                                <p className="text-xs text-gray-500 mt-1">PNG, JPG, PDF - Max 5MB</p>
+                              </div>
+                            )}
+                          </label>
+                          {paymentData.proofFile && (
+                            <button
+                              type="button"
+                              onClick={() => setPaymentData(prev => ({ ...prev, proofFile: null }))}
+                              className="mt-2 text-xs text-red-600 hover:text-red-700"
+                            >
+                              Remove file
+                            </button>
+                          )}
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  )}
+
+                  {/* Free Training Message */}
+                  {training.price === 0 && (
+                    <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                      <div className="flex items-start gap-3">
+                        <svg viewBox="0 0 24 24" fill="currentColor" className="size-6 text-green-600 shrink-0">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
+                        </svg>
+                        <div>
+                          <h3 className="font-bold text-sm md:text-base text-green-900 mb-1">Free Training</h3>
+                          <p className="text-xs md:text-sm text-green-800">
+                            This training is completely free. Click submit to complete your enrollment.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
 
                   {/* Submit Button */}
                   <div className="pt-4 border-t">
@@ -563,6 +616,8 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
                           </svg>
                           Submitting...
                         </>
+                      ) : training.price === 0 ? (
+                        'Complete Free Enrollment'
                       ) : (
                         'Submit Enrollment & Payment'
                       )}
@@ -593,12 +648,35 @@ export function TrainingEnrollmentContent({ trainingId, initialData }: TrainingE
                       </div>
                       <div className="pt-3 border-t">
                         <p className="text-xs text-gray-500 mb-1">Training Fee</p>
-                        <div className="flex items-baseline gap-1">
-                          <span className="text-gray-500 text-xs">NPR</span>
-                          <span className="text-xl md:text-2xl font-bold text-brand-navy">
-                            {training.price.toLocaleString()}
-                          </span>
-                        </div>
+                        {training.price === 0 ? (
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-xl md:text-2xl font-bold text-green-600">FREE</span>
+                          </div>
+                        ) : hasDiscount ? (
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-gray-400 line-through">
+                                NPR {basePrice.toLocaleString()}
+                              </span>
+                              <span className="text-xs font-bold text-white bg-red-500 px-2 py-0.5 rounded">
+                                {validOfferPercentage}% OFF
+                              </span>
+                            </div>
+                            <div className="flex items-baseline gap-1">
+                              <span className="text-gray-500 text-xs">NPR</span>
+                              <span className="text-xl md:text-2xl font-bold text-green-600">
+                                {discountedPrice.toLocaleString()}
+                              </span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex items-baseline gap-1">
+                            <span className="text-gray-500 text-xs">NPR</span>
+                            <span className="text-xl md:text-2xl font-bold text-brand-navy">
+                              {basePrice.toLocaleString()}
+                            </span>
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>

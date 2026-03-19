@@ -16,9 +16,47 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
     return 'bg-brand-blue'
   }
 
-  // Format price
-  const formatPrice = (price: number) => {
-    return price === 0 ? 'Free' : `NPR ${price.toLocaleString()}`
+  // Calculate discounted price with validation
+  const calculateDiscountedPrice = (price: number, offerPercentage: number | null) => {
+    // Validate offerPercentage is within bounds (0-100)
+    // Semantic: null = no discount offered, 0 = discount exists but is 0%, 1-100 = valid discount
+    if (offerPercentage === null || offerPercentage <= 0 || offerPercentage > 100) {
+      return price
+    }
+    return price - (price * offerPercentage / 100)
+  }
+
+  // Format price with discount
+  const formatPrice = (price: number, offerPercentage: number | null) => {
+    if (price === 0) {
+      return <span className="text-green-600 font-bold">FREE</span>
+    }
+
+    // Only show discount if offerPercentage is explicitly set (not null) and within valid range (1-100)
+    const validOfferPercentage = offerPercentage !== null && offerPercentage > 0 && offerPercentage <= 100
+      ? offerPercentage
+      : null
+    
+    const hasDiscount = validOfferPercentage !== null
+    const discountedPrice = hasDiscount ? calculateDiscountedPrice(price, validOfferPercentage) : price
+
+    if (hasDiscount) {
+      return (
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[10px] text-gray-400 line-through">
+            NPR {price.toLocaleString()}
+          </span>
+          <span className="text-xs font-bold text-green-600">
+            NPR {Math.round(discountedPrice).toLocaleString()}
+          </span>
+          <span className="text-[9px] text-green-600 font-semibold">
+            {validOfferPercentage}% OFF
+          </span>
+        </div>
+      )
+    }
+
+    return <span>NPR {price.toLocaleString()}</span>
   }
 
   return (
@@ -53,7 +91,7 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
           <div className="text-center">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Price</div>
             <div className="text-xs font-bold text-brand-blue">
-              {formatPrice(item.price)}
+              {formatPrice(item.price, item.offerPercentage)}
             </div>
           </div>
         </div>
