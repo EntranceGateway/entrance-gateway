@@ -30,7 +30,9 @@ function parseCookies(): Record<string, string> {
 export function getUserId(): number | null {
   const cookies = parseCookies()
   const userId = cookies['userId']
-  return userId ? parseInt(userId) : null
+  if (!userId) return null
+  const parsed = parseInt(userId)
+  return Number.isNaN(parsed) ? null : parsed
 }
 
 /**

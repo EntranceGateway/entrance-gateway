@@ -34,8 +34,10 @@ export async function authenticatedApiClient<T>(
   } catch (error) {
     // Handle 401 Unauthorized - token might have expired during request
     if (error instanceof ApiError && error.status === 401) {
-      // Try to refresh token and retry once
-      const newToken = await getValidAccessTokenFromCookies()
+      // Force refresh token and retry once
+      // The backend rejected our token, so our current cookie is definitively invalid
+      const forceRefresh = true
+      const newToken = await getValidAccessTokenFromCookies(forceRefresh)
 
       if (newToken) {
         const retryHeaders: HeadersInit = {
@@ -47,7 +49,7 @@ export async function authenticatedApiClient<T>(
           ...options,
           headers: retryHeaders,
         })
-      }
+       }
     }
 
     throw error
@@ -56,46 +58,68 @@ export async function authenticatedApiClient<T>(
 
 /**
  * Get valid access token from cookies via API proxy
- * Automatically refreshes if token is expired
+ * Automatically refreshes if token is expired.
+ * Also applies a 5s timeout to avoid hanging requests.
  */
-async function getValidAccessTokenFromCookies(): Promise<string | null> {
+async function getValidAccessTokenFromCookies(forceRefresh = false): Promise<string | null> {
   try {
-    // First, try to get current token
-    const response = await fetch('/api/auth/token', {
-      method: 'GET',
-      headers: { 'Accept': 'application/json' },
-      credentials: 'include',
-    })
+    const controller = new AbortController()
+    const timeoutId = setTimeout(() => controller.abort(), 5000)
 
-    if (response.ok) {
-      const data = await response.json()
-      return data.accessToken
-    }
+    try {
+      if (!forceRefresh) {
+        // Try getting the current token first
+        const response = await fetch('/api/auth/token', {
+          method: 'GET',
+          headers: { 'Accept': 'application/json' },
+          credentials: 'include',
+          signal: controller.signal,
+        })
 
-    // Token not found or expired - try to refresh
-    if (response.status === 401) {
+        if (response.ok) {
+          const data = await response.json()
+          const token = data?.accessToken
+          if (typeof token === 'string') {
+             return token
+          }
+        }
+      }
+
+      // If missing, expired, invalid, or we forced refresh, hit the refresh endpoint
       const refreshResponse = await fetch('/api/auth/refresh', {
         method: 'POST',
         credentials: 'include',
+        signal: controller.signal,
       })
 
       if (refreshResponse.ok) {
-        // Retry fetching token after refresh
+        // Retry fetching token after successful refresh
         const retryResponse = await fetch('/api/auth/token', {
           method: 'GET',
           headers: { 'Accept': 'application/json' },
           credentials: 'include',
+          signal: controller.signal,
         })
 
         if (retryResponse.ok) {
           const data = await retryResponse.json()
-          return data.accessToken
+          const newToken = data?.accessToken
+          if (typeof newToken === 'string') {
+            return newToken
+          }
         }
       }
-    }
 
-    return null
-  } catch {
+      return null
+    } finally {
+      clearTimeout(timeoutId)
+    }
+  } catch (error) {
+    if (error instanceof DOMException && error.name === 'AbortError') {
+      console.error('[authenticatedClient] Token fetch timed out after 5s')
+    } else {
+      console.error('[authenticatedClient] Error fetching valid access token:', error)
+    }
     return null
   }
 }

@@ -71,7 +71,13 @@ export async function getValidTokenOrRefresh(): Promise<string | null> {
       })
     }
 
-    return data.data.accessToken
+    const token = data?.data?.accessToken
+    if (typeof token !== 'string') {
+      console.error('[token.ts] Invalid token format received:', typeof token)
+      return null
+    }
+
+    return token
   } catch {
     return null
   }

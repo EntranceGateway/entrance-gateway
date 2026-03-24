@@ -23,7 +23,9 @@ export async function getRefreshToken(): Promise<string | undefined> {
 export async function getUserId(): Promise<number | null> {
   const cookieStore = await cookies()
   const userId = cookieStore.get('userId')?.value
-  return userId ? parseInt(userId) : null
+  if (!userId) return null
+  const parsed = parseInt(userId)
+  return Number.isNaN(parsed) ? null : parsed
 }
 
 /**

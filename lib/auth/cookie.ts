@@ -42,7 +42,9 @@ export function getAccessTokenFromCookie(): string | null {
 export function getUserIdFromCookie(): number | null {
   const cookies = parseCookies()
   const userId = cookies['userId']
-  return userId ? parseInt(userId) : null
+  if (!userId) return null
+  const parsed = parseInt(userId)
+  return Number.isNaN(parsed) ? null : parsed
 }
 
 /**
@@ -70,8 +72,14 @@ export async function fetchAccessToken(): Promise<string | null> {
     }
 
     const data = await response.json()
-    return data.accessToken
-  } catch {
+    const token = data?.accessToken
+    if (typeof token !== 'string') return null
+    
+    return token
+  } catch (error) {
+    if (error instanceof TypeError) {
+       console.error('[cookie.ts] Network error fetching access token:', error.message)
+    }
     return null
   }
 }
