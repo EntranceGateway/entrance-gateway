@@ -1,41 +1,45 @@
-import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
 
-export async function POST() {
+/**
+ * Server-side: Get a valid access token from cookies, auto-refreshing if needed.
+ * 
+ * 1. Reads accessToken from httpOnly cookies
+ * 2. If missing, attempts to refresh using the refreshToken cookie
+ * 3. On successful refresh, updates cookies and returns the new access token
+ * 4. Returns null if no valid token can be obtained
+ */
+export async function getValidTokenOrRefresh(): Promise<string | null> {
+  const cookieStore = await cookies()
+  const accessToken = cookieStore.get('accessToken')?.value
+
+  if (accessToken) {
+    return accessToken
+  }
+
+  // No access token — try refreshing
+  const refreshToken = cookieStore.get('refreshToken')?.value
+  if (!refreshToken) {
+    return null
+  }
+
   try {
-    const cookieStore = await cookies()
-    const refreshToken = cookieStore.get('refreshToken')?.value
-
-    if (!refreshToken) {
-      return NextResponse.json(
-        { error: 'No refresh token found' },
-        { status: 401 }
-      )
-    }
-
-    // Call backend API
     const response = await fetch(`${API_BASE_URL}/api/v1/auth/refresh-token`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ refreshToken }),
     })
 
-    const data = await response.json()
+    const data = await response.json().catch(() => null)
 
     if (!response.ok) {
-      // Clear cookies on refresh failure
+      // Refresh failed — clear stale cookies
+      console.error('[token.ts] Backend refresh failed:', response.status, data)
       cookieStore.delete('accessToken')
       cookieStore.delete('refreshToken')
       cookieStore.delete('userId')
-
-      return NextResponse.json(
-        { error: data.message || 'Token refresh failed' },
-        { status: response.status }
-      )
+      return null
     }
 
     // Update cookies with new tokens
@@ -51,11 +55,11 @@ export async function POST() {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 7,
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     })
 
-    // Re-set userId cookie so client-side isAuthenticated() stays correct
+    // Re-set userId cookie
     const existingUserId = cookieStore.get('userId')?.value
     if (existingUserId) {
       cookieStore.set('userId', existingUserId, {
@@ -67,16 +71,8 @@ export async function POST() {
       })
     }
 
-    return NextResponse.json({
-      success: true,
-      message: 'Token refreshed successfully',
-      expiresIn: data.data.expiresIn,
-    })
-  } catch (error) {
-    console.error('Token refresh error:', error)
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    )
+    return data.data.accessToken
+  } catch {
+    return null
   }
 }

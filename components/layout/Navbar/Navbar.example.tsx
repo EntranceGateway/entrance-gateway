@@ -6,6 +6,8 @@ import Image from 'next/image'
 import { Navbar } from './Navbar'
 import { fetchUserProfile } from '@/services/client/user.client'
 import { logout, refreshToken } from '@/lib/auth/client'
+import { fetchAccessToken } from '@/lib/auth/cookie'
+import { useTokenRefresh } from '@/hooks/auth/useTokenRefresh'
 import type { User } from '@/types/user.types'
 
 /**
@@ -30,45 +32,60 @@ const navigationItems = [
 export function NavbarExample() {
   const [userData, setUserData] = useState<User | null>(null)
   const [isLoadingUser, setIsLoadingUser] = useState(true)
-  const [mounted, setMounted] = useState(false)
 
+  // Proactive token refresh — schedules refresh ~1 min before expiry
+  useTokenRefresh()
+
+  // Single useEffect for auth loading - no mounted state anti-pattern
   useEffect(() => {
-    setMounted(true)
-  }, [])
+    const loadUserData = async () => {
+      setIsLoadingUser(true)
 
-  useEffect(() => {
-    if (mounted) {
-      loadUserData()
-    }
-  }, [mounted])
+      try {
+        // First check if we have a valid token (cookies)
+        const token = await fetchAccessToken()
 
-  const loadUserData = async () => {
-    try {
-      const response = await fetchUserProfile()
-      setUserData(response.data)
-    } catch (error) {
-      // If 401, try refreshing the token and retry once
-      if (error instanceof Error && error.message === 'UNAUTHORIZED') {
-        try {
-          await refreshToken()
-          const retryResponse = await fetchUserProfile()
-          setUserData(retryResponse.data)
+        if (!token) {
+          // No token - not authenticated
+          setUserData(null)
+          setIsLoadingUser(false)
           return
-        } catch {
-          // Refresh also failed — user is truly not authenticated
         }
+
+        // Have token - fetch user profile
+        const response = await fetchUserProfile()
+        setUserData(response.data)
+      } catch (error) {
+        // If 401, try refreshing the token and retry once
+        if (error instanceof Error && error.message === 'UNAUTHORIZED') {
+          try {
+            await refreshToken()
+            const retryResponse = await fetchUserProfile()
+            setUserData(retryResponse.data)
+            setIsLoadingUser(false)
+            return
+          } catch {
+            // Refresh also failed — user is truly not authenticated
+          }
+        }
+        setUserData(null)
+      } finally {
+        setIsLoadingUser(false)
       }
-      setUserData(null)
-    } finally {
-      setIsLoadingUser(false)
     }
-  }
+
+    loadUserData()
+  }, [])
 
   const handleNotificationClick = () => {
     // Handle notification click
   }
 
   const handleSignOut = async () => {
+    // Optimistic UI update
+    setUserData(null)
+    setIsLoadingUser(false)
+
     try {
       await logout()
       window.location.href = '/signin'
@@ -80,27 +97,6 @@ export function NavbarExample() {
   // Get user display name
   const userName = userData?.fullname || 'User'
   const userInitial = userName.charAt(0).toUpperCase()
-
-  // Don't render anything until mounted to prevent hydration mismatch
-  if (!mounted) {
-    return (
-      <Navbar.Provider>
-        <Navbar.Frame>
-          <Navbar.Container>
-            <Navbar.MobileMenuButton />
-            <Link href="/" className="flex items-center">
-              <Image src="/eg-logo.jpg" alt="EntranceGateway" width={180} height={50} className="h-10 w-auto" priority />
-            </Link>
-            <Navbar.DesktopNav items={navigationItems} />
-            <Navbar.Actions>
-              <div className="h-8 w-8 rounded-full bg-gray-200 animate-pulse" />
-            </Navbar.Actions>
-          </Navbar.Container>
-          <Navbar.MobileMenu items={navigationItems} isAuthenticated={false} />
-        </Navbar.Frame>
-      </Navbar.Provider>
-    )
-  }
 
   return (
     <Navbar.Provider>

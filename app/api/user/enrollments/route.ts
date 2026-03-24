@@ -1,21 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getValidTokenOrRefresh } from '@/lib/auth/token'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
 
 export async function GET(request: NextRequest) {
   try {
-    // Get access token from cookies or Authorization header
-    const cookieStore = await cookies()
-    let accessToken = cookieStore.get('accessToken')?.value
-
-    // If not in cookies, check Authorization header (for client-side requests)
-    if (!accessToken) {
-      const authHeader = request.headers.get('Authorization')
-      if (authHeader?.startsWith('Bearer ')) {
-        accessToken = authHeader.substring(7)
-      }
-    }
+    const accessToken = await getValidTokenOrRefresh()
 
     if (!accessToken) {
       console.error('❌ No access token found for enrollments request')

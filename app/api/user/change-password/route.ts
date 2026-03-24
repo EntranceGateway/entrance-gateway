@@ -1,13 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getValidTokenOrRefresh } from '@/lib/auth/token'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
 
 export async function POST(request: NextRequest) {
   try {
-    // Get access token from cookies
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('accessToken')?.value
+    const accessToken = await getValidTokenOrRefresh()
 
     if (!accessToken) {
       return NextResponse.json(

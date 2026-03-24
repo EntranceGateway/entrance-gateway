@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { getUserId, isAuthenticated, logout as logoutClient } from '@/lib/auth/client'
+import { getUserId, logout as logoutClient } from '@/lib/auth/client'
+import { fetchAccessToken } from '@/lib/auth/cookie'
 
 export function useAuth() {
   const router = useRouter()
@@ -12,15 +13,23 @@ export function useAuth() {
     checkAuth()
   }, [])
 
-  const checkAuth = () => {
+  const checkAuth = async () => {
     setIsLoading(true)
-    
-    const authenticated = isAuthenticated()
-    const id = getUserId()
-    
-    setIsLoggedIn(authenticated)
-    setUserId(id)
-    setIsLoading(false)
+
+    try {
+      // Check auth via API proxy (reads httpOnly cookies)
+      const token = await fetchAccessToken()
+      const authenticated = !!token
+      const id = getUserId()
+
+      setIsLoggedIn(authenticated)
+      setUserId(id)
+    } catch {
+      setIsLoggedIn(false)
+      setUserId(null)
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const logout = async () => {

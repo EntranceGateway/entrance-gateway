@@ -2,26 +2,40 @@
 
 /**
  * Client-side auth utilities for cookie-based authentication
+ * Single source of truth: cookies (no localStorage for tokens)
  */
+
+/**
+ * Parse cookies from document.cookie
+ */
+function parseCookies(): Record<string, string> {
+  if (typeof document === 'undefined') return {}
+
+  const cookies: Record<string, string> = {}
+  document.cookie.split(';').forEach(cookie => {
+    const [name, ...rest] = cookie.split('=')
+    const trimmedName = name.trim()
+    const value = rest.join('=').trim()
+    if (trimmedName && value) {
+      cookies[trimmedName] = value
+    }
+  })
+
+  return cookies
+}
 
 /**
  * Get user ID from cookie (client-side)
  */
 export function getUserId(): number | null {
-  if (typeof document === 'undefined') return null
-  
-  const cookies = document.cookie.split(';')
-  const userIdCookie = cookies.find(c => c.trim().startsWith('userId='))
-  
-  if (!userIdCookie) return null
-  
-  const userId = userIdCookie.split('=')[1]
+  const cookies = parseCookies()
+  const userId = cookies['userId']
   return userId ? parseInt(userId) : null
 }
 
 /**
  * Check if user is authenticated (client-side)
- * Note: This only checks for userId cookie, actual auth is verified server-side
+ * Checks for userId cookie presence - actual token validation happens server-side
  */
 export function isAuthenticated(): boolean {
   return getUserId() !== null
@@ -29,6 +43,7 @@ export function isAuthenticated(): boolean {
 
 /**
  * Login user (calls Next.js API route)
+ * Tokens are stored in httpOnly cookies by the server
  */
 export async function login(email: string, password: string) {
   const response = await fetch('/api/auth/login', {
@@ -37,10 +52,11 @@ export async function login(email: string, password: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email, password }),
+    credentials: 'include',
   })
-  
+
   const data = await response.json()
-  
+
   if (!response.ok) {
     // Handle specific status codes
     switch (response.status) {
@@ -62,7 +78,7 @@ export async function login(email: string, password: string) {
         throw new Error(data.error || 'Login failed. Please try again')
     }
   }
-  
+
   return data
 }
 
@@ -85,10 +101,11 @@ export async function register(userData: {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(userData),
+    credentials: 'include',
   })
-  
+
   const data = await response.json()
-  
+
   if (!response.ok) {
     // Handle specific status codes
     switch (response.status) {
@@ -108,7 +125,7 @@ export async function register(userData: {
         throw new Error(data.error || 'Registration failed. Please try again')
     }
   }
-  
+
   return data
 }
 
@@ -122,10 +139,11 @@ export async function verifyOtp(email: string, otp: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email, otp }),
+    credentials: 'include',
   })
-  
+
   const data = await response.json()
-  
+
   if (!response.ok) {
     // Handle specific status codes
     switch (response.status) {
@@ -147,7 +165,7 @@ export async function verifyOtp(email: string, otp: string) {
         throw new Error(data.error || 'OTP verification failed. Please try again')
     }
   }
-  
+
   return data
 }
 
@@ -161,10 +179,11 @@ export async function resendOtp(email: string) {
       'Content-Type': 'application/json',
     },
     body: JSON.stringify({ email }),
+    credentials: 'include',
   })
-  
+
   const data = await response.json()
-  
+
   if (!response.ok) {
     // Handle specific status codes
     switch (response.status) {
@@ -182,75 +201,63 @@ export async function resendOtp(email: string) {
         throw new Error(data.error || 'Failed to resend OTP. Please try again')
     }
   }
-  
+
   return data
 }
 
 /**
  * Refresh token (calls Next.js API route)
+ * Server updates httpOnly cookies automatically
  */
 export async function refreshToken() {
   const response = await fetch('/api/auth/refresh', {
     method: 'POST',
+    credentials: 'include',
   })
-  
+
   const data = await response.json()
-  
+
   if (!response.ok) {
     throw new Error(data.error || 'Token refresh failed')
   }
-  
+
   return data
 }
 
 /**
- * Logout user (calls Next.js API route and clears all client storage)
+ * Logout user (calls Next.js API route to clear server cookies)
  */
 export async function logout() {
   try {
-    // Call server API to clear cookies
+    // Call server API to clear httpOnly cookies
     const response = await fetch('/api/auth/logout', {
       method: 'POST',
+      credentials: 'include',
     })
-    
+
     const data = await response.json()
-    
+
     if (!response.ok) {
       throw new Error(data.error || 'Logout failed')
     }
-    
-    // Clear all client-side storage
-    clearAllClientStorage()
-    
+
+    // Clear client-side accessible cookies
+    clearClientCookies()
+
     return data
   } catch (error) {
-    // Even if API fails, clear client storage
-    clearAllClientStorage()
+    // Even if API fails, clear client cookies
+    clearClientCookies()
     throw error
   }
 }
 
 /**
- * Clear all client-side storage (localStorage, sessionStorage, cookies)
+ * Clear client-side accessible cookies (not httpOnly)
  */
-function clearAllClientStorage(): void {
+function clearClientCookies(): void {
   if (typeof window === 'undefined') return
-  
-  // Clear localStorage
-  try {
-    localStorage.clear()
-  } catch (e) {
-    // Silently fail
-  }
-  
-  // Clear sessionStorage
-  try {
-    sessionStorage.clear()
-  } catch (e) {
-    // Silently fail
-  }
-  
-  // Clear all cookies (client-side accessible ones)
+
   try {
     const cookies = document.cookie.split(';')
     cookies.forEach(cookie => {

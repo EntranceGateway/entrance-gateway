@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
+import { getValidTokenOrRefresh } from '@/lib/auth/token'
 import { logger } from '@/lib/logger'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
@@ -11,8 +11,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegat
  */
 export async function POST(request: Request) {
   try {
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('accessToken')?.value
+    const accessToken = await getValidTokenOrRefresh()
 
     if (!accessToken) {
       logger.error('[API] No access token found for quiz attempt submission')
