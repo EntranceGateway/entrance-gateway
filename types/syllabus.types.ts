@@ -21,6 +21,20 @@ export interface SyllabusDetailResponse {
   data: Syllabus
 }
 
+export interface SyllabusListPayload {
+  content: Syllabus[]
+  totalElements: number
+  totalPages: number
+  pageNumber: number
+  pageSize: number
+  last: boolean
+}
+
+export interface SyllabusListResponse {
+  message: string
+  data: SyllabusListPayload
+}
+
 // Error response type
 export interface ApiErrorResponse {
   message: string

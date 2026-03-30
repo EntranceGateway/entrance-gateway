@@ -147,11 +147,13 @@ export function SyllabusDetailContent({ syllabusSlug, initialData }: SyllabusDet
           <div className="w-full lg:col-span-4 order-2">
             <SyllabusDetailSidebar
               info={{
-                code: syllabusData.courseCode,
+                syllabusTitle: syllabusData.syllabusTitle,
+                subjectCode: syllabusData.courseCode,
+                courseCode: syllabusData.courseCode,
                 creditHours: syllabusData.creditHours,
                 lectureHours: syllabusData.lectureHours,
                 practicalHours: syllabusData.practicalHours,
-                program: syllabusData.courseName,
+                courseName: syllabusData.courseName,
                 semester: `Semester ${syllabusData.semester}`,
                 year: syllabusData.year,
                 subjectName: syllabusData.subjectName,

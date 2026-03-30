@@ -1,9 +1,11 @@
 interface SubjectInfo {
-  code: string
+  syllabusTitle: string
+  subjectCode: string
+  courseCode: string
   creditHours: number
   lectureHours: number
   practicalHours: number
-  program: string
+  courseName: string
   semester: string
   year: number
   subjectName: string
@@ -19,10 +21,15 @@ export function SyllabusDetailSidebar({ info, detailUri }: SyllabusDetailSidebar
     <aside className="w-full space-y-4 sm:space-y-6 lg:sticky lg:top-24">
       {/* SCRAPER: Hidden metadata for scraper-only context */}
       <span className="sr-only" data-role="meta-subject-info"
+        data-syllabus-title={info.syllabusTitle}
         data-subject-name={info.subjectName}
-        data-course-code={info.code}
+        data-subject-code={info.subjectCode}
+        data-course-name={info.courseName}
+        data-course-code={info.courseCode}
         data-credit-hours={info.creditHours}
-        data-program={info.program}
+        data-lecture-hours={info.lectureHours}
+        data-practical-hours={info.practicalHours}
+        data-program={info.courseName}
         data-semester={info.semester}
         data-year={info.year}
         data-detail-uri={detailUri || ''}
@@ -56,7 +63,7 @@ export function SyllabusDetailSidebar({ info, detailUri }: SyllabusDetailSidebar
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 text-brand-gold shrink-0">
                 <path d="M9.4 16.6L4.8 12l4.6-4.6L8 6l-6 6 6 6 1.4-1.4zm5.2 0l4.6-4.6-4.6-4.6L16 6l6 6-6 6-1.4-1.4z" />
               </svg>
-              <code data-role="course-code" className="text-gray-900 text-sm font-medium">{info.code}</code>
+              <code data-role="course-code" className="text-gray-900 text-sm font-medium">{info.courseCode}</code>
             </div>
           </div>
 
@@ -106,7 +113,7 @@ export function SyllabusDetailSidebar({ info, detailUri }: SyllabusDetailSidebar
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 text-brand-gold shrink-0">
                 <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
               </svg>
-              <p data-role="program" className="text-gray-900 text-sm font-medium">{info.program}</p>
+              <p data-role="program" className="text-gray-900 text-sm font-medium">{info.courseName}</p>
             </div>
           </div>
 

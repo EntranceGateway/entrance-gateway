@@ -1,6 +1,8 @@
 import { Suspense } from 'react'
 import { SyllabusPageContent } from '@/components/features/syllabus/SyllabusPageContent'
 import { getCourses, getFullSyllabus } from '@/services/server/courses.server'
+import { getSyllabusList } from '@/services/server/syllabus.server'
+import { mapCourseToSyllabusListItem } from '@/types/syllabus-list.types'
 
 export const metadata = {
   title: 'Academic Syllabus Directory - EntranceGateway',
@@ -8,21 +10,28 @@ export const metadata = {
 }
 
 export default async function SyllabusPage() {
-  // Fetch courses on server
-  const initialData = await getCourses({ page: 0, size: 100 }).catch(() => null)
+  const coursesResponse = await getCourses({ page: 0, size: 100 }).catch(() => null)
+  const courses = coursesResponse?.data.content || []
 
-  // Pre-fetch first course's full syllabus for better UX
-  let firstCourseSyllabus = null
-  if (initialData?.data.content[0]) {
-    firstCourseSyllabus = await getFullSyllabus(initialData.data.content[0].courseId).catch(() => null)
+  const syllabusResponses = await Promise.all(
+    courses.map((course) => getFullSyllabus(course.courseId).catch(() => null))
+  )
+
+  const syllabusListResponse = await getSyllabusList().catch(() => null)
+  const syllabusSlugMap = Object.fromEntries(
+    (syllabusListResponse?.data.content || []).map((item) => [item.syllabusId, item.slug])
+  )
+
+  const syllabusPageData = {
+    courses: courses.map((course, index) =>
+      mapCourseToSyllabusListItem(course, syllabusResponses[index], syllabusSlugMap)
+    ),
+    totalCourses: coursesResponse?.data.totalElements || courses.length,
   }
 
   return (
     <Suspense fallback={<div>Loading...</div>}>
-      <SyllabusPageContent 
-        initialData={initialData} 
-        firstCourseSyllabus={firstCourseSyllabus}
-      />
+      <SyllabusPageContent initialData={syllabusPageData} />
     </Suspense>
   )
 }

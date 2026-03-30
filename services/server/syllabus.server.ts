@@ -1,6 +1,6 @@
 // Server-side Syllabus API calls (for SSR)
 
-import type { SyllabusDetailResponse } from '@/types/syllabus.types'
+import type { SyllabusDetailResponse, SyllabusListResponse } from '@/types/syllabus.types'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
 
@@ -15,8 +15,6 @@ export async function getSyllabusById(identifier: string): Promise<SyllabusDetai
     ? `${API_BASE_URL}/api/v1/syllabus/slug/${identifier}`
     : `${API_BASE_URL}/api/v1/syllabus/${identifier}`
   
-  console.log('Fetching syllabus from:', endpoint)
-  
   const response = await fetch(endpoint, {
     method: 'GET',
     headers: {
@@ -27,6 +25,22 @@ export async function getSyllabusById(identifier: string): Promise<SyllabusDetai
 
   if (!response.ok) {
     throw new Error(`Failed to fetch syllabus: ${response.statusText}`)
+  }
+
+  return response.json()
+}
+
+export async function getSyllabusList(): Promise<SyllabusListResponse> {
+  const response = await fetch(`${API_BASE_URL}/api/v1/syllabus?page=0&size=1000`, {
+    method: 'GET',
+    headers: {
+      'Accept': '*/*',
+    },
+    cache: 'no-store',
+  })
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch syllabus list: ${response.statusText}`)
   }
 
   return response.json()

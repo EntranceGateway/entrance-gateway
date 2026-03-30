@@ -47,6 +47,19 @@ This document currently covers:
 - `credit-hours`
 - `data-detail-uri`
 
+Syllabus list pages must server-render the nested syllabus tree directly in raw HTML:
+- course items
+- year labels
+- semester blocks
+- subject rows
+
+Each syllabus subject link must expose:
+- `href="/syllabus/<slug>"`
+- `data-role="syllabus-link"`
+- `data-detail-uri="/syllabus/<slug>"`
+
+Canonical syllabus detail URIs should use the syllabus slug when available. Numeric ID fallback is only acceptable as a temporary recovery path, not as the preferred scraper contract.
+
 ### Syllabus detail page
 - `page-title`
 - `page-content`
@@ -289,7 +302,7 @@ This document currently covers:
 
 | Module | List selector | Item selector | Title selector | Link selector | Detail URI source |
 | --- | --- | --- | --- | --- | --- |
-| Syllabus | `[data-role="course-list"]` | `[data-role="semester-item"]`, `[data-role="course-item"]` | `[data-role="course-name"]`, `[data-role="subject-name"]` | `[data-role="syllabus-link"]` | `data-detail-uri` |
+| Syllabus | `[data-role="course-list"]` | `[data-role="semester-item"]`, `[data-role="course-item"]` | `[data-role="course-name"]`, `[data-role="subject-name"]` | `[data-role="syllabus-link"]` | slug-based `data-detail-uri` |
 | Notes | `[data-role="note-list"]` | `[data-role="note-item"]` | `[data-role="note-title"]` | `[data-role="note-link"]` | `data-detail-uri` |
 | Old Questions | `[data-role="question-list"]` | `[data-role="question-item"], [data-role="question-row"]` | `[data-role="question-title"]` | `[data-role="question-link"]` | `data-detail-uri` |
 | Colleges | `[data-role="college-list"]` | `[data-role="college-item"]` | `[data-role="college-name"]` | `[data-role="college-link"]` | `data-detail-uri` |
@@ -421,8 +434,19 @@ For every list page, confirm the server-rendered HTML includes:
 - `data-detail-uri` on list items or links
 - pagination discoverability via URL parameters
 
+For syllabus specifically, also confirm raw HTML includes:
+- `[data-role="semester-item"]`
+- `[data-role="semester-name"]`
+- `[data-role="syllabus-link"]`
+- `[data-role="subject-code"]`
+- `[data-role="subject-name"]`
+- `[data-role="credit-hours"]`
+- slug-based `/syllabus/<slug>` values in `href` and `data-detail-uri`
+
 ### Manual curl examples
 ```bash
+curl -s 'http://localhost:3000/syllabus?page=1' | grep -o 'data-role="syllabus-link"' | head
+curl -s 'http://localhost:3000/syllabus?page=1' | grep -o 'data-detail-uri="/syllabus/[^"]*"' | head
 curl -s 'http://localhost:3000/notes?page=2' | grep -o 'data-role="note-list"'
 curl -s 'http://localhost:3000/questions?page=2' | grep -o 'data-role="question-list"'
 curl -s 'http://localhost:3000/blogs?page=2' | grep -o 'data-role="blog-list"'
