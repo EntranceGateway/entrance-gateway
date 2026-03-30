@@ -21,7 +21,8 @@ export function SyllabusTable({ data, onItemClick }: SyllabusTableProps) {
       {/* Desktop Table View - Hidden on mobile/tablet */}
       <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden mb-12">
         <div className="overflow-x-auto">
-          <table className="min-w-full text-left text-sm whitespace-nowrap">
+          {/* SCRAPER: data-role="syllabus-table" */}
+          <table data-role="syllabus-table" className="min-w-full text-left text-sm whitespace-nowrap">
             <thead className="bg-brand-navy text-white">
               <tr>
                 <th
@@ -61,17 +62,21 @@ export function SyllabusTable({ data, onItemClick }: SyllabusTableProps) {
                 <tr
                   key={item.id}
                   onClick={() => onItemClick?.(item.id)}
+                  data-role="syllabus-row"
+                  data-subject-code={item.code}
                   className={cn(
                     'transition-all duration-200 group cursor-pointer',
                     'hover:bg-blue-50 hover:shadow-md hover:scale-[1.01]',
                     index % 2 === 1 && 'bg-gray-50'
                   )}
                 >
+                  {/* SCRAPER: data-role="subject-code" */}
                   <td className="px-6 py-4 font-mono text-gray-600 font-medium group-hover:text-brand-blue transition-colors">
-                    {item.code}
+                    <code data-role="subject-code">{item.code}</code>
                   </td>
+                  {/* SCRAPER: data-role="subject-name" */}
                   <td className="px-6 py-4 font-semibold text-brand-navy text-base group-hover:text-brand-blue transition-colors">
-                    {item.name}
+                    <span data-role="subject-name">{item.name}</span>
                   </td>
                   <td className="px-6 py-4">
                     <span
@@ -85,9 +90,11 @@ export function SyllabusTable({ data, onItemClick }: SyllabusTableProps) {
                       {item.course}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-gray-600">{item.yearSemester}</td>
+                  {/* SCRAPER: data-role="semester" */}
+                  <td className="px-6 py-4 text-gray-600"><span data-role="semester">{item.yearSemester}</span></td>
+                  {/* SCRAPER: data-role="credit-hours" */}
                   <td className="px-6 py-4 text-gray-600 text-right font-medium">
-                    {item.creditHours} Cr
+                    <span data-role="credit-hours">{item.creditHours} Cr</span>
                   </td>
                 </tr>
               ))}

@@ -50,7 +50,8 @@ export function SyllabusPageContent({ initialData, firstCourseSyllabus }: Syllab
 
   return (
     <main className="flex-grow bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+      {/* SCRAPER: data-role="page-content" */}
+      <div data-role="page-content" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <SyllabusHeader />
 
         {/* Search Bar */}

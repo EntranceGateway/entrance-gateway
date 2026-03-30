@@ -27,9 +27,9 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
   const category = item.courses?.[0]?.courseName || 'Higher Education'
 
   return (
-    <div className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-200 transition-all duration-300 flex flex-col h-full">
+    <article data-role="college-item" data-college-name={item.collegeName} data-location={item.location} data-affiliation={item.affiliation.replace(/_/g, ' ')} data-detail-uri={`/colleges/${item.slug || item.collegeId}`} className="group bg-white rounded-2xl overflow-hidden shadow-sm hover:shadow-xl border border-gray-200 transition-all duration-300 flex flex-col h-full">
       {/* Image */}
-      <Link href={`/colleges/${item.slug || item.collegeId}`} className="relative h-48 overflow-hidden block">
+      <Link href={`/colleges/${item.slug || item.collegeId}`} data-role="college-link" data-detail-uri={`/colleges/${item.slug || item.collegeId}`} className="relative h-48 overflow-hidden block">
         {isImageLoading ? (
           <div className="w-full h-full bg-gray-200 animate-pulse" />
         ) : displayImage ? (
@@ -46,7 +46,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
           </div>
         )}
         {/* Affiliation Badge */}
-        <div className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-semibold text-brand-blue shadow-sm flex items-center gap-1">
+        <div data-role="affiliation" className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm px-2 py-1 rounded-md text-xs font-semibold text-brand-blue shadow-sm flex items-center gap-1">
           <svg viewBox="0 0 24 24" fill="currentColor" className="size-3.5">
             <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
           </svg>
@@ -59,13 +59,13 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
       {/* Content */}
       <div className="p-5 flex-grow flex flex-col">
         {/* Category */}
-        <div className="mb-1 text-xs font-bold text-brand-blue uppercase tracking-wide">
+        <div data-role="course-name" className="mb-1 text-xs font-bold text-brand-blue uppercase tracking-wide">
           {category}
         </div>
 
         {/* College Name */}
-        <Link href={`/colleges/${item.slug || item.collegeId}`}>
-          <h3 className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-brand-blue transition-colors cursor-pointer line-clamp-2">
+        <Link href={`/colleges/${item.slug || item.collegeId}`} data-role="college-link" data-detail-uri={`/colleges/${item.slug || item.collegeId}`}>
+          <h3 data-role="college-name" className="text-lg font-bold text-gray-900 mb-2 leading-tight group-hover:text-brand-blue transition-colors cursor-pointer line-clamp-2">
             {item.collegeName}
           </h3>
         </Link>
@@ -75,7 +75,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
           <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 text-gray-400">
             <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
           </svg>
-          <span>{item.location}</span>
+          <span data-role="location">{item.location}</span>
         </div>
 
         {/* Courses Count */}
@@ -84,7 +84,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 text-gray-400">
               <path d="M21 5c-1.11-.35-2.33-.5-3.5-.5-1.95 0-4.05.4-5.5 1.5-1.45-1.1-3.55-1.5-5.5-1.5S2.45 4.9 1 6v14.65c0 .25.25.5.5.5.1 0 .15-.05.25-.05C3.1 20.45 5.05 20 6.5 20c1.95 0 4.05.4 5.5 1.5 1.35-.85 3.8-1.5 5.5-1.5 1.65 0 3.35.3 4.75 1.05.1.05.15.05.25.05.25 0 .5-.25.5-.5V6c-.6-.45-1.25-.75-2-1zm0 13.5c-1.1-.35-2.3-.5-3.5-.5-1.7 0-4.15.65-5.5 1.5V8c1.35-.85 3.8-1.5 5.5-1.5 1.2 0 2.4.15 3.5.5v11.5z" />
             </svg>
-            <span>{item.courses.length} {item.courses.length === 1 ? 'Course' : 'Courses'}</span>
+            <span data-role="course-count">{item.courses.length} {item.courses.length === 1 ? 'Course' : 'Courses'}</span>
           </div>
         )}
 
@@ -92,6 +92,8 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
         <div className="mt-auto flex gap-2">
           <Link
             href={`/colleges/${item.slug || item.collegeId}`}
+            data-role="college-link"
+            data-detail-uri={`/colleges/${item.slug || item.collegeId}`}
             className="flex-1 bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2.5 px-4 rounded-lg transition-colors text-sm text-center"
           >
             View Details
@@ -107,7 +109,7 @@ export function CollegesCard({ item, onFavorite }: CollegesCardProps) {
           </button>
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 

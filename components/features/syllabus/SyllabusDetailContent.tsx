@@ -109,22 +109,25 @@ export function SyllabusDetailContent({ syllabusSlug, initialData }: SyllabusDet
     <main className="flex-grow">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         {/* Page Heading */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-brand-navy text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight tracking-tight mb-2 font-heading">
+        <section className="mb-6 sm:mb-8">
+          {/* SCRAPER: data-role="page-title" */}
+          <h1 data-role="page-title" className="text-brand-navy text-2xl sm:text-3xl md:text-4xl font-extrabold leading-tight tracking-tight mb-2 font-heading">
             {syllabusData.syllabusTitle}
           </h1>
           <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-            <span className="bg-brand-gold/20 text-brand-navy px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">
+            {/* SCRAPER: data-role="course-name" */}
+            <span data-role="course-name" className="bg-brand-gold/20 text-brand-navy px-2 py-0.5 rounded text-xs font-bold uppercase tracking-wider">
               {syllabusData.courseName}
             </span>
             <p className="text-gray-600 text-sm sm:text-base font-normal">
-              Course Code: {syllabusData.courseCode} | Semester {syllabusData.semester} | Year {syllabusData.year}
+              Course Code: <code data-role="course-code">{syllabusData.courseCode}</code> | <span data-role="semester">Semester {syllabusData.semester}</span> | <span data-role="year">Year {syllabusData.year}</span>
             </p>
           </div>
-        </div>
+        </section>
 
         {/* Main Content - PDF Viewer First (Mobile Priority) */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        {/* SCRAPER: data-role="page-content" */}
+        <article data-role="page-content" className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* PDF Viewer - Full width on mobile, 8 cols on desktop */}
           <div className="w-full lg:col-span-8 order-1 flex flex-col gap-6">
             {/* PDF Viewer - syllabusFile now contains the full signed URL */}
@@ -153,9 +156,10 @@ export function SyllabusDetailContent({ syllabusSlug, initialData }: SyllabusDet
                 year: syllabusData.year,
                 subjectName: syllabusData.subjectName,
               }}
+              detailUri={`/syllabus/${syllabusSlug}`}
             />
           </div>
-        </div>
+        </article>
       </div>
     </main>
   )

@@ -129,11 +129,23 @@ export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsD
 
   return (
     <main className="flex-grow">
+      <span
+        className="sr-only"
+        data-role="meta-training-info"
+        data-training-name={training.trainingName}
+        data-training-status={training.trainingStatus}
+        data-training-category={training.trainingCategory}
+        data-training-type={training.trainingType}
+        data-training-hours={training.trainingHours}
+        data-location={training.location || ''}
+        data-price={training.price}
+        data-detail-uri={`/trainings/${trainingSlug}`}
+      />
       {/* Hero Section */}
       <TrainingsDetailHero training={training} />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <article data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
         
         {/* Enrollment Status Banner */}
         {!isCheckingEnrollment && isEnrolled && (
@@ -456,7 +468,7 @@ export function TrainingsDetailContent({ trainingSlug, initialData }: TrainingsD
             />
           </div>
         </div>
-      </div>
+      </article>
 
       {/* Syllabus Full-Screen Drawer */}
       {isSyllabusDrawerOpen && training.syllabusDescription && (

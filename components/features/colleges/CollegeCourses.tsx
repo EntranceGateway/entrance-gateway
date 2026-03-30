@@ -31,7 +31,7 @@ export function CollegeCourses({ courses }: CollegeCoursesProps) {
   }
 
   return (
-    <section>
+    <section data-role="course-list">
       <h2 className="text-2xl font-bold text-brand-navy mb-6 flex items-center gap-2 font-heading">
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-6">
           <path d="M12 3L1 9l4 2.18v6L12 21l7-3.82v-6l2-1.09V17h2V9L12 3zm6.82 6L12 12.72 5.18 9 12 5.28 18.82 9zM17 15.99l-5 2.73-5-2.73v-3.72L12 15l5-2.73v3.72z" />
@@ -40,18 +40,22 @@ export function CollegeCourses({ courses }: CollegeCoursesProps) {
       </h2>
       <div className="space-y-4 md:space-y-6">
         {courses.map((course) => (
-          <div
+          <article
             key={course.id}
+            data-role="course-item"
+            data-course-name={course.name}
+            data-affiliation={course.affiliation?.replace(/_/g, ' ') || ''}
             className="bg-white rounded-xl border border-gray-200 overflow-hidden hover:border-brand-blue/50 transition-colors"
           >
             <div className="p-4 sm:p-6">
               {/* Header */}
               <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start mb-4 gap-3">
                 <div className="flex-1">
-                  <h3 className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{course.name}</h3>
+                  <h3 data-role="course-name" className="text-lg sm:text-xl font-bold text-gray-900 mb-1">{course.name}</h3>
                   <p className="text-xs sm:text-sm text-gray-500">{course.fullName}</p>
                 </div>
                 <span
+                  data-role="course-level"
                   className={cn(
                     'px-3 py-1 rounded-full text-xs font-semibold self-start',
                     getLevelColor(course.level)
@@ -64,7 +68,7 @@ export function CollegeCourses({ courses }: CollegeCoursesProps) {
               {/* Description */}
               {course.description && (
                 <div className="mb-4">
-                  <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-line line-clamp-3">
+                  <p data-role="description" className="text-sm text-gray-600 leading-relaxed whitespace-pre-line line-clamp-3">
                     {course.description}
                   </p>
                 </div>
@@ -76,14 +80,14 @@ export function CollegeCourses({ courses }: CollegeCoursesProps) {
                   <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 text-brand-gold shrink-0">
                     <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
                   </svg>
-                  <span className="text-xs sm:text-sm">Duration: {course.duration}</span>
+                  <span data-role="duration" className="text-xs sm:text-sm">Duration: {course.duration}</span>
                 </div>
                 {course.affiliation && (
                   <div className="flex items-center gap-2 text-gray-600">
                     <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 text-brand-gold shrink-0">
                       <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
                     </svg>
-                    <span className="text-xs sm:text-sm">{course.affiliation.replace(/_/g, ' ')}</span>
+                    <span data-role="affiliation" className="text-xs sm:text-sm">{course.affiliation.replace(/_/g, ' ')}</span>
                   </div>
                 )}
                 {course.seats && (
@@ -109,7 +113,7 @@ export function CollegeCourses({ courses }: CollegeCoursesProps) {
                 </p>
               </div>
             </div>
-          </div>
+          </article>
         ))}
       </div>
     </section>

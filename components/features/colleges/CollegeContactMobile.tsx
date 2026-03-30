@@ -19,12 +19,24 @@ export function CollegeContactMobile({ contactInfo, latitude, longitude, college
 
   return (
     <>
-      <section className="lg:hidden bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200">
+      <span
+        className="sr-only"
+        data-role="meta-college-contact-mobile"
+        data-college-name={collegeName || ''}
+        data-website={contactInfo.website || ''}
+        data-phone={contactInfo.phone || ''}
+        data-email={contactInfo.email || ''}
+        data-latitude={latitude ?? ''}
+        data-longitude={longitude ?? ''}
+        data-map-uri={mapUrl || ''}
+      />
+      <section data-role="contact-info" className="lg:hidden bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200">
         <h3 className="text-base sm:text-lg font-bold text-brand-navy mb-3 sm:mb-4">Contact Information</h3>
         <div className="space-y-3 sm:space-y-4 text-sm">
           {contactInfo.website && (
             <a
               href={contactInfo.website}
+              data-role="website"
               target="_blank"
               rel="noopener noreferrer"
               className="flex items-center gap-2 sm:gap-3 text-gray-600 hover:text-brand-blue transition-colors break-all"
@@ -40,6 +52,7 @@ export function CollegeContactMobile({ contactInfo, latitude, longitude, college
           {contactInfo.phone && (
             <a
               href={`tel:${contactInfo.phone}`}
+              data-role="phone"
               className="flex items-center gap-2 sm:gap-3 text-gray-600 hover:text-brand-blue transition-colors"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-50 flex items-center justify-center text-brand-blue shrink-0">
@@ -53,6 +66,7 @@ export function CollegeContactMobile({ contactInfo, latitude, longitude, college
           {contactInfo.email && (
             <a
               href={`mailto:${contactInfo.email}`}
+              data-role="email"
               className="flex items-center gap-2 sm:gap-3 text-gray-600 hover:text-brand-blue transition-colors break-all"
             >
               <div className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-blue-50 flex items-center justify-center text-brand-blue shrink-0">
@@ -68,7 +82,7 @@ export function CollegeContactMobile({ contactInfo, latitude, longitude, college
 
       {/* Location Map - Mobile */}
       {mapUrl && (
-        <section className="lg:hidden bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200">
+        <section data-role="location-map" className="lg:hidden bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-sm border border-gray-200">
           <h3 className="text-base sm:text-lg font-bold text-brand-navy mb-3 sm:mb-4 flex items-center gap-2">
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 text-brand-gold">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
@@ -79,6 +93,7 @@ export function CollegeContactMobile({ contactInfo, latitude, longitude, college
           {/* Map Preview */}
           <a
             href={mapUrl}
+            data-role="map-link"
             target="_blank"
             rel="noopener noreferrer"
             className="block rounded-lg overflow-hidden h-48 sm:h-56 bg-gray-200 relative group cursor-pointer mb-3 sm:mb-4"
@@ -96,17 +111,18 @@ export function CollegeContactMobile({ contactInfo, latitude, longitude, college
           <div className="space-y-2 text-xs text-gray-500 mb-3 sm:mb-4">
             <div className="flex items-center justify-between">
               <span>Latitude:</span>
-              <span className="font-mono font-medium text-gray-700">{latitude}</span>
+              <span data-role="latitude" className="font-mono font-medium text-gray-700">{latitude}</span>
             </div>
             <div className="flex items-center justify-between">
               <span>Longitude:</span>
-              <span className="font-mono font-medium text-gray-700">{longitude}</span>
+              <span data-role="longitude" className="font-mono font-medium text-gray-700">{longitude}</span>
             </div>
           </div>
 
           {/* View on Google Maps Button */}
           <a
             href={mapUrl}
+            data-role="map-link"
             target="_blank"
             rel="noopener noreferrer"
             className="w-full flex items-center justify-center gap-2 bg-brand-blue hover:bg-blue-700 text-white font-semibold py-2.5 px-4 rounded-lg transition-colors text-sm"

@@ -35,7 +35,7 @@ export function QuestionsTable({ data, isLoading }: QuestionsTableProps) {
       {/* Desktop Table View - Hidden on mobile/tablet */}
       <div className="hidden lg:block bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table data-role="questions-table" className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-brand-navy text-white">
                 <th className="px-6 py-4 text-sm font-semibold tracking-wide border-b border-gray-200">
@@ -59,23 +59,28 @@ export function QuestionsTable({ data, isLoading }: QuestionsTableProps) {
               {data.map((item, index) => (
                 <tr
                   key={item.id}
+                  data-role="question-row"
+                  data-set-name={item.setName}
+                  data-course-name={item.courseName}
+                  data-detail-uri={`/questions/${item.slug || item.id}`}
                   className={cn(
                     'transition-colors hover:bg-brand-blue/5',
                     index % 2 === 1 && 'bg-gray-50'
                   )}
                 >
                   <td className="px-6 py-4">
-                    <Link href={`/questions/${item.slug || item.id}`} className="flex items-center gap-3 group">
+                    <Link href={`/questions/${item.slug || item.id}`} data-role="question-link" data-detail-uri={`/questions/${item.slug || item.id}`} className="flex items-center gap-3 group">
                       <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-gray-400 shrink-0 group-hover:text-brand-blue transition-colors">
                         <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
                       </svg>
-                      <span className="text-sm font-medium text-gray-900 group-hover:text-brand-blue transition-colors">{item.setName}</span>
+                      <span data-role="question-title" className="text-sm font-medium text-gray-900 group-hover:text-brand-blue transition-colors">{item.setName}</span>
                     </Link>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">{item.subject}</td>
-                  <td className="px-6 py-4 text-sm text-gray-600 text-center">{item.year}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600"><span data-role="subject-name">{item.subject}</span></td>
+                  <td className="px-6 py-4 text-sm text-gray-600 text-center"><span data-role="year">{item.year}</span></td>
                   <td className="px-6 py-4">
                     <span
+                      data-role="course-name"
                       className={cn(
                         'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
                         item.courseName === 'BCA' && 'bg-blue-100 text-blue-800',
@@ -88,7 +93,7 @@ export function QuestionsTable({ data, isLoading }: QuestionsTableProps) {
                     </span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                    <span data-role="affiliation" className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-200">
                       {item.affiliation.replace(/_/g, ' ')}
                     </span>
                   </td>

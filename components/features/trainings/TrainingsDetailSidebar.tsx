@@ -93,7 +93,7 @@ export function TrainingsDetailSidebar({
         <div className="p-6 border-b border-gray-100">
           {training.price === 0 ? (
             <div className="flex items-baseline gap-1">
-              <span className="text-4xl font-bold text-green-600">Free</span>
+              <span data-role="price" className="text-4xl font-bold text-green-600">Free</span>
             </div>
           ) : hasDiscount ? (
             <div className="space-y-1">
@@ -107,7 +107,7 @@ export function TrainingsDetailSidebar({
               </div>
               <div className="flex items-baseline gap-1">
                 <span className="text-gray-500 text-sm font-medium">NPR</span>
-                <span className="text-4xl font-bold text-green-600">
+                <span data-role="price" className="text-4xl font-bold text-green-600">
                   {Math.round(discountedPrice).toLocaleString()}
                 </span>
               </div>
@@ -115,7 +115,7 @@ export function TrainingsDetailSidebar({
           ) : (
             <div className="flex items-baseline gap-1">
               <span className="text-gray-500 text-sm font-medium">NPR</span>
-              <span className="text-4xl font-bold text-brand-navy">
+              <span data-role="price" className="text-4xl font-bold text-brand-navy">
                 {training.price.toLocaleString()}
               </span>
             </div>
@@ -124,6 +124,15 @@ export function TrainingsDetailSidebar({
 
         {/* Details */}
         <div className="p-6 space-y-6">
+          <span
+            className="sr-only"
+            data-role="meta-training-sidebar"
+            data-price={training.price}
+            data-duration={training.trainingHours}
+            data-training-type={training.trainingType}
+            data-location={training.location || ''}
+            data-capacity={`${training.currentParticipants}/${training.maxParticipants}`}
+          />
           {/* Training Info */}
           <div className="space-y-4">
             {/* Duration */}
@@ -134,7 +143,7 @@ export function TrainingsDetailSidebar({
                 </svg>
                 <span>Duration</span>
               </div>
-              <span className="font-semibold text-gray-900">{training.trainingHours} Hours</span>
+              <span data-role="duration" className="font-semibold text-gray-900">{training.trainingHours} Hours</span>
             </div>
 
             {/* Type */}
@@ -145,7 +154,7 @@ export function TrainingsDetailSidebar({
                 </svg>
                 <span>Type</span>
               </div>
-              <span className="font-semibold text-gray-900">{training.trainingType}</span>
+              <span data-role="training-type" className="font-semibold text-gray-900">{training.trainingType}</span>
             </div>
 
             {/* Location */}
@@ -156,7 +165,7 @@ export function TrainingsDetailSidebar({
                 </svg>
                 <span>Location</span>
               </div>
-              <span className="font-semibold text-gray-900">{training.location}</span>
+              <span data-role="location" className="font-semibold text-gray-900">{training.location}</span>
             </div>
           </div>
 
@@ -164,7 +173,7 @@ export function TrainingsDetailSidebar({
           <div className="space-y-2 pt-4 border-t border-gray-100">
             <div className="flex justify-between items-end text-sm mb-1">
               <span className="text-gray-500 font-medium">Availability</span>
-              <span className="text-brand-navy font-bold">
+              <span data-role="capacity" className="text-brand-navy font-bold">
                 {training.currentParticipants}/{training.maxParticipants} filled
               </span>
             </div>

@@ -126,15 +126,18 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
   }
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-3" data-role="course-list">
       {filteredCourses.map((course) => {
         const isCourseExpanded = expandedCourse === course.id
         const isCourseLoading = loadingCourse === course.id
         const years = courseData[course.id] || []
 
         return (
-          <div
+          <article
             key={course.id}
+            data-role="course-item"
+            data-course-name={course.name}
+            data-course-affiliation={course.affiliation}
             className="bg-white border border-gray-200 rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-all duration-300 animate-in fade-in slide-in-from-bottom-2"
           >
             {/* Course Header */}
@@ -149,14 +152,17 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                   </svg>
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-base sm:text-lg font-bold text-brand-navy truncate transition-colors duration-200">
+                  {/* SCRAPER: data-role="course-name" */}
+                  <h3 data-role="course-name" className="text-base sm:text-lg font-bold text-brand-navy truncate transition-colors duration-200">
                     {course.name}
                   </h3>
                   <div className="flex flex-wrap items-center gap-2 mt-1">
-                    <span className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded transition-colors duration-200">
+                    {/* SCRAPER: data-role="course-code" */}
+                    <code data-role="course-code" className="text-xs font-mono text-gray-500 bg-gray-100 px-2 py-0.5 rounded transition-colors duration-200">
                       {course.code}
-                    </span>
-                    <span className="text-xs text-gray-500">
+                    </code>
+                    {/* SCRAPER: data-role="affiliation" */}
+                    <span data-role="affiliation" className="text-xs text-gray-500">
                       {course.affiliation}
                     </span>
                   </div>
@@ -195,7 +201,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                     {/* Year Header */}
                     <div className="flex items-center gap-2 mb-2">
                       <div className="h-px bg-gray-300 flex-1"></div>
-                      <h4 className="text-sm font-bold text-gray-700 px-2">{year.yearName}</h4>
+                      <h4 data-role="year" className="text-sm font-bold text-gray-700 px-2">{year.yearName}</h4>
                       <div className="h-px bg-gray-300 flex-1"></div>
                     </div>
 
@@ -205,7 +211,7 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                       const isSemesterExpanded = expandedSemester === semesterId
 
                       return (
-                        <div key={semesterId} className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:border-brand-blue/30">
+                        <section key={semesterId} data-role="semester-item" data-semester={semester.semesterName} data-year={year.yearName} className="bg-white rounded-lg border border-gray-200 overflow-hidden transition-all duration-200 hover:border-brand-blue/30">
                           {/* Semester Header */}
                           <button
                             onClick={() => handleSemesterClick(semesterId)}
@@ -217,7 +223,8 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                   <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
                                 </svg>
                               </div>
-                              <span className="text-sm sm:text-base font-semibold text-gray-900 truncate transition-colors duration-200">
+                              {/* SCRAPER: data-role="semester-name" */}
+                              <span data-role="semester-name" className="text-sm sm:text-base font-semibold text-gray-900 truncate transition-colors duration-200">
                                 {semester.semesterName}
                               </span>
                               <span className="text-xs text-gray-500">
@@ -254,6 +261,11 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                   <Link
                                     key={subjectKey}
                                     href={subjectIdentifier ? `/syllabus/${subjectIdentifier}` : '#'}
+                                    data-role="syllabus-link"
+                                    data-detail-uri={subjectIdentifier ? `/syllabus/${subjectIdentifier}` : ''}
+                                    data-subject-name={subject.subjectName}
+                                    data-subject-code={subject.subjectCode}
+                                    data-credits={subject.credits}
                                     className={`w-full px-4 py-3 hover:bg-white transition-all duration-200 text-left group block cursor-pointer ${
                                       !subjectIdentifier ? 'opacity-50 cursor-not-allowed pointer-events-none' : ''
                                     }`}
@@ -261,14 +273,17 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                                     <div className="flex items-center justify-between gap-3">
                                       <div className="min-w-0 flex-1">
                                         <div className="flex items-center gap-2 mb-1">
-                                          <span className="text-xs font-mono text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200 transition-colors duration-200 group-hover:border-brand-blue/30">
+                                          {/* SCRAPER: data-role="subject-code" */}
+                                          <code data-role="subject-code" className="text-xs font-mono text-gray-500 bg-white px-2 py-0.5 rounded border border-gray-200 transition-colors duration-200 group-hover:border-brand-blue/30">
                                             {subject.subjectCode}
-                                          </span>
-                                          <span className="text-xs text-gray-500">
+                                          </code>
+                                          {/* SCRAPER: data-role="credit-hours" */}
+                                          <span data-role="credit-hours" className="text-xs text-gray-500">
                                             {subject.credits} Credit Hours
                                           </span>
                                         </div>
-                                        <p className="text-sm font-medium text-gray-900 group-hover:text-brand-blue transition-colors duration-200">
+                                        {/* SCRAPER: data-role="subject-name" */}
+                                        <p data-role="subject-name" className="text-sm font-medium text-gray-900 group-hover:text-brand-blue transition-colors duration-200">
                                           {subject.subjectName}
                                         </p>
                                       </div>
@@ -287,14 +302,14 @@ export function SyllabusAccordion({ courses, searchQuery = '', firstCourseSyllab
                               })}
                             </div>
                           </div>
-                        </div>
+                        </section>
                       )
                     })}
                   </div>
                 )})}
               </div>
             </div>
-          </div>
+          </article>
         )
       })}
     </div>

@@ -8,28 +8,29 @@ interface QuestionsCardProps {
 
 export function QuestionsCard({ item }: QuestionsCardProps) {
   return (
-    <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all hover:shadow-md hover:border-brand-blue/30">
+    <article data-role="question-item" data-set-name={item.setName} data-course-name={item.courseName} data-detail-uri={`/questions/${item.slug || item.id}`} className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all hover:shadow-md hover:border-brand-blue/30">
       {/* Header: Set Name with Icon */}
       <div className="flex items-center gap-3 mb-3">
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-gray-400 shrink-0">
           <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z" />
         </svg>
-        <h3 className="font-semibold text-brand-navy text-base leading-tight flex-1">
+        <h3 data-role="question-title" className="font-semibold text-brand-navy text-base leading-tight flex-1">
           {item.setName}
         </h3>
       </div>
 
       {/* Subject */}
       <div className="mb-3">
-        <p className="text-sm text-gray-600">{item.subject}</p>
+        <p data-role="subject-name" className="text-sm text-gray-600">{item.subject}</p>
       </div>
 
       {/* Year and Course Badges */}
       <div className="flex items-center gap-2 mb-3">
-        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
+        <span data-role="year" className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
           {item.year}
         </span>
         <span
+          data-role="course-name"
           className={cn(
             'inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium',
             item.courseName === 'BCA' && 'bg-blue-100 text-blue-800',
@@ -48,13 +49,15 @@ export function QuestionsCard({ item }: QuestionsCardProps) {
           <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 text-gray-400 shrink-0">
             <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
           </svg>
-          <span className="text-xs text-gray-600">{item.affiliation.replace(/_/g, ' ')}</span>
+          <span data-role="affiliation" className="text-xs text-gray-600">{item.affiliation.replace(/_/g, ' ')}</span>
         </div>
       </div>
 
       {/* Action Button */}
       <Link
         href={`/questions/${item.slug || item.id}`}
+        data-role="question-link"
+        data-detail-uri={`/questions/${item.slug || item.id}`}
         className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-2 px-4 rounded-md text-sm transition-all shadow-sm flex items-center justify-center gap-2"
       >
         <svg viewBox="0 0 24 24" fill="currentColor" className="size-4">
@@ -62,7 +65,7 @@ export function QuestionsCard({ item }: QuestionsCardProps) {
         </svg>
         View PDF
       </Link>
-    </div>
+    </article>
   )
 }
 

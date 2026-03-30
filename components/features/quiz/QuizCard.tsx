@@ -85,8 +85,15 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
   }
 
   return (
-    <div
+    <article
       onClick={onClick}
+      data-role="quiz-item"
+      data-quiz-title={item.setName}
+      data-course-name={item.courseName}
+      data-question-count={item.nosOfQuestions}
+      data-duration={item.durationInMinutes}
+      data-price={item.price ?? 0}
+      data-detail-uri={`/quiz/${item.slug || item.questionSetId}/start`}
       className="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg transition-shadow cursor-pointer"
     >
       {/* Content */}
@@ -94,13 +101,13 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
         {/* Header: Status Badge and Category */}
         <div className="flex justify-between items-start mb-4">
           {getStatusBadge()}
-          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <span data-role="course-name" className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {item.courseName}
           </span>
         </div>
 
         {/* Quiz Title */}
-        <h3 className="text-xl font-bold text-brand-navy mb-4 leading-tight">
+        <h3 data-role="quiz-title" className="text-xl font-bold text-brand-navy mb-4 leading-tight">
           {item.setName}
         </h3>
 
@@ -108,15 +115,15 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
         <div className="grid grid-cols-3 gap-2 mb-6 py-4 border-y border-gray-100">
           <div className="text-center">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Questions</div>
-            <div className="text-xs font-bold text-gray-800">{item.nosOfQuestions}</div>
+            <div data-role="question-count" className="text-xs font-bold text-gray-800">{item.nosOfQuestions}</div>
           </div>
           <div className="text-center border-x border-gray-100 px-1">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Duration</div>
-            <div className="text-xs font-bold text-gray-800">{item.durationInMinutes} Min</div>
+            <div data-role="duration" className="text-xs font-bold text-gray-800">{item.durationInMinutes} Min</div>
           </div>
           <div className="text-center">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Price</div>
-            <div className="text-xs font-bold text-brand-blue">
+            <div data-role="price" className="text-xs font-bold text-brand-blue">
               {formatPrice(item.price)}
             </div>
           </div>
@@ -130,6 +137,8 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
             e.stopPropagation()
             onClick?.()
           }}
+          data-role="quiz-link"
+          data-detail-uri={`/quiz/${item.slug || item.questionSetId}/start`}
           className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-3 rounded-xl transition-colors text-sm shadow-sm"
         >
           View Details
@@ -151,14 +160,14 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
           )}
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
 // Card Grid Container
 export function QuizCardGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+    <div data-role="quiz-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
       {children}
     </div>
   )

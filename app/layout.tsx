@@ -4,6 +4,7 @@ import "./globals.css";
 import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { ProgressBar } from "@/components/shared/Loading";
 import { ToastProvider } from "@/components/shared/Toast";
+import { DebugPageStructureLoader } from "@/components/shared/DebugPageStructureLoader";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -73,6 +74,7 @@ export default function RootLayout({
         className={`${inter.variable} ${roboto.variable} antialiased`}
       >
         <ToastProvider>
+          <DebugPageStructureLoader />
           <ProgressBar />
           <ConditionalLayout>{children}</ConditionalLayout>
         </ToastProvider>

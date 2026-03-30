@@ -126,7 +126,7 @@ export function CollegesPageContent({
   if (error && !isLoading && colleges.length === 0) {
     return (
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <CollegesHeader />
           
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mt-8">
@@ -154,7 +154,7 @@ export function CollegesPageContent({
   if (isLoading && !colleges.length) {
     return (
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <CollegesHeader />
           <CenteredSpinner size="lg" text="Loading colleges..." />
         </div>
@@ -164,7 +164,7 @@ export function CollegesPageContent({
 
   return (
     <main className="flex-grow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
         {/* Header with Search */}
         <div className="mb-10 flex flex-col md:flex-row md:items-end justify-between gap-4">
           <CollegesHeader />
@@ -197,15 +197,17 @@ export function CollegesPageContent({
               </div>
             ) : (
               <>
-                <CollegesCardGrid>
-                  {filteredColleges.map((college) => (
-                    <CollegesCard
-                      key={college.collegeId}
-                      item={college}
-                      onFavorite={handleFavorite}
-                    />
-                  ))}
-                </CollegesCardGrid>
+                <div data-role="college-list">
+                  <CollegesCardGrid>
+                    {filteredColleges.map((college) => (
+                      <CollegesCard
+                        key={college.collegeId}
+                        item={college}
+                        onFavorite={handleFavorite}
+                      />
+                    ))}
+                  </CollegesCardGrid>
+                </div>
 
                 {/* Pagination */}
                 {totalPages > 1 && (

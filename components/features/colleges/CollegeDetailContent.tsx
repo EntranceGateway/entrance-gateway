@@ -177,7 +177,7 @@ export function CollegeDetailContent({ collegeSlug, initialData }: CollegeDetail
       />
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
+      <article data-role="page-content" className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-8 md:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 sm:gap-8">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6 sm:space-y-8">
@@ -203,9 +203,13 @@ export function CollegeDetailContent({ collegeSlug, initialData }: CollegeDetail
             latitude={college.latitude}
             longitude={college.longitude}
             collegeName={college.collegeName}
+            location={college.location}
+            affiliation={college.affiliation.replace(/_/g, ' ')}
+            establishedYear={college.establishedYear}
+            detailUri={`/colleges/${collegeSlug}`}
           />
         </div>
-      </div>
+      </article>
     </main>
   )
 }

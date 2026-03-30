@@ -108,10 +108,19 @@ export function BlogDetailContent({ blogSlug, initialData }: BlogDetailContentPr
   return (
     <main className="flex-grow">
       {/* Main Content */}
-      <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+      <article data-role="page-content" className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+        <span
+          className="sr-only"
+          data-role="meta-blog-info"
+          data-blog-title={blog.title}
+          data-category="Article"
+          data-published-date={formattedBlog.date}
+          data-read-time={formattedBlog.readTime}
+          data-detail-uri={`/blogs/${blogSlug}`}
+        />
         {/* Article - Full Width */}
         <BlogArticle blog={formattedBlog} />
-      </div>
+      </article>
     </main>
   )
 }

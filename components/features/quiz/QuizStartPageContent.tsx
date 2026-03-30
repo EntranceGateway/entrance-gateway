@@ -48,7 +48,14 @@ export function QuizStartPageContent({ initialQuestions, initialTitle, initialEr
     
     return (
       <main className="flex-grow bg-gray-50">
-        <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <article data-role="page-content" className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <span
+            className="sr-only"
+            data-role="meta-quiz-info"
+            data-quiz-title={initialTitle}
+            data-question-count={initialQuestions?.length ?? 0}
+            data-detail-uri={`/quiz/${questionSetId}/start`}
+          />
           {/* Error banner */}
           <div className="bg-semantic-error/10 border border-semantic-error text-semantic-error p-6 rounded-lg">
             <div className="flex items-center gap-3">
@@ -56,8 +63,8 @@ export function QuizStartPageContent({ initialQuestions, initialTitle, initialEr
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
               </svg>
               <div>
-                <h3 className="font-bold text-lg mb-1">Unable to load quiz</h3>
-                <p className="text-sm">{errorMessage}</p>
+                <h3 data-role="page-title" className="font-bold text-lg mb-1">Unable to load quiz</h3>
+                <p data-role="description" className="text-sm">{errorMessage}</p>
               </div>
             </div>
           </div>
@@ -74,7 +81,7 @@ export function QuizStartPageContent({ initialQuestions, initialTitle, initialEr
               Go Back
             </button>
           </div>
-        </div>
+        </article>
       </main>
     )
   }

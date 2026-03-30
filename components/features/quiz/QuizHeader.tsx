@@ -41,10 +41,10 @@ export function QuizHeader() {
   }, [loadCartCount])
 
   return (
-    <div className="mb-8 sm:mb-10">
+    <section className="mb-8 sm:mb-10">
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-3 sm:mb-4">
         <div className="flex-1">
-          <h1 className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-navy font-heading">
+          <h1 data-role="page-title" className="text-3xl sm:text-4xl md:text-5xl font-extrabold text-brand-navy font-heading">
             Available Quizzes
           </h1>
         </div>
@@ -82,6 +82,6 @@ export function QuizHeader() {
       <p className="text-gray-500 text-base sm:text-lg max-w-3xl">
         Prepare for your entrance exams with our professionally curated quizzes designed to simulate real exam conditions and boost your cognitive agility.
       </p>
-    </div>
+    </section>
   )
 }

@@ -25,7 +25,7 @@ export function CollegeDetailHero({
   isVerified = false,
 }: CollegeDetailHeroProps) {
   return (
-    <div className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
+    <section className="relative w-full h-[400px] md:h-[500px] overflow-hidden">
       {/* Cover Image - object-cover ensures proper fit */}
       <img
         src={coverImage}
@@ -76,7 +76,7 @@ export function CollegeDetailHero({
             </div>
             
             {/* College Name */}
-            <h1 className="text-3xl md:text-5xl font-bold mb-3 tracking-tight font-heading">
+            <h1 data-role="page-title" className="text-3xl md:text-5xl font-bold mb-3 tracking-tight font-heading">
               {name}
             </h1>
             
@@ -86,24 +86,24 @@ export function CollegeDetailHero({
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-brand-gold">
                   <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
                 </svg>
-                {location}
+                <span data-role="location">{location}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-brand-gold">
                   <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
                 </svg>
-                Affiliated to {affiliation}
+                <span data-role="affiliation">Affiliated to {affiliation}</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-brand-gold">
                   <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
                 </svg>
-                Estd. {established}
+                <span data-role="established-year">Estd. {established}</span>
               </div>
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </section>
   )
 }

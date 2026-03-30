@@ -16,13 +16,15 @@ interface SyllabusNavigationProps {
 }
 
 export function SyllabusNavigation({ previous, next, semesterLink }: SyllabusNavigationProps) {
+  // SCRAPER: Navigation links with data-role="*-link"
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+    <nav className="bg-white rounded-xl p-6 shadow-sm border border-gray-200" data-role="syllabus-navigation">
       <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
         {/* Previous Subject */}
         {previous ? (
           <Link
             href={previous.href}
+            data-role="prev-link"
             className="flex items-center gap-3 text-gray-500 hover:text-brand-navy transition-colors group"
           >
             <div className="p-2 bg-gray-100 rounded-lg group-hover:bg-brand-gold/20 transition-colors">
@@ -45,6 +47,7 @@ export function SyllabusNavigation({ previous, next, semesterLink }: SyllabusNav
         {semesterLink && (
           <Link
             href={semesterLink.href}
+            data-role="semester-link"
             className="text-brand-blue hover:text-brand-navy hover:underline text-sm font-semibold transition-colors"
           >
             {semesterLink.label}
@@ -55,6 +58,7 @@ export function SyllabusNavigation({ previous, next, semesterLink }: SyllabusNav
         {next ? (
           <Link
             href={next.href}
+            data-role="next-link"
             className="flex items-center gap-3 text-gray-500 hover:text-brand-navy transition-colors group text-right"
           >
             <div className="text-right">
@@ -73,6 +77,6 @@ export function SyllabusNavigation({ previous, next, semesterLink }: SyllabusNav
           <div />
         )}
       </div>
-    </div>
+    </nav>
   )
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { fetchOldQuestions } from '@/services/client/questions.client'
 import { QuestionsHeader } from './QuestionsHeader'
 import { QuestionsFilters } from './QuestionsFilters'
@@ -14,13 +15,18 @@ interface QuestionsPageContentProps {
   initialData?: OldQuestion[] | null
   initialError?: string | null
   initialTotalPages?: number
+  initialPage?: number
 }
 
-export function QuestionsPageContent({ 
-  initialData, 
+export function QuestionsPageContent({
+  initialData,
   initialError,
-  initialTotalPages = 0 
+  initialTotalPages = 0,
+  initialPage = 0,
 }: QuestionsPageContentProps) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
   const { showToast } = useToast()
   const [questions, setQuestions] = useState<OldQuestion[]>(initialData || [])
   const [isLoading, setIsLoading] = useState(!initialData && !initialError)
@@ -28,10 +34,26 @@ export function QuestionsPageContent({
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [selectedYear, setSelectedYear] = useState('')
-  const [currentPage, setCurrentPage] = useState(0)
+  const [currentPage, setCurrentPage] = useState(initialPage)
   const [totalPages, setTotalPages] = useState(initialTotalPages)
 
-  // Show error toast on mount if there's an initial error
+  useEffect(() => {
+    if (!selectedCourse && !selectedYear) {
+      setCurrentPage(initialPage)
+      setQuestions(initialData || [])
+      setTotalPages(initialTotalPages)
+      setIsLoading(false)
+      setError(initialError || null)
+    }
+  }, [initialData, initialError, initialPage, initialTotalPages, selectedCourse, selectedYear])
+
+  const updatePageUrl = (pageIndex: number) => {
+    const params = new URLSearchParams(searchParams.toString())
+    params.set('page', String(pageIndex + 1))
+    params.set('size', '10')
+    router.push(`${pathname}?${params.toString()}`, { scroll: false })
+  }
+
   useEffect(() => {
     if (initialError) {
       showToast(initialError, 'error')
@@ -39,21 +61,20 @@ export function QuestionsPageContent({
   }, [initialError, showToast])
 
   useEffect(() => {
-    // Skip initial load if we have SSR data and no filters
-    if (initialData && !searchQuery && !selectedCourse && !selectedYear && currentPage === 0) {
+    if (initialData && !searchQuery && !selectedCourse && !selectedYear && currentPage === initialPage) {
       return
     }
 
     loadQuestions()
-  }, [currentPage, selectedCourse, selectedYear])
+  }, [currentPage, selectedCourse, selectedYear, initialData, initialPage, searchQuery])
 
-  const loadQuestions = async () => {
+  const loadQuestions = async (pageOverride = currentPage) => {
     setIsLoading(true)
     setError(null)
-    
+
     try {
       const response = await fetchOldQuestions({
-        page: currentPage,
+        page: pageOverride,
         size: 10,
         sortBy: 'year',
         sortDir: 'desc',
@@ -79,22 +100,21 @@ export function QuestionsPageContent({
     setSelectedYear('')
     setCurrentPage(0)
     setError(null)
+    updatePageUrl(0)
   }
 
-  // Filter questions by search query (client-side)
-  const filteredQuestions = questions.filter(q => 
-    searchQuery === '' || 
+  const filteredQuestions = questions.filter(q =>
+    searchQuery === '' ||
     q.setName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     q.subject.toLowerCase().includes(searchQuery.toLowerCase())
   )
 
-  // Show error state
   if (error && !isLoading && questions.length === 0) {
     return (
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <QuestionsHeader />
-          
+
           <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-12 text-red-400 mx-auto mb-4">
               <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
@@ -116,11 +136,10 @@ export function QuestionsPageContent({
     )
   }
 
-  // Show loading state
   if (isLoading && !questions.length) {
     return (
       <main className="flex-grow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <QuestionsHeader />
           <CenteredSpinner size="lg" text="Loading questions..." />
         </div>
@@ -130,7 +149,7 @@ export function QuestionsPageContent({
 
   return (
     <main className="flex-grow">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <QuestionsHeader />
 
         <QuestionsFilters
@@ -143,14 +162,20 @@ export function QuestionsPageContent({
           onReset={handleReset}
         />
 
-        <QuestionsTable data={filteredQuestions} isLoading={isLoading} />
+        <div data-role="question-list">
+          <QuestionsTable data={filteredQuestions} isLoading={isLoading} />
+        </div>
 
         {totalPages > 1 && (
           <div className="mt-6 flex justify-end">
             <QuestionsPagination
               currentPage={currentPage + 1}
               totalPages={totalPages}
-              onPageChange={(page) => setCurrentPage(page - 1)}
+              onPageChange={(page) => {
+                const nextPage = page - 1
+                setCurrentPage(nextPage)
+                updatePageUrl(nextPage)
+              }}
             />
           </div>
         )}

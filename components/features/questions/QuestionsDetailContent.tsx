@@ -98,17 +98,17 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
         <nav className="mb-4 sm:mb-6">
           <ol className="flex items-center gap-2 text-sm">
             <li>
-              <Link href="/questions" className="text-gray-500 hover:text-brand-navy transition-colors">
+              <Link href="/questions" data-role="questions-link" className="text-gray-500 hover:text-brand-navy transition-colors">
                 Old Questions
               </Link>
             </li>
             <li className="text-gray-400">/</li>
-            <li className="text-brand-navy font-medium truncate">{question.setName}</li>
+            <li data-role="question-title" className="text-brand-navy font-medium truncate">{question.setName}</li>
           </ol>
         </nav>
 
         {/* Main Content Grid - PDF First on Mobile */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <article data-role="page-content" className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* PDF Viewer - Full width on mobile, 8 cols on desktop */}
           <div className="w-full lg:col-span-8 order-1 flex flex-col gap-6">
             {/* PDF Viewer - pdfFilePath now contains the full signed URL */}
@@ -121,6 +121,16 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
 
           {/* Sidebar - Below PDF on mobile, 4 cols on desktop */}
           <aside className="w-full lg:col-span-4 order-2">
+            <span
+              className="sr-only"
+              data-role="meta-question-info"
+              data-set-name={question.setName}
+              data-subject-name={question.subject}
+              data-year={question.year}
+              data-course-name={question.courseName}
+              data-affiliation={question.affiliation.replace(/_/g, ' ')}
+              data-detail-uri={`/questions/${question.slug || question.id}`}
+            />
             <div className="lg:sticky lg:top-24 space-y-6">
               {/* Question Details Card */}
               <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
@@ -132,19 +142,19 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
                   {/* Set Name */}
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Set Name</p>
-                    <p className="font-semibold text-gray-900">{question.setName}</p>
+                    <p data-role="question-title" className="font-semibold text-gray-900">{question.setName}</p>
                   </div>
 
                   {/* Subject */}
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Subject</p>
-                    <p className="font-semibold text-gray-900">{question.subject}</p>
+                    <p data-role="subject-name" className="font-semibold text-gray-900">{question.subject}</p>
                   </div>
 
                   {/* Year */}
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Year</p>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 border border-gray-200">
+                    <span data-role="year" className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800 border border-gray-200">
                       {question.year}
                     </span>
                   </div>
@@ -152,7 +162,7 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
                   {/* Course */}
                   <div>
                     <p className="text-xs text-gray-500 mb-1">Course</p>
-                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                    <span data-role="course-name" className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                       {question.courseName}
                     </span>
                   </div>
@@ -164,7 +174,7 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
                       <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 text-gray-400">
                         <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
                       </svg>
-                      <span className="text-sm text-gray-700">{question.affiliation.replace(/_/g, ' ')}</span>
+                      <span data-role="affiliation" className="text-sm text-gray-700">{question.affiliation.replace(/_/g, ' ')}</span>
                     </div>
                   </div>
 
@@ -172,7 +182,7 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
                   {question.description && (
                     <div>
                       <p className="text-xs text-gray-500 mb-1">Description</p>
-                      <p className="text-sm text-gray-700 leading-relaxed">{question.description}</p>
+                      <p data-role="description" className="text-sm text-gray-700 leading-relaxed">{question.description}</p>
                     </div>
                   )}
                 </div>
@@ -181,13 +191,14 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
               {/* Back Button */}
               <Link
                 href="/questions"
+                data-role="questions-link"
                 className="block w-full bg-white hover:bg-gray-50 border-2 border-gray-200 text-brand-navy font-semibold py-3 px-4 rounded-lg transition-colors text-center"
               >
                 ← Back to All Questions
               </Link>
             </div>
           </aside>
-        </div>
+        </article>
       </div>
     </main>
   )

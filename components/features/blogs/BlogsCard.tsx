@@ -19,7 +19,7 @@ interface BlogsCardProps {
 
 export function BlogsCard({ article, onReadArticle }: BlogsCardProps) {
   return (
-    <article className="bg-white rounded-2xl overflow-hidden border border-gray-200 flex flex-col md:flex-row shadow-sm hover:shadow-md transition-shadow group">
+    <article data-role="blog-item" data-blog-title={article.title} data-category={article.category} data-published-date={article.date} data-detail-uri={`/blogs/${article.slug || article.blogId || article.id}`} className="bg-white rounded-2xl overflow-hidden border border-gray-200 flex flex-col md:flex-row shadow-sm hover:shadow-md transition-shadow group">
       {/* Image Section */}
       <div className="md:w-1/3 h-48 sm:h-56 md:h-auto relative overflow-hidden">
         {article.image ? (
@@ -44,10 +44,10 @@ export function BlogsCard({ article, onReadArticle }: BlogsCardProps) {
         <div>
           {/* Category and Date */}
           <div className="flex items-center gap-2 sm:gap-3 mb-3 sm:mb-4 flex-wrap">
-            <span className="bg-brand-blue text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">
+            <span data-role="category" className="bg-brand-blue text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">
               {article.category}
             </span>
-            <span className="text-gray-400 text-xs font-medium flex items-center gap-1">
+            <span data-role="published-date" className="text-gray-400 text-xs font-medium flex items-center gap-1">
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-3.5">
                 <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
               </svg>
@@ -56,13 +56,13 @@ export function BlogsCard({ article, onReadArticle }: BlogsCardProps) {
           </div>
 
           {/* Title */}
-          <h2 className="text-xl sm:text-2xl font-bold text-brand-navy mb-2 sm:mb-3 group-hover:text-brand-blue transition-colors leading-tight">
+          <h2 data-role="blog-title" className="text-xl sm:text-2xl font-bold text-brand-navy mb-2 sm:mb-3 group-hover:text-brand-blue transition-colors leading-tight">
             {article.title}
           </h2>
 
           {/* Description */}
           {article.description && (
-            <p className="text-gray-600 text-sm sm:text-base line-clamp-2 sm:line-clamp-3 leading-relaxed">
+            <p data-role="description" className="text-gray-600 text-sm sm:text-base line-clamp-2 sm:line-clamp-3 leading-relaxed">
               {article.description}
             </p>
           )}
@@ -72,6 +72,8 @@ export function BlogsCard({ article, onReadArticle }: BlogsCardProps) {
         <div className="mt-5 sm:mt-6 md:mt-8 flex justify-end">
           <Link
             href={`/blogs/${article.slug || article.blogId || article.id}`}
+            data-role="blog-link"
+            data-detail-uri={`/blogs/${article.slug || article.blogId || article.id}`}
             className="bg-brand-gold hover:bg-[#FFB300] text-brand-navy font-bold py-2 sm:py-2.5 px-4 sm:px-6 rounded-lg transition-all duration-200 flex items-center gap-2 text-xs sm:text-sm shadow-sm w-full sm:w-auto justify-center"
           >
             Read Full Article

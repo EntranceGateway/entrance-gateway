@@ -7,6 +7,17 @@ interface NotesDetailSidebarProps {
 export function NotesDetailSidebar({ note }: NotesDetailSidebarProps) {
   return (
     <aside className="w-full space-y-4 sm:space-y-6 lg:sticky lg:top-24">
+      <span
+        className="sr-only"
+        data-role="meta-note-info"
+        data-subject={note.subject}
+        data-course-name={note.courseName}
+        data-course-code={note.subjectCode}
+        data-semester={note.semester}
+        data-year={note.year ?? ''}
+        data-affiliation={note.affiliation}
+        data-detail-uri={`/notes/${note.slug || note.noteId}`}
+      />
       {/* Main Info Card */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         {/* Top Accent Bar */}
@@ -24,18 +35,18 @@ export function NotesDetailSidebar({ note }: NotesDetailSidebarProps) {
               <span className="text-xs font-bold uppercase tracking-wider text-gray-500">
                 Affiliation
               </span>
-              <h3 className="text-sm font-bold text-brand-navy truncate">
+              <h3 data-role="affiliation" className="text-sm font-bold text-brand-navy truncate">
                 {note.affiliation}
               </h3>
             </div>
           </div>
 
           {/* Title */}
-          <h1 className="text-xl sm:text-2xl font-heading font-bold text-brand-navy mb-2">
+          <h1 data-role="page-title" className="text-xl sm:text-2xl font-heading font-bold text-brand-navy mb-2">
             {note.subject}
           </h1>
           <p className="text-gray-500 text-sm mb-6 sm:mb-8">
-            Official academic note for {note.courseName} students.
+            Official academic note for <span data-role="course-name">{note.courseName}</span> students.
           </p>
 
           {/* Details */}
@@ -51,7 +62,7 @@ export function NotesDetailSidebar({ note }: NotesDetailSidebarProps) {
                 <p className="text-xs text-gray-500 uppercase font-semibold mb-0.5">
                   code
                 </p>
-                <p className="font-medium text-gray-900">{note.subjectCode}</p>              </div>
+                <code data-role="course-code" className="font-medium text-gray-900">{note.subjectCode}</code>              </div>
             </div>
 
             {/* Semester */}
@@ -65,9 +76,9 @@ export function NotesDetailSidebar({ note }: NotesDetailSidebarProps) {
                 <p className="text-xs text-gray-500 uppercase font-semibold mb-0.5">
                   Semester
                 </p>
-                <p className="font-medium text-gray-900">Semester {note.semester}</p>
+                <p data-role="semester" className="font-medium text-gray-900">Semester {note.semester}</p>
                 {note.year && (
-                  <p className="text-xs text-gray-500 mt-0.5">Year {note.year}</p>
+                  <p data-role="year" className="text-xs text-gray-500 mt-0.5">Year {note.year}</p>
                 )}
               </div>
             </div>
@@ -83,7 +94,7 @@ export function NotesDetailSidebar({ note }: NotesDetailSidebarProps) {
                 <p className="text-xs text-gray-500 uppercase font-semibold mb-0.5">
                   Course
                 </p>
-                <p className="font-medium text-gray-900">{note.courseName}</p>
+                <p data-role="course-name" className="font-medium text-gray-900">{note.courseName}</p>
               </div>
             </div>
           </div>

@@ -65,23 +65,33 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
           </div>
 
           {/* Content - Scrollable */}
-          <div className="flex-grow overflow-y-auto p-4 sm:p-6">
+          <article data-role="page-content" className="flex-grow overflow-y-auto p-4 sm:p-6">
+            <span
+              className="sr-only"
+              data-role="meta-quiz-info"
+              data-quiz-title={quiz.setName}
+              data-course-name={quiz.courseName}
+              data-question-count={quiz.nosOfQuestions}
+              data-duration={quiz.durationInMinutes}
+              data-price={quiz.price ?? 0}
+              data-detail-uri={`/quiz/${quiz.slug || quiz.questionSetId}/start`}
+            />
             {/* Category Badge */}
             <div className="mb-4 sm:mb-6">
-              <span className="inline-block bg-brand-lavender text-brand-purple text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
+              <span data-role="course-name" className="inline-block bg-brand-lavender text-brand-purple text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
                 {quiz.courseName}
               </span>
             </div>
 
             {/* Title */}
-            <h3 className="text-xl sm:text-2xl font-heading font-bold text-brand-navy mb-3 sm:mb-4">
+            <h3 data-role="quiz-title" className="text-xl sm:text-2xl font-heading font-bold text-brand-navy mb-3 sm:mb-4">
               {quiz.setName}
             </h3>
 
             {/* Description */}
             {quiz.description && quiz.description.trim() && (
               <div className="mb-4 sm:mb-6">
-                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
+                <p data-role="description" className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">
                   {quiz.description}
                 </p>
               </div>
@@ -94,7 +104,7 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
                   <span className="material-symbols-outlined text-brand-blue mr-2 sm:mr-3 text-[18px] sm:text-[20px]">quiz</span>
                   <span className="font-medium text-sm sm:text-base">Questions</span>
                 </div>
-                <span className="text-brand-navy font-bold text-sm sm:text-base">
+                <span data-role="question-count" className="text-brand-navy font-bold text-sm sm:text-base">
                   {quiz.nosOfQuestions}
                 </span>
               </div>
@@ -104,7 +114,7 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
                   <span className="material-symbols-outlined text-brand-blue mr-2 sm:mr-3 text-[18px] sm:text-[20px]">schedule</span>
                   <span className="font-medium text-sm sm:text-base">Duration</span>
                 </div>
-                <span className="text-brand-navy font-bold text-sm sm:text-base">
+                <span data-role="duration" className="text-brand-navy font-bold text-sm sm:text-base">
                   {quiz.durationInMinutes} Minutes
                 </span>
               </div>
@@ -114,7 +124,7 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
                   <span className="material-symbols-outlined text-brand-blue mr-2 sm:mr-3 text-[18px] sm:text-[20px]">menu_book</span>
                   <span className="font-medium text-sm sm:text-base">Course</span>
                 </div>
-                <span className="text-brand-navy font-bold text-sm sm:text-base">
+                <span data-role="course-name" className="text-brand-navy font-bold text-sm sm:text-base">
                   {quiz.courseName}
                 </span>
               </div>
@@ -124,12 +134,12 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
                   <span className="material-symbols-outlined text-brand-gold mr-2 sm:mr-3 text-[18px] sm:text-[20px]">payments</span>
                   <span className="font-medium text-sm sm:text-base">Price</span>
                 </div>
-                <span className="text-brand-navy font-bold text-base sm:text-lg">
+                <span data-role="price" className="text-brand-navy font-bold text-base sm:text-lg">
                   {formatPrice(quiz.price)}
                 </span>
               </div>
             </div>
-          </div>
+          </article>
 
           {/* Footer Actions - Fixed at bottom */}
           <div className="p-4 sm:p-6 border-t border-gray-200 flex-shrink-0">
@@ -187,7 +197,7 @@ export function QuizDetailSidebar({ quiz, isOpen, onClose, purchaseStatus = 'NOT
             {(purchaseStatus === 'PAID' || purchaseStatus === 'ACTIVE') && (
               <button
                 onClick={() => {
-                  window.location.href = `/quiz/${quiz.questionSetId}/start`
+                  window.location.href = `/quiz/${quiz.slug || quiz.questionSetId}/start`
                 }}
                 className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 sm:py-3 rounded-lg transition-colors text-sm sm:text-base"
               >

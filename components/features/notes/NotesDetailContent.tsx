@@ -88,7 +88,7 @@ export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContent
     <main className="flex-grow">
       <div className="w-full max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
         {/* Main Content Grid - PDF First on Mobile */}
-        <div className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+        <article data-role="page-content" className="flex flex-col lg:grid lg:grid-cols-12 gap-6 lg:gap-8 items-start">
           {/* PDF Viewer - Full width on mobile, 8 cols on desktop */}
           <div className="w-full lg:col-span-8 order-1 flex flex-col gap-6">
             {/* PDF Viewer - noteName now contains the full signed URL */}
@@ -99,7 +99,7 @@ export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContent
             />
 
             {/* Description Section */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sm:p-6 md:p-8">
+            <section data-role="description" className="bg-white rounded-xl shadow-sm border border-gray-200 p-5 sm:p-6 md:p-8">
               <div className="flex items-center gap-2 mb-4">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 text-brand-blue">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -111,14 +111,14 @@ export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContent
               <div className="prose prose-sm max-w-none text-gray-600">
                 <p>{note.noteDescription}</p>
               </div>
-            </div>
+            </section>
           </div>
 
           {/* Sidebar - Below PDF on mobile, side on desktop */}
           <div className="w-full lg:col-span-4 order-2">
             <NotesDetailSidebar note={note} />
           </div>
-        </div>
+        </article>
       </div>
     </main>
   )

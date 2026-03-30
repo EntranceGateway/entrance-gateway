@@ -11,6 +11,10 @@ interface CollegeSidebarProps {
   latitude?: number
   longitude?: number
   collegeName?: string
+  location?: string
+  affiliation?: string
+  establishedYear?: string
+  detailUri?: string
 }
 
 export function CollegeSidebar({
@@ -20,6 +24,10 @@ export function CollegeSidebar({
   latitude,
   longitude,
   collegeName,
+  location,
+  affiliation,
+  establishedYear,
+  detailUri,
 }: CollegeSidebarProps) {
   // Generate Google Maps URL
   const mapUrl = latitude && longitude 
@@ -28,6 +36,15 @@ export function CollegeSidebar({
 
   return (
     <aside className="lg:col-span-1">
+      <span
+        className="sr-only"
+        data-role="meta-college-info"
+        data-college-name={collegeName || ''}
+        data-location={location || ''}
+        data-affiliation={affiliation || ''}
+        data-established-year={establishedYear || ''}
+        data-detail-uri={detailUri || ''}
+      />
       <div className="lg:sticky lg:top-24 space-y-4 sm:space-y-6">
         {/* Quick Actions */}
         <div className="bg-white rounded-xl sm:rounded-2xl p-4 sm:p-6 shadow-lg border border-gray-200">

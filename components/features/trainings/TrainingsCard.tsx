@@ -60,21 +60,31 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
   }
 
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
+    <article
+      data-role="training-item"
+      data-training-name={item.trainingName}
+      data-training-status={item.trainingStatus}
+      data-training-category={item.trainingCategory}
+      data-training-type={item.trainingType}
+      data-training-hours={item.trainingHours}
+      data-location={item.location || ''}
+      data-detail-uri={`/trainings/${item.slug || item.trainingId}`}
+      className="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg transition-shadow"
+    >
       {/* Content */}
       <div className="p-6 flex-grow">
         {/* Header: Status Badge and Category */}
         <div className="flex justify-between items-start mb-4">
-          <span className="bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
+          <span data-role="training-status" className="bg-brand-blue/10 text-brand-blue text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-wider">
             {item.trainingStatus}
           </span>
-          <span className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
+          <span data-role="category" className="text-xs font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded">
             {item.trainingCategory}
           </span>
         </div>
 
         {/* Training Title */}
-        <h3 className="text-xl font-bold text-brand-navy mb-4 leading-tight">
+        <h3 data-role="training-name" className="text-xl font-bold text-brand-navy mb-4 leading-tight">
           {item.trainingName}
         </h3>
 
@@ -82,15 +92,15 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
         <div className="grid grid-cols-3 gap-2 mb-6 py-4 border-y border-gray-100">
           <div className="text-center">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Type</div>
-            <div className="text-xs font-bold text-gray-800">{item.trainingType}</div>
+            <div data-role="training-type" className="text-xs font-bold text-gray-800">{item.trainingType}</div>
           </div>
           <div className="text-center border-x border-gray-100 px-1">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Duration</div>
-            <div className="text-xs font-bold text-gray-800">{item.trainingHours} Hours</div>
+            <div data-role="duration" className="text-xs font-bold text-gray-800">{item.trainingHours} Hours</div>
           </div>
           <div className="text-center">
             <div className="text-[10px] text-gray-400 uppercase font-bold">Price</div>
-            <div className="text-xs font-bold text-brand-blue">
+            <div data-role="price" className="text-xs font-bold text-brand-blue">
               {formatPrice(item.price, item.offerPercentage)}
             </div>
           </div>
@@ -100,7 +110,7 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
         <div className="mb-6">
           <div className="flex justify-between items-center mb-1.5">
             <span className="text-xs font-medium text-gray-600">Capacity</span>
-            <span className="text-xs font-bold text-brand-navy">
+            <span data-role="capacity" className="text-xs font-bold text-brand-navy">
               {item.currentParticipants}/{item.maxParticipants} joined
             </span>
           </div>
@@ -117,6 +127,8 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
       <div className="p-6 pt-0 space-y-3">
         <Link
           href={`/trainings/${item.slug || item.trainingId}`}
+          data-role="training-link"
+          data-detail-uri={`/trainings/${item.slug || item.trainingId}`}
           className="w-full bg-brand-gold hover:bg-yellow-500 text-brand-navy font-bold py-3 rounded-xl transition-colors text-sm shadow-sm block text-center"
         >
           View Details
@@ -138,14 +150,14 @@ export function TrainingsCard({ item, onDownloadSyllabus }: TrainingsCardProps) 
           )}
         </div>
       </div>
-    </div>
+    </article>
   )
 }
 
 // Card Grid Container
 export function TrainingsCardGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+    <div data-role="training-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
       {children}
     </div>
   )

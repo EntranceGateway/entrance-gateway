@@ -15,9 +15,13 @@ interface SyllabusCardProps {
 }
 
 export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
+  // SCRAPER: data-role="syllabus-card"
   return (
-    <div
+    <article
       onClick={() => onClick?.(item.id)}
+      data-role="syllabus-card"
+      data-subject-code={item.code}
+      data-course={item.course}
       className={cn(
         'bg-white rounded-lg shadow-sm border border-gray-200 p-4 transition-all duration-200 group cursor-pointer',
         'hover:shadow-xl hover:border-brand-blue hover:-translate-y-1 hover:scale-[1.02]'
@@ -25,9 +29,10 @@ export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
     >
       {/* Header: Code and Badge */}
       <div className="flex items-center gap-2 mb-2">
-        <span className="font-mono text-sm text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded">
+        {/* SCRAPER: data-role="subject-code" */}
+        <code data-role="subject-code" className="font-mono text-sm text-gray-600 font-medium bg-gray-50 px-2 py-1 rounded">
           {item.code}
-        </span>
+        </code>
         <span
           className={cn(
             'inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold border',
@@ -41,7 +46,8 @@ export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
       </div>
 
       {/* Subject Name */}
-      <h3 className="font-semibold text-brand-navy text-base leading-tight mb-3 group-hover:text-brand-blue transition-colors">
+      {/* SCRAPER: data-role="subject-name" */}
+      <h3 data-role="subject-name" className="font-semibold text-brand-navy text-base leading-tight mb-3 group-hover:text-brand-blue transition-colors">
         {item.name}
       </h3>
 
@@ -55,7 +61,8 @@ export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
           >
             <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11z" />
           </svg>
-          <span>{item.yearSemester}</span>
+          {/* SCRAPER: data-role="semester" */}
+          <span data-role="semester">{item.yearSemester}</span>
         </div>
         <div className="flex items-center gap-1 font-medium text-brand-navy">
           <svg
@@ -66,7 +73,8 @@ export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
             <path d="M12 2L1 7l11 5 9-4.09V17h2V6z" />
             <path d="M5 13.18v4L12 21l7-3.82v-4L12 17z" />
           </svg>
-          <span>{item.creditHours} Credits</span>
+          {/* SCRAPER: data-role="credit-hours" */}
+          <span data-role="credit-hours">{item.creditHours} Credits</span>
         </div>
       </div>
 
@@ -84,7 +92,7 @@ export function SyllabusCard({ item, onClick }: SyllabusCardProps) {
           </button>
         </div>
       )}
-    </div>
+    </article>
   )
 }
 

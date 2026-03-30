@@ -96,8 +96,18 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
   return (
     <main className="flex-grow w-full">
       {/* Hero Section */}
-      <div className="bg-gradient-to-br from-brand-navy to-brand-blue text-white">
+      <section className="bg-gradient-to-br from-brand-navy to-brand-blue text-white">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-6 sm:py-10 md:py-14 lg:py-16">
+          <span
+            className="sr-only"
+            data-role="meta-course-info"
+            data-course-name={course.courseName}
+            data-affiliation={course.affiliation.replace(/_/g, ' ')}
+            data-course-level={course.courseLevel}
+            data-course-type={course.courseType}
+            data-college-count={colleges.length}
+            data-detail-uri={`/courses/${courseSlug}`}
+          />
           {/* Breadcrumb */}
           <nav className="mb-3 sm:mb-4 md:mb-6">
             <ol className="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm">
@@ -112,7 +122,7 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
           </nav>
 
           {/* Course Title */}
-          <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 md:mb-5 font-heading leading-tight">
+          <h1 data-role="page-title" className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-3 sm:mb-4 md:mb-5 font-heading leading-tight">
             {course.courseName}
           </h1>
 
@@ -122,31 +132,31 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-3.5 sm:size-4 md:size-5 text-brand-gold shrink-0">
                 <path d="M5 13.18v4L12 21l7-3.82v-4L12 17l-7-3.82zM12 3L1 9l11 6 9-4.91V17h2V9L12 3z" />
               </svg>
-              <span className="truncate">{course.affiliation.replace(/_/g, ' ')}</span>
+              <span data-role="affiliation" className="truncate">{course.affiliation.replace(/_/g, ' ')}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-3.5 sm:size-4 md:size-5 text-brand-gold shrink-0">
                 <path d="M15 1H9v2h6V1zm-4 13h2V8h-2v6zm8.03-6.61l1.42-1.42c-.43-.51-.9-.99-1.41-1.41l-1.42 1.42C16.07 4.74 14.12 4 12 4c-4.97 0-9 4.03-9 9s4.02 9 9 9 9-4.03 9-9c0-2.12-.74-4.07-1.97-5.61zM12 20c-3.87 0-7-3.13-7-7s3.13-7 7-7 7 3.13 7 7-3.13 7-7 7z" />
               </svg>
-              <span>{course.courseLevel}</span>
+              <span data-role="course-level">{course.courseLevel}</span>
             </div>
             <div className="flex items-center gap-1.5 sm:gap-2">
               <svg viewBox="0 0 24 24" fill="currentColor" className="size-3.5 sm:size-4 md:size-5 text-brand-gold shrink-0">
                 <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm0 4c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm6 12H6v-1.4c0-2 4-3.1 6-3.1s6 1.1 6 3.1V19z" />
               </svg>
-              <span>{course.courseType}</span>
+              <span data-role="course-type">{course.courseType}</span>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 lg:py-12">
+      <article data-role="page-content" className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6 md:py-10 lg:py-12">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-4 sm:space-y-6 lg:space-y-8">
             {/* About Section */}
-            <section className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-sm border border-gray-200">
+            <section data-role="course-description" className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-sm border border-gray-200">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-brand-navy mb-3 sm:mb-4 flex items-center gap-2 font-heading">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 md:size-6 shrink-0">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2v6zm0-8h-2V7h2v2z" />
@@ -154,14 +164,14 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
                 About the Course
               </h2>
               <div className="prose max-w-none text-gray-600">
-                <p className="text-sm sm:text-base md:text-base leading-relaxed sm:leading-relaxed md:leading-loose whitespace-pre-line">
+                <p data-role="description" className="text-sm sm:text-base md:text-base leading-relaxed sm:leading-relaxed md:leading-loose whitespace-pre-line">
                   {course.description}
                 </p>
               </div>
             </section>
 
             {/* Admission Criteria */}
-            <section className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-sm border border-gray-200">
+            <section data-role="admission-criteria" className="bg-white rounded-lg sm:rounded-xl md:rounded-2xl p-4 sm:p-5 md:p-6 lg:p-8 shadow-sm border border-gray-200">
               <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-brand-navy mb-3 sm:mb-4 flex items-center gap-2 font-heading">
                 <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 md:size-6 shrink-0">
                   <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
@@ -169,7 +179,7 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
                 Admission Criteria
               </h2>
               <div className="bg-gray-50 p-3 sm:p-4 md:p-5 rounded-lg">
-                <p className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed sm:leading-relaxed md:leading-loose whitespace-pre-line">
+                <p data-role="criteria" className="text-xs sm:text-sm md:text-base text-gray-600 leading-relaxed sm:leading-relaxed md:leading-loose whitespace-pre-line">
                   {course.criteria}
                 </p>
               </div>
@@ -177,7 +187,7 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
 
             {/* Colleges Offering This Course */}
             {colleges.length > 0 && (
-              <section>
+              <section data-role="college-list">
                 <h2 className="text-lg sm:text-xl md:text-2xl font-bold text-brand-navy mb-3 sm:mb-4 md:mb-6 flex items-center gap-2 font-heading">
                   <svg viewBox="0 0 24 24" fill="currentColor" className="size-4 sm:size-5 md:size-6 shrink-0">
                     <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
@@ -202,19 +212,19 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
                 <div className="space-y-3 sm:space-y-4 text-sm sm:text-base">
                   <div>
                     <p className="text-xs sm:text-sm text-gray-500 mb-1">Course Level</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base">{course.courseLevel}</p>
+                    <p data-role="course-level" className="font-semibold text-gray-900 text-sm sm:text-base">{course.courseLevel}</p>
                   </div>
                   <div>
                     <p className="text-xs sm:text-sm text-gray-500 mb-1">Course Type</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base">{course.courseType}</p>
+                    <p data-role="course-type" className="font-semibold text-gray-900 text-sm sm:text-base">{course.courseType}</p>
                   </div>
                   <div>
                     <p className="text-xs sm:text-sm text-gray-500 mb-1">Affiliation</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base break-words">{course.affiliation.replace(/_/g, ' ')}</p>
+                    <p data-role="affiliation" className="font-semibold text-gray-900 text-sm sm:text-base break-words">{course.affiliation.replace(/_/g, ' ')}</p>
                   </div>
                   <div>
                     <p className="text-xs sm:text-sm text-gray-500 mb-1">Available Colleges</p>
-                    <p className="font-semibold text-gray-900 text-sm sm:text-base">{colleges.length} {colleges.length === 1 ? 'College' : 'Colleges'}</p>
+                    <p data-role="college-count" className="font-semibold text-gray-900 text-sm sm:text-base">{colleges.length} {colleges.length === 1 ? 'College' : 'Colleges'}</p>
                   </div>
                 </div>
               </div>
@@ -229,7 +239,7 @@ export function CourseDetailContent({ courseSlug, initialData }: CourseDetailCon
             </div>
           </aside>
         </div>
-      </div>
+      </article>
     </main>
   )
 }
@@ -243,6 +253,10 @@ function CollegeCard({ college }: { college: any }) {
   return (
     <Link
       href={`/colleges/${college.slug || college.collegeId}`}
+      data-role="college-item"
+      data-college-name={college.collegeName}
+      data-location={college.location}
+      data-detail-uri={`/colleges/${college.slug || college.collegeId}`}
       className="bg-white rounded-lg sm:rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-3 sm:p-4 md:p-6 group"
     >
       <div className="flex gap-2.5 sm:gap-3 md:gap-4">
@@ -265,16 +279,16 @@ function CollegeCard({ college }: { college: any }) {
 
         {/* Info */}
         <div className="flex-1 min-w-0">
-          <h3 className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1 group-hover:text-brand-blue transition-colors line-clamp-1">
+          <h3 data-role="college-name" className="text-sm sm:text-base md:text-lg font-bold text-gray-900 mb-1 group-hover:text-brand-blue transition-colors line-clamp-1">
             {college.collegeName}
           </h3>
           <div className="flex items-center gap-1 sm:gap-1.5 text-xs sm:text-sm text-gray-600 mb-1.5 sm:mb-2">
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-3 sm:size-3.5 md:size-4 text-gray-400 shrink-0">
               <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
             </svg>
-            <span className="truncate">{college.location}</span>
+            <span data-role="location" className="truncate">{college.location}</span>
           </div>
-          <p className="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">{college.description}</p>
+          <p data-role="description" className="text-xs sm:text-sm text-gray-600 line-clamp-2 leading-relaxed">{college.description}</p>
         </div>
 
         {/* Arrow */}

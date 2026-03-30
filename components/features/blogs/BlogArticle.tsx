@@ -23,24 +23,24 @@ export function BlogArticle({ blog }: BlogArticleProps) {
       {/* Header */}
       <header className="mb-6 sm:mb-8">
         <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
-          <span className="bg-brand-blue text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">
+          <span data-role="category" className="bg-brand-blue text-white text-[10px] font-bold uppercase tracking-widest px-2.5 py-1 rounded">
             {blog.category}
           </span>
-          <span className="text-gray-500 text-xs sm:text-sm font-medium flex items-center gap-1">
+          <span data-role="published-date" className="text-gray-500 text-xs sm:text-sm font-medium flex items-center gap-1">
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-3 sm:size-4">
               <path d="M19 3h-1V1h-2v2H8V1H6v2H5c-1.11 0-1.99.9-1.99 2L3 19c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm0 16H5V8h14v11zM7 10h5v5H7z" />
             </svg>
             {blog.date}
           </span>
           <span className="text-gray-300 hidden sm:inline">|</span>
-          <span className="text-gray-500 text-xs sm:text-sm font-medium flex items-center gap-1">
+          <span data-role="read-time" className="text-gray-500 text-xs sm:text-sm font-medium flex items-center gap-1">
             <svg viewBox="0 0 24 24" fill="currentColor" className="size-3 sm:size-4">
               <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
             </svg>
             {blog.readTime}
           </span>
         </div>
-        <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-brand-navy mb-4 sm:mb-6 font-heading tracking-tight leading-tight">
+        <h1 data-role="page-title" className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-extrabold text-brand-navy mb-4 sm:mb-6 font-heading tracking-tight leading-tight">
           {blog.title}
         </h1>
       </header>
@@ -62,7 +62,7 @@ export function BlogArticle({ blog }: BlogArticleProps) {
       )}
 
       {/* Content */}
-      <div className="max-w-none">
+      <div data-role="article-content" className="max-w-none">
         {/* Main Content - Markdown */}
         <MarkdownRenderer content={blog.content} />
       </div>
@@ -71,6 +71,7 @@ export function BlogArticle({ blog }: BlogArticleProps) {
       <div className="mt-8 sm:mt-12 pt-6 sm:pt-8 border-t border-gray-200">
         <Link
           href="/blogs"
+          data-role="blogs-link"
           className="bg-brand-gold hover:bg-[#FFB300] text-brand-navy font-bold py-2 sm:py-2.5 px-5 sm:px-6 rounded-lg transition-all duration-200 inline-flex items-center gap-2 text-xs sm:text-sm shadow-sm"
         >
           <svg viewBox="0 0 24 24" fill="currentColor" className="size-3 sm:size-4">

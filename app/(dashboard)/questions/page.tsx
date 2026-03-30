@@ -8,15 +8,31 @@ export const metadata = {
   description: 'Access and download past entrance exam question papers for major IT courses in Nepal.',
 }
 
-export default async function QuestionsPage() {
-  // Fetch initial data on server with proper error handling
+interface QuestionsPageProps {
+  searchParams?: Promise<{
+    page?: string
+    size?: string
+  }>
+}
+
+const DEFAULT_PAGE_SIZE = 10
+const MAX_PAGE_SIZE = 50
+
+export default async function QuestionsPage({ searchParams }: QuestionsPageProps) {
+  const params = await searchParams
+  const page = Math.max(0, Number(params?.page ?? '1') - 1 || 0)
+  const size = Math.min(
+    MAX_PAGE_SIZE,
+    Math.max(1, Number(params?.size ?? String(DEFAULT_PAGE_SIZE)) || DEFAULT_PAGE_SIZE)
+  )
+
   let initialData = null
   let error = null
 
   try {
     const response = await getOldQuestions({ 
-      page: 0, 
-      size: 10, 
+      page,
+      size,
       sortBy: 'year', 
       sortDir: 'desc' 
     })
@@ -32,6 +48,7 @@ export default async function QuestionsPage() {
         initialData={initialData?.content || null} 
         initialError={error}
         initialTotalPages={initialData?.totalPages || 0}
+        initialPage={page}
       />
     </Suspense>
   )
