@@ -4,8 +4,9 @@ import { useState, useEffect } from 'react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { QuizHeader } from './QuizHeader'
 import { QuizCard, QuizCardGrid } from './QuizCard'
-import { QuizDetailSidebar } from './QuizDetailSidebar'
-import { QuizPaymentForm } from './QuizPaymentForm'
+import { QuizTemplateDetailSidebar } from './QuizTemplateDetailSidebar'
+import { QuizCustomPracticeSidebar } from './QuizCustomPracticeSidebar'
+import { QuizHistoryTab } from './QuizHistoryTab'
 import { CardGridSkeleton } from '@/components/shared/Loading'
 import { fetchQuizzes } from '@/services/client/quiz.client'
 import { checkPurchaseStatus } from '@/services/client/payment.client'
@@ -14,6 +15,11 @@ import { useToast } from '@/components/shared/Toast'
 import { useAuth } from '@/hooks/auth/useAuth'
 import type { Quiz, QuizListResponse } from '@/types/quiz.types'
 import type { PurchaseStatus } from '@/types/payment.types'
+import type { QuizTemplate } from '@/types/quizTemplate.types'
+import { QuizPaymentForm } from './QuizPaymentForm'
+import { QuizDetailSidebar } from './QuizDetailSidebar'
+import { QuizTemplateCard } from './QuizTemplateCard'
+import { fetchQuizTemplates } from '@/services/client/quizTemplate.client'
 
 interface QuizPageContentProps {
   initialData?: QuizListResponse | null
@@ -27,6 +33,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
   const searchParams = useSearchParams()
   const { success, error: showError } = useToast()
   const { isLoggedIn } = useAuth()
+  const [activeTab, setActiveTab] = useState<'QUIZZES' | 'TEMPLATES' | 'HISTORY'>('QUIZZES')
   const [quizzes, setQuizzes] = useState<Quiz[]>(initialData?.data?.content || [])
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
@@ -36,6 +43,17 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
   const [isPaymentFormOpen, setIsPaymentFormOpen] = useState(false)
   const [currentPage, setCurrentPage] = useState(initialPage)
   const [totalPages, setTotalPages] = useState(initialData?.data?.totalPages || 1)
+
+  // Templates State
+  const [templates, setTemplates] = useState<QuizTemplate[]>([])
+  const [isTemplatesLoading, setIsTemplatesLoading] = useState(false)
+  const [templatesError, setTemplatesError] = useState<string | null>(null)
+  const [hasFetchedTemplates, setHasFetchedTemplates] = useState(false)
+  
+  // Custom Generation
+  const [isCustomSidebarOpen, setIsCustomSidebarOpen] = useState(false)
+  const [selectedTemplate, setSelectedTemplate] = useState<QuizTemplate | null>(null)
+  const [isTemplateDetailOpen, setIsTemplateDetailOpen] = useState(false)
 
   useEffect(() => {
     setCurrentPage(initialPage)
@@ -82,6 +100,34 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
 
     loadQuizzes()
   }, [currentPage, initialData, initialPage])
+
+  // Load Templates
+  useEffect(() => {
+    if (activeTab === 'TEMPLATES' && !hasFetchedTemplates && !isTemplatesLoading) {
+      const loadTemplates = async () => {
+        setIsTemplatesLoading(true)
+        setTemplatesError(null)
+        try {
+          const response = await fetchQuizTemplates('PRACTICE', { page: 0, size: 20 })
+          if (response?.data?.content) {
+            setTemplates(response.data.content)
+          } else {
+            setTemplatesError('Invalid templates format')
+          }
+        } catch (err) {
+          if (err instanceof Error && err.message === 'Please sign in to access practice templates.') {
+            setTemplatesError('UNAUTHORIZED')
+          } else {
+            setTemplatesError('Unable to load templates.')
+          }
+        } finally {
+          setIsTemplatesLoading(false)
+          setHasFetchedTemplates(true)
+        }
+      }
+      loadTemplates()
+    }
+  }, [activeTab, hasFetchedTemplates, isTemplatesLoading])
 
   const handleQuizClick = async (quiz: Quiz) => {
     setSelectedQuiz(quiz)
@@ -168,8 +214,100 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
           </div>
         )}
 
+        {/* Type Toggle Tabs */}
+        <div className="flex bg-gray-100 p-1.5 rounded-xl self-start overflow-x-auto scbar-none flex-shrink-0 mb-8">
+          <button
+            onClick={() => setActiveTab('QUIZZES')}
+            className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+              activeTab === 'QUIZZES' 
+                ? 'bg-white text-brand-navy shadow-sm' 
+                : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
+            }`}
+          >
+            All Quizzes
+          </button>
+          <button
+            onClick={() => setActiveTab('TEMPLATES')}
+            className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+              activeTab === 'TEMPLATES' 
+                ? 'bg-white text-brand-navy shadow-sm' 
+                : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
+            }`}
+          >
+            Practice Templates
+          </button>
+          {isLoggedIn && (
+            <button
+              onClick={() => setActiveTab('HISTORY')}
+              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                activeTab === 'HISTORY' 
+                  ? 'bg-white text-brand-navy shadow-sm' 
+                  : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
+              }`}
+            >
+              My History
+            </button>
+          )}
+        </div>
+
         <div data-role="quiz-list">
-          {isLoading ? (
+          {activeTab === 'HISTORY' ? (
+            <QuizHistoryTab />
+          ) : activeTab === 'TEMPLATES' ? (
+            <div className="space-y-6">
+              {templatesError === 'UNAUTHORIZED' ? (
+                 <div className="bg-white p-6 rounded-xl border border-red-100 text-center">
+                    <span className="material-symbols-outlined text-red-500 text-4xl mb-2">lock</span>
+                    <h3 className="text-lg font-bold text-gray-900 mb-2">Sign In Required</h3>
+                    <p className="text-sm text-gray-600 mb-4">You must be signed in to view and compile practice mock sets.</p>
+                    <button
+                      onClick={() => {
+                          sessionStorage.setItem('redirectAfterLogin', '/quiz')
+                          router.push('/signin')
+                      }}
+                      className="bg-brand-navy hover:bg-brand-blue text-white px-6 py-2 rounded-lg text-sm font-bold transition-colors"
+                    >
+                      Sign In
+                    </button>
+                 </div>
+              ) : isTemplatesLoading ? (
+                 <CardGridSkeleton count={4} />
+              ) : templatesError ? (
+                 <div className="text-center py-12 text-red-500">{templatesError}</div>
+              ) : (
+                <>
+                  <div className="bg-gradient-to-r from-brand-navy to-brand-blue rounded-xl p-6 text-white flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-8">
+                    <div>
+                      <h3 className="text-xl font-bold font-heading mb-1 flex items-center gap-2">
+                        <span className="material-symbols-outlined text-brand-gold">psychology</span>
+                        Build Your Own Setup
+                      </h3>
+                      <p className="text-sm opacity-90 text-gray-300">Mix and match any syllabus topics with custom constraints and negative marking.</p>
+                    </div>
+                    <button
+                      onClick={() => setIsCustomSidebarOpen(true)}
+                      className="whitespace-nowrap px-6 py-2.5 bg-white text-brand-navy font-bold rounded-lg hover:bg-gray-100 transition-colors shrink-0"
+                    >
+                      Create Custom Quiz
+                    </button>
+                  </div>
+
+                  <QuizCardGrid>
+                    {templates.map(template => (
+                      <QuizTemplateCard 
+                        key={template.templateId}
+                        template={template}
+                        onClick={() => {
+                          setSelectedTemplate(template)
+                          setIsTemplateDetailOpen(true)
+                        }}
+                      />
+                    ))}
+                  </QuizCardGrid>
+                </>
+              )}
+            </div>
+          ) : isLoading ? (
             <CardGridSkeleton count={6} />
           ) : !error && quizzes.length === 0 ? (
             <div className="text-center py-12">
@@ -204,7 +342,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
           ) : null}
         </div>
 
-        {!isLoading && !error && totalPages > 1 && quizzes.length > 0 && (
+        {activeTab === 'QUIZZES' && !isLoading && !error && totalPages > 1 && quizzes.length > 0 && (
           <div className="mt-8 flex items-center justify-center gap-3">
             <button
               id="quiz-pagination-prev"
@@ -239,6 +377,19 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
 
       {isPaymentFormOpen && selectedQuiz && (
         <QuizPaymentForm quiz={selectedQuiz} onClose={handleClosePaymentForm} />
+      )}
+
+      {/* Template Modals */}
+      <QuizCustomPracticeSidebar 
+        isOpen={isCustomSidebarOpen}
+        onClose={() => setIsCustomSidebarOpen(false)}
+      />
+      {selectedTemplate && (
+        <QuizTemplateDetailSidebar 
+          templateId={selectedTemplate.templateId}
+          isOpen={isTemplateDetailOpen}
+          onClose={() => setIsTemplateDetailOpen(false)}
+        />
       )}
     </main>
   )

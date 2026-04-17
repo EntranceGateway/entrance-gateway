@@ -42,7 +42,9 @@ export async function checkQuizPurchaseStatus(
     )
 
     if (!response.ok) {
-      logger.error(`[SSR] Error checking purchase status for quiz ${quizId}: HTTP ${response.status}`)
+      if (response.status !== 404) {
+        logger.error(`[SSR] Error checking purchase status for quiz ${quizId}: HTTP ${response.status}`)
+      }
       return {
         message: 'Quiz purchase status',
         data: {

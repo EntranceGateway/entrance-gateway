@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
 import { useToast } from '@/components/shared/Toast'
-import { submitQuizAttempt } from '@/services/client/quizAttempt.client'
+import { submitQuizAttempt, submitGeneratedAttempt } from '@/services/client/quizAttempt.client'
 import type { QuizAttemptResult } from '@/services/client/quizAttempt.client'
 import type { QuizQuestion } from '@/types/quiz-player.types'
 
@@ -72,13 +72,14 @@ interface QuizPlayerContentProps {
   questions: QuizQuestion[]
   quizTitle: string
   questionSetId: number
+  attemptId?: number
   onExit: () => void
 }
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
-export function QuizPlayerContent({ questions, quizTitle, questionSetId, onExit }: QuizPlayerContentProps) {
+export function QuizPlayerContent({ questions, quizTitle, questionSetId, attemptId, onExit }: QuizPlayerContentProps) {
   const total = questions.length
   const { success, error: showError, info } = useToast()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -141,25 +142,50 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, onExit 
         selectedOptionId: updatedAnswers[qn.questionId] ?? null,
       }))
 
-      submitQuizAttempt({ questionSetId, questionAnswers })
-        .then((response) => {
-          setServerResult(response.data)
-          if (response.data.percentage >= 70) {
-            success(`🎉 ${response.data.status}! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
-          } else {
-            info(`Quiz complete! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
-          }
-        })
-        .catch((err) => {
-          const msg = err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.'
-          setSubmitError(msg)
-          showError(msg)
-        })
-        .finally(() => {
-          setIsSubmitting(false)
-        })
+      if (attemptId !== undefined && attemptId !== 0) {
+        submitGeneratedAttempt(attemptId, { questionSetId, questionAnswers })
+          .then((response) => {
+            // Map the minimal generated attempting result into the existing UI shape
+            const derivedPct = questions.length > 0 ? (response.data.score / questions.length) * 100 : 0
+            setServerResult({
+              totalScore: response.data.score,
+              percentage: derivedPct,
+              status: derivedPct >= 60 ? 'PASSED' : 'FAILED',
+              totalQuestions: questions.length,
+              correctAnswers: undefined as unknown as number, // Let client strictly calculate via ??
+              wrongAnswers: undefined as unknown as number,
+              skippedAnswers: undefined as unknown as number,
+              rank: 0,
+              percentile: 0
+            })
+            success(`Practice Set Submitted. You scored ${response.data.score}!`)
+          })
+          .catch((err) => {
+            const msg = err instanceof Error ? err.message : 'Failed to submit practice set.'
+            setSubmitError(msg)
+            showError(msg)
+          })
+          .finally(() => setIsSubmitting(false))
+
+      } else {
+        submitQuizAttempt({ questionSetId, questionAnswers })
+          .then((response) => {
+            setServerResult(response.data)
+            if (response.data.percentage >= 70) {
+              success(`🎉 ${response.data.status}! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
+            } else {
+              info(`Quiz complete! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
+            }
+          })
+          .catch((err) => {
+            const msg = err instanceof Error ? err.message : 'Failed to submit quiz. Please try again.'
+            setSubmitError(msg)
+            showError(msg)
+          })
+          .finally(() => setIsSubmitting(false))
+      }
     }
-  }, [selectedOptionId, q, currentIndex, total, questions, answers, questionSetId, info, success, showError])
+  }, [selectedOptionId, q, currentIndex, total, questions, answers, questionSetId, attemptId, info, success, showError])
 
   const handleBack = useCallback(() => {
     if (currentIndex > 0) {
@@ -206,12 +232,15 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, onExit 
     const answeredCount = Object.keys(answers).length
     const clientIncorrect = answeredCount - clientCorrect
 
-    // Prefer server results
+    // For standard quizzes we prefer server results. For custom quizzes, the server just gives total score,
+    // so we merge server's total score with client's correctly computed detailed metrics smoothly.
     const correctCount = serverResult?.correctAnswers ?? clientCorrect
     const incorrectCount = serverResult?.wrongAnswers ?? clientIncorrect
     const skippedCount = serverResult?.skippedAnswers ?? (total - answeredCount)
     const score = serverResult?.totalScore ?? clientScore
-    const pct = serverResult?.percentage ?? (totalMarks > 0 ? Math.round((clientScore / totalMarks) * 100) : 0)
+    const pct = typeof serverResult?.percentage === 'number' && serverResult.percentage > 0 
+                  ? Math.round(serverResult.percentage) 
+                  : (totalMarks > 0 ? Math.round((clientScore / totalMarks) * 100) : 0)
 
     const feedback =
       pct >= 90 ? { emoji: '🏆', msg: 'Outstanding!', color: 'text-yellow-500' } :
@@ -282,7 +311,7 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, onExit 
               {serverResult?.status && (
                 <div className="text-center mb-4">
                   <span className={`inline-block px-4 py-1.5 rounded-full text-sm font-bold ${
-                    serverResult.status === 'PASS'
+                    serverResult.status === 'PASSED'
                       ? 'bg-green-100 text-green-700'
                       : 'bg-red-100 text-red-700'
                   }`}>
