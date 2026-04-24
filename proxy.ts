@@ -26,6 +26,9 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const accessToken = request.cookies.get('accessToken')?.value
   const refreshToken = request.cookies.get('refreshToken')?.value
+  const requestHeaders = new Headers(request.headers)
+
+  requestHeaders.set('x-pathname', pathname)
   
   // Check if current path is protected
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path)) ||
@@ -39,7 +42,11 @@ export async function proxy(request: NextRequest) {
   
   // Allow access to non-protected routes (including auth pages for non-authenticated users)
   if (!isProtectedPath) {
-    return NextResponse.next()
+    return NextResponse.next({
+      request: {
+        headers: requestHeaders,
+      },
+    })
   }
   
   // Protected route - check authentication
@@ -64,7 +71,11 @@ export async function proxy(request: NextRequest) {
       
       if (refreshResponse.ok) {
         const data = await refreshResponse.json()
-        const response = NextResponse.next()
+        const response = NextResponse.next({
+          request: {
+            headers: requestHeaders,
+          },
+        })
         
         // Update cookies with new tokens
         response.cookies.set('accessToken', data.data.accessToken, {
@@ -113,7 +124,11 @@ export async function proxy(request: NextRequest) {
   }
   
   // Access token exists - allow access
-  return NextResponse.next()
+  return NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  })
 }
 
 export const config = {

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { FormInput } from '@/components/shared/Form/FormInput'
 import { PasswordInput } from '@/components/shared/Form/PasswordInput'
@@ -10,7 +10,6 @@ import { login } from '@/lib/auth/client'
 import { useToast } from '@/components/shared/Toast'
 
 export function SignInForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const { success, error: showError, info } = useToast()
   const [formData, setFormData] = useState({
@@ -75,15 +74,11 @@ export function SignInForm() {
       success('Login successful!')
       
       // Check for redirect URL from query params
-      const redirectUrl = searchParams.get('redirect')
+      const redirectUrl = searchParams.get('redirect') || '/'
       
-      // Delay redirect slightly to allow toast to be visible
+      // Force a document navigation so the SSR shell re-renders with auth cookies
       setTimeout(() => {
-        if (redirectUrl) {
-          router.push(redirectUrl)
-        } else {
-          router.push('/')
-        }
+        window.location.assign(redirectUrl)
       }, 800)
     } catch (err) {
       // Error handling with specific messages

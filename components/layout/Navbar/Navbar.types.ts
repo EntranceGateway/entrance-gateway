@@ -1,6 +1,12 @@
+import type { User } from '@/types/user.types'
+
 export interface NavItem {
   label: string
   href: string
+}
+
+export interface NavbarInitialUser {
+  fullname: User['fullname']
 }
 
 export interface NavbarProps {
@@ -13,6 +19,7 @@ export interface NavbarProps {
     name: string
     avatar: string
   }
+  initialUser?: NavbarInitialUser | null
   onNotificationClick?: () => void
   className?: string
 }

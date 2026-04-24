@@ -1,2 +1,3 @@
 export { Navbar } from './Navbar'
-export type { NavbarProps, NavItem } from './Navbar.types'
+export { NavbarServer } from './Navbar.server'
+export type { NavbarProps, NavItem, NavbarInitialUser } from './Navbar.types'
