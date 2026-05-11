@@ -67,10 +67,16 @@ function setAuthCookies(
 }
 
 export async function GET(request: NextRequest) {
-  const { searchParams, origin } = request.nextUrl
+  const { searchParams } = request.nextUrl
   const error = searchParams.get('error')
   const code = searchParams.get('code')
   const redirectAfterLogin = sanitizeRedirect(request.cookies.get('oauthRedirectAfterLogin')?.value)
+
+  // Derive the public-facing origin. Behind a reverse proxy (nginx/Docker),
+  // request.nextUrl.origin resolves to the container's internal hostname.
+  const forwardedHost = request.headers.get('x-forwarded-host') || request.headers.get('host')
+  const forwardedProto = request.headers.get('x-forwarded-proto') || 'https'
+  const origin = forwardedHost ? `${forwardedProto}://${forwardedHost}` : request.nextUrl.origin
 
   if (error) {
     const response = NextResponse.redirect(buildSignInRedirect(origin, error))
