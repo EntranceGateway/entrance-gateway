@@ -1,8 +1,9 @@
 import { NextResponse, NextRequest } from 'next/server'
-import { getValidTokenOrRefresh } from '@/lib/auth/token'
+import { fetchWithAuthRetry } from '@/lib/auth/apiProxy'
 import { logger } from '@/lib/logger'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+
 
 /**
  * POST /api/quiz-attempts/generate/[templateId]
@@ -14,18 +15,7 @@ export async function POST(
   { params }: { params: Promise<{ templateId: string }> }
 ) {
   try {
-    const accessToken = await getValidTokenOrRefresh()
-    
-    // We must await params according to Next.js 15+ API route conventions
     const { templateId } = await params
-
-    if (!accessToken) {
-      logger.error('[API] No access token found for quiz generation')
-      return NextResponse.json(
-        { message: 'Please sign in to generate a quiz' },
-        { status: 401 }
-      )
-    }
 
     if (!templateId || !/^[0-9a-fA-F-]+$/.test(templateId)) {
       return NextResponse.json(
@@ -34,17 +24,23 @@ export async function POST(
       )
     }
 
-    const response = await fetch(
+    const { response } = await fetchWithAuthRetry(
       `${API_BASE_URL}/api/v1/quiz-attempts/generate/${templateId}`,
       {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${accessToken}`,
         },
-        signal: AbortSignal.timeout(15000), // 15s timeout
+        signal: AbortSignal.timeout(15000),
       }
     )
+
+    if (!response) {
+      return NextResponse.json(
+        { message: 'Your session expired. Please sign in again.' },
+        { status: 401 }
+      )
+    }
 
     const data = await response.json().catch(() => ({}))
 
@@ -60,12 +56,12 @@ export async function POST(
       // User-friendly error messages
       if (response.status === 401) {
         return NextResponse.json(
-          { message: 'Please sign in to start this quiz.' },
+          { message: 'Your session expired. Please sign in again.' },
           { status: 401 }
         )
       } else if (response.status === 403) {
         return NextResponse.json(
-          { message: 'You do not have permission or an active subscription to start this quiz.' },
+          { message: data.message || 'You do not have permission or an active subscription to start this quiz.' },
           { status: 403 }
         )
       } else if (response.status === 404) {

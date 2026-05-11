@@ -25,7 +25,7 @@ export function CollegesPageContent({
   const { showToast } = useToast()
   const [colleges, setColleges] = useState<College[]>(initialData || [])
   const [isLoading, setIsLoading] = useState(!initialData && !initialError)
-  const [error, setError] = useState<string | null>(initialError || null)
+  const [, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [currentPage, setCurrentPage] = useState(0)
   const [totalPages, setTotalPages] = useState(initialTotalPages)
@@ -44,13 +44,6 @@ export function CollegesPageContent({
     { id: 'bhaktapur', label: 'Bhaktapur', checked: false },
     { id: 'pokhara', label: 'Pokhara', checked: false },
   ])
-
-  // Show error toast on mount if there's an initial error
-  useEffect(() => {
-    if (initialError) {
-      showToast(initialError, 'error')
-    }
-  }, [initialError, showToast])
 
   useEffect(() => {
     // Skip initial load if we have SSR data and no filters
@@ -75,11 +68,10 @@ export function CollegesPageContent({
 
       setColleges(response.data.content)
       setTotalPages(response.data.totalPages)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load colleges'
-      setError(errorMessage)
+    } catch {
+      setError(null)
       setColleges([])
-      showToast(errorMessage, 'error')
+      setTotalPages(0)
     } finally {
       setIsLoading(false)
     }
@@ -121,34 +113,6 @@ export function CollegesPageContent({
     college.collegeName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     college.location.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  // Show error state
-  if (error && !isLoading && colleges.length === 0) {
-    return (
-      <main className="flex-grow">
-        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <CollegesHeader />
-          
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center mt-8">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-12 text-red-400 mx-auto mb-4">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-            </svg>
-            <h3 className="text-lg font-semibold text-red-900 mb-2">Failed to Load Colleges</h3>
-            <p className="text-sm text-red-700 mb-4">{error}</p>
-            <button
-              onClick={() => {
-                setError(null)
-                loadColleges()
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </main>
-    )
-  }
 
   // Show loading state
   if (isLoading && !colleges.length) {

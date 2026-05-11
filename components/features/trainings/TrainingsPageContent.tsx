@@ -54,8 +54,10 @@ export function TrainingsPageContent({ initialData, initialPage = 0 }: Trainings
         })
         setTrainings(response.data.content)
         setTotalPages(response.data.totalPages)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load trainings')
+      } catch {
+        setTrainings([])
+        setTotalPages(0)
+        setError(null)
       } finally {
         setIsLoading(false)
       }
@@ -82,21 +84,10 @@ export function TrainingsPageContent({ initialData, initialPage = 0 }: Trainings
       <div data-role="page-content" className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
         <TrainingsHeader />
 
-        {error && (
-          <div className="bg-semantic-error/10 border border-semantic-error text-semantic-error p-4 rounded-lg mb-6">
-            <div className="flex items-center gap-2">
-              <svg viewBox="0 0 24 24" fill="currentColor" className="size-5 shrink-0">
-                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-              </svg>
-              <span className="font-medium">{error}</span>
-            </div>
-          </div>
-        )}
-
         <div data-role="training-list">
           {isLoading ? (
             <CardGridSkeleton count={4} />
-          ) : !error && trainings.length === 0 ? (
+          ) : trainings.length === 0 ? (
             <div className="text-center py-12">
               <svg
                 viewBox="0 0 24 24"
@@ -124,7 +115,7 @@ export function TrainingsPageContent({ initialData, initialPage = 0 }: Trainings
               <h3 className="text-lg font-semibold text-gray-900 mb-2">No trainings available</h3>
               <p className="text-gray-500">Check back soon for upcoming training programs.</p>
             </div>
-          ) : !error ? (
+          ) : (
             <TrainingsCardGrid>
               {trainings.map((training) => (
                 <TrainingsCard
@@ -134,10 +125,10 @@ export function TrainingsPageContent({ initialData, initialPage = 0 }: Trainings
                 />
               ))}
             </TrainingsCardGrid>
-          ) : null}
+          )}
         </div>
 
-        {!isLoading && !error && totalPages > 1 && trainings.length > 0 && (
+        {!isLoading && totalPages > 1 && trainings.length > 0 && (
           <div className="mt-8 flex items-center justify-center gap-3">
             <button
               id="trainings-pagination-prev"

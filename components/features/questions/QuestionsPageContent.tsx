@@ -8,7 +8,6 @@ import { QuestionsFilters } from './QuestionsFilters'
 import { QuestionsTable } from './QuestionsTable'
 import { QuestionsPagination } from './QuestionsPagination'
 import { CenteredSpinner } from '@/components/shared/Loading'
-import { useToast } from '@/components/shared/Toast'
 import type { OldQuestion } from '@/types/questions.types'
 
 interface QuestionsPageContentProps {
@@ -27,10 +26,9 @@ export function QuestionsPageContent({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const { showToast } = useToast()
   const [questions, setQuestions] = useState<OldQuestion[]>(initialData || [])
   const [isLoading, setIsLoading] = useState(!initialData && !initialError)
-  const [error, setError] = useState<string | null>(initialError || null)
+  const [, setError] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCourse, setSelectedCourse] = useState('')
   const [selectedYear, setSelectedYear] = useState('')
@@ -53,12 +51,6 @@ export function QuestionsPageContent({
     params.set('size', '10')
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
-
-  useEffect(() => {
-    if (initialError) {
-      showToast(initialError, 'error')
-    }
-  }, [initialError, showToast])
 
   useEffect(() => {
     if (initialData && !searchQuery && !selectedCourse && !selectedYear && currentPage === initialPage) {
@@ -84,11 +76,10 @@ export function QuestionsPageContent({
 
       setQuestions(response.data.content)
       setTotalPages(response.data.totalPages)
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load questions'
-      setError(errorMessage)
+    } catch {
+      setError(null)
       setQuestions([])
-      showToast(errorMessage, 'error')
+      setTotalPages(0)
     } finally {
       setIsLoading(false)
     }
@@ -108,33 +99,6 @@ export function QuestionsPageContent({
     q.setName.toLowerCase().includes(searchQuery.toLowerCase()) ||
     q.subject.toLowerCase().includes(searchQuery.toLowerCase())
   )
-
-  if (error && !isLoading && questions.length === 0) {
-    return (
-      <main className="flex-grow">
-        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <QuestionsHeader />
-
-          <div className="bg-red-50 border border-red-200 rounded-xl p-6 text-center">
-            <svg viewBox="0 0 24 24" fill="currentColor" className="size-12 text-red-400 mx-auto mb-4">
-              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-            </svg>
-            <h3 className="text-lg font-semibold text-red-900 mb-2">Failed to Load Questions</h3>
-            <p className="text-sm text-red-700 mb-4">{error}</p>
-            <button
-              onClick={() => {
-                setError(null)
-                loadQuestions()
-              }}
-              className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-4 rounded-lg transition-colors"
-            >
-              Try Again
-            </button>
-          </div>
-        </div>
-      </main>
-    )
-  }
 
   if (isLoading && !questions.length) {
     return (

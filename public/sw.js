@@ -1,7 +1,7 @@
 // Minimal service worker for PWA install prompt
 // Does NOT cache anything — Next.js handles its own caching
 
-self.addEventListener('install', (event) => {
+self.addEventListener('install', () => {
   self.skipWaiting();
 });
 
@@ -10,13 +10,9 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only intercept same-origin GET requests
-  // Non-GET (POST/PUT/DELETE) and cross-origin requests are left to the browser
-  if (
-    event.request.method !== 'GET' ||
-    !event.request.url.startsWith(self.location.origin)
-  ) {
-    return;
-  }
-  event.respondWith(fetch(event.request));
+  // This service worker exists only to make the app installable.
+  // Do not proxy requests with respondWith(fetch(...)); when a dev-server
+  // request is cancelled or unavailable, that rejected promise creates noisy
+  // "FetchEvent resulted in a network error" console errors.
+  return;
 });

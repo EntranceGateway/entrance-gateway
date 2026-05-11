@@ -61,8 +61,32 @@ export default function CustomQuizStartPage({ params }: { params: Promise<{ atte
       }
 
       try {
+        interface RawSnapshotOption {
+          optionId: number
+          text?: string
+          optionText?: string
+          optionImageUrl?: string | null
+          imageUrl?: string | null
+          isCorrect?: boolean
+          correct?: boolean
+        }
+
+        interface RawSnapshotQuestion {
+          questionId: number
+          question: string
+          marks?: number
+          topicId?: number
+          categoryId?: number
+          topicName?: string
+          categoryName?: string
+          questionSetId?: number
+          questionSetTitle?: string
+          mcqImage?: string | null
+          options?: RawSnapshotOption[]
+        }
+
         // Parse snapshot and strictly map it to the legacy QuizPlayerContent spec
-        const rawQuestions: any[] = JSON.parse(snapshotStr)
+        const rawQuestions = JSON.parse(snapshotStr) as RawSnapshotQuestion[]
         if (!Array.isArray(rawQuestions) || rawQuestions.length === 0) {
           throw new Error('Snapshot array is totally empty or malformed.')
         }
@@ -76,11 +100,12 @@ export default function CustomQuizStartPage({ params }: { params: Promise<{ atte
           questionSetId: rq.questionSetId || 0,
           questionSetTitle: rq.questionSetTitle || 'Generated Set',
           mcqImage: rq.mcqImage || null,
-          options: (rq.options || []).map((o: any) => ({
+          options: (rq.options || []).map((o, index) => ({
             optionId: o.optionId,
             optionText: o.text || o.optionText || '?',
             optionImageUrl: o.optionImageUrl || o.imageUrl || null,
-            correct: o.isCorrect === true || o.correct === true
+            correct: o.isCorrect === true || o.correct === true,
+            optionOrder: index + 1,
           }))
         }))
 

@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Roboto } from "next/font/google";
 import "./globals.css";
-import { ConditionalLayout } from "@/components/layout/ConditionalLayout";
 import { ProgressBar } from "@/components/shared/Loading";
 import { ToastProvider } from "@/components/shared/Toast";
 import { DebugPageStructureLoader } from "@/components/shared/DebugPageStructureLoader";
@@ -76,7 +75,7 @@ export default function RootLayout({
         <ToastProvider>
           <DebugPageStructureLoader />
           <ProgressBar />
-          <ConditionalLayout>{children}</ConditionalLayout>
+          {children}
         </ToastProvider>
         <script
           dangerouslySetInnerHTML={{

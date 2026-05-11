@@ -1,7 +1,5 @@
 import { QuizPageContent } from '@/components/features/quiz'
 import { getQuizzes } from '@/services/server/quiz.server'
-import { checkMultipleQuizPurchaseStatuses } from '@/services/server/payment.server'
-import { logger } from '@/lib/logger'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -27,30 +25,12 @@ export default async function QuizPage({ searchParams }: QuizPageProps) {
     Math.max(1, Number(params?.size ?? String(DEFAULT_PAGE_SIZE)) || DEFAULT_PAGE_SIZE)
   )
 
-  const initialData = await getQuizzes({ 
+  const initialData = await getQuizzes({
     page,
     size,
     sortBy: 'setName',
     sortDir: 'asc',
   }).catch(() => null)
-  
-  let purchaseStatuses: Record<number, string> = {}
-  
-  if (initialData?.data?.content && Array.isArray(initialData.data.content)) {
-    try {
-      const quizIds = initialData.data.content.map(quiz => quiz.questionSetId)
-      const statusMap = await checkMultipleQuizPurchaseStatuses(quizIds)
-      
-      purchaseStatuses = Object.fromEntries(
-        Array.from(statusMap.entries()).map(([id, response]) => [
-          id,
-          response?.data?.status ?? 'NOT_PURCHASED'
-        ])
-      )
-    } catch (error) {
-      logger.error('[QuizPage] Error fetching purchase statuses:', error instanceof Error ? error.message : 'Unknown error')
-    }
-  }
-  
-  return <QuizPageContent initialData={initialData} purchaseStatuses={purchaseStatuses} initialPage={page} />
+
+  return <QuizPageContent initialData={initialData} purchaseStatuses={{}} initialPage={page} />
 }

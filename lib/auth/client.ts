@@ -44,6 +44,15 @@ export function isAuthenticated(): boolean {
 }
 
 /**
+ * Start Google OAuth2 login through the Next.js proxy route.
+ * The backend redirects back to /oauth2/callback with tokens, where cookies are set.
+ */
+export function startGoogleOAuth(redirect = '/') {
+  const safeRedirect = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : '/'
+  window.location.assign(`/api/auth/oauth/google?redirect=${encodeURIComponent(safeRedirect)}`)
+}
+
+/**
  * Login user (calls Next.js API route)
  * Tokens are stored in httpOnly cookies by the server
  */

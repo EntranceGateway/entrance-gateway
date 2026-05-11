@@ -75,8 +75,10 @@ export function BlogsPageContent({ initialData, initialPage = 0 }: BlogsPageCont
         const response = await fetchBlogs({ page: currentPage, size: 10 })
         setBlogs(response.data.content)
         setTotalPages(response.data.totalPages)
-      } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load blogs')
+      } catch {
+        setBlogs([])
+        setTotalPages(0)
+        setError(null)
       } finally {
         setIsLoading(false)
       }
@@ -104,18 +106,6 @@ export function BlogsPageContent({ initialData, initialPage = 0 }: BlogsPageCont
         <div data-role="blog-list" className="flex flex-col gap-8">
           {isLoading ? (
             <CenteredSpinner size="lg" text="Loading articles..." />
-          ) : error ? (
-            <div className="bg-error/10 border border-error text-error p-6 rounded-lg">
-              <div className="flex items-center gap-3">
-                <svg viewBox="0 0 24 24" fill="currentColor" className="size-6 shrink-0">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z" />
-                </svg>
-                <div>
-                  <h3 className="font-bold text-lg mb-1">Failed to load articles</h3>
-                  <p className="text-sm">{error}</p>
-                </div>
-              </div>
-            </div>
           ) : blogs.length === 0 ? (
             <div className="text-center py-12">
               <p className="text-gray-500">No articles available at the moment.</p>
@@ -148,7 +138,7 @@ export function BlogsPageContent({ initialData, initialPage = 0 }: BlogsPageCont
           )}
         </div>
 
-        {!isLoading && !error && totalPages > 1 && blogs.length > 0 && (
+        {!isLoading && totalPages > 1 && blogs.length > 0 && (
           <BlogsPagination
             currentPage={currentPage + 1}
             totalPages={totalPages}

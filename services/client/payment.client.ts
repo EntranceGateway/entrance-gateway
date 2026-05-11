@@ -1,5 +1,30 @@
-import { apiClient } from '../api/client'
-import type { PaymentResponse, PaymentRequest, PaymentType, PurchaseStatusResponse } from '@/types/payment.types'
+import type { PaymentResponse, PaymentRequest, PaymentType, PurchaseStatusResponse, PaymentMethod } from '@/types/payment.types'
+interface InitiateSubscriptionPaymentRequest {
+  moduleId: string
+  moduleType: 'SUBSCRIPTION'
+  amount: number
+  paymentMethod: PaymentMethod
+  entranceTypeSlug?: string | null
+}
+
+interface InitiatePaymentResponse {
+  message: string
+  data?: {
+    paymentUrl?: string
+    redirectUrl?: string
+    transactionUuid?: string
+    paymentId?: number
+    [key: string]: unknown
+  }
+}
+
+interface ManualSubscriptionPaymentInput {
+  moduleId: string
+  amount: number
+  transactionId: string
+  paymentDate: string
+  notes?: string
+}
 
 /**
  * Submit payment with proof file
@@ -143,4 +168,47 @@ export async function checkPurchaseStatus(
       },
     }
   }
+}
+
+export async function initiateSubscriptionPayment(
+  payload: InitiateSubscriptionPaymentRequest
+): Promise<InitiatePaymentResponse> {
+  const response = await fetch('/api/payments/initiate', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json',
+    },
+    body: JSON.stringify(payload),
+  })
+
+  const data: InitiatePaymentResponse = await response.json().catch(() => ({
+    message: 'Invalid payment initiation response',
+  }))
+
+  if (!response.ok) {
+    throw new Error(data.message || 'Unable to initiate subscription payment.')
+  }
+
+  return data
+}
+
+export async function submitSubscriptionManualPaymentProof(
+  payload: ManualSubscriptionPaymentInput,
+  proofFile: File
+): Promise<PaymentResponse> {
+  return submitPaymentWithProof(
+    0,
+    'SUBSCRIPTION',
+    {
+      moduleId: payload.moduleId,
+      moduleType: 'SUBSCRIPTION',
+      amount: payload.amount,
+      paymentMethod: 'MANUAL',
+      transactionId: payload.transactionId,
+      paymentDate: payload.paymentDate,
+      notes: payload.notes,
+    },
+    proofFile
+  )
 }

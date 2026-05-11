@@ -40,6 +40,20 @@ export interface GeneratedAttemptResponse {
     score: number
     isSubmitted: boolean
     attemptedAt: string
+    totalQuestions?: number
+    correctAnswers?: number
+    wrongAnswers?: number
+    skippedAnswers?: number
+    percentage?: number
+    timeTakenSeconds?: number
+    rank?: number
+    percentile?: number
+    topicPerformance?: Array<{
+      topicName: string
+      totalQuestions: number
+      correctQuestions: number
+      percentage: number
+    }>
   }
 }
 

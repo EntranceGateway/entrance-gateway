@@ -2,12 +2,28 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
+import { useSearchParams } from 'next/navigation'
+import { useEffect } from 'react'
 import { SignInForm } from './SignInForm'
 import { AuthSidebar } from './AuthSidebar'
 import { useToast } from '@/components/shared/Toast'
+import { startGoogleOAuth } from '@/lib/auth/client'
 
 export function SignInPageContent() {
-  const { info } = useToast()
+  const searchParams = useSearchParams()
+  const { error } = useToast()
+
+  useEffect(() => {
+    const oauthError = searchParams.get('error')
+    if (oauthError) {
+      error(decodeURIComponent(oauthError))
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const handleGoogleSignIn = () => {
+    startGoogleOAuth(searchParams.get('redirect') || '/')
+  }
 
   return (
     <div className="flex w-full h-screen overflow-hidden">
@@ -61,11 +77,11 @@ export function SignInPageContent() {
             </div>
 
             {/* Social Login */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <button
                 type="button"
-                onClick={() => info('Coming soon')}
-                className="flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2"
+                onClick={handleGoogleSignIn}
+                className="flex cursor-pointer items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2"
               >
                 <svg className="h-5 w-5" viewBox="0 0 24 24">
                   <path
@@ -88,25 +104,11 @@ export function SignInPageContent() {
                 <span>Google</span>
               </button>
 
-              <button
-                type="button"
-                onClick={() => info('Coming soon')}
-                className="flex items-center justify-center px-4 py-2.5 border border-gray-300 rounded-lg shadow-sm bg-white text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors gap-2"
-              >
-                <svg className="h-5 w-5 text-[#1877F2]" fill="currentColor" viewBox="0 0 24 24">
-                  <path
-                    clipRule="evenodd"
-                    d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"
-                    fillRule="evenodd"
-                  />
-                </svg>
-                <span>Facebook</span>
-              </button>
             </div>
 
             {/* Sign Up Link */}
             <p className="text-center text-sm text-gray-600 pt-4">
-              Don't have an account?{' '}
+              Don&apos;t have an account?{' '}
               <Link
                 href="/signup"
                 className="font-bold text-brand-blue hover:text-brand-navy hover:underline transition-colors"

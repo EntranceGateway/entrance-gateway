@@ -7,7 +7,14 @@ import { QuizAttemptsTab } from './tabs/QuizAttemptsTab'
 import { PurchasesTab } from './tabs/PurchasesTab'
 import { AdmissionsTab } from './tabs/AdmissionsTab'
 import { fetchUserHistory } from '@/services/client/history.client'
-import type { UserProfileFull, PaginatedResponse } from '@/types/user.types'
+import type {
+  UserProfileFull,
+  PaginatedResponse,
+  TrainingEnrollmentHistory,
+  QuizAttemptHistory,
+  PurchaseHistory,
+  AdmissionHistory,
+} from '@/types/user.types'
 import { CenteredSpinner } from '@/components/shared/Loading'
 
 interface ProfileHistoryProps {
@@ -28,8 +35,9 @@ export function ProfileHistory({ initialData }: ProfileHistoryProps) {
   const [purchasesPage, setPurchasesPage] = useState(0)
   const [admissionsPage, setAdmissionsPage] = useState(0)
 
+
   // Helper function to get safe paginated data
-  const getSafeEnrollmentsData = (): PaginatedResponse<any> => {
+  const getSafeEnrollmentsData = (): PaginatedResponse<TrainingEnrollmentHistory> => {
     if (profileData?.enrollmentsPaginated) {
       return profileData.enrollmentsPaginated
     }
@@ -44,7 +52,7 @@ export function ProfileHistory({ initialData }: ProfileHistoryProps) {
     }
   }
 
-  const getSafeQuizAttemptsData = (): PaginatedResponse<any> => {
+  const getSafeQuizAttemptsData = (): PaginatedResponse<QuizAttemptHistory> => {
     if (profileData?.quizAttemptsPaginated) {
       return profileData.quizAttemptsPaginated
     }
@@ -59,7 +67,7 @@ export function ProfileHistory({ initialData }: ProfileHistoryProps) {
     }
   }
 
-  const getSafePurchasesData = (): PaginatedResponse<any> => {
+  const getSafePurchasesData = (): PaginatedResponse<PurchaseHistory> => {
     if (profileData?.purchasesPaginated) {
       return profileData.purchasesPaginated
     }
@@ -74,7 +82,7 @@ export function ProfileHistory({ initialData }: ProfileHistoryProps) {
     }
   }
 
-  const getSafeAdmissionsData = (): PaginatedResponse<any> => {
+  const getSafeAdmissionsData = (): PaginatedResponse<AdmissionHistory> => {
     if (profileData?.admissionsPaginated) {
       return profileData.admissionsPaginated
     }
@@ -118,6 +126,7 @@ export function ProfileHistory({ initialData }: ProfileHistoryProps) {
       })
       
       if (response?.data) {
+
         // Convert history data to UserProfileFull format
         const updatedData: UserProfileFull = {
           ...profileData,

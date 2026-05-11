@@ -1,10 +1,16 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/shared/Toast'
-import { fetchAllTopics, generateCustomQuizAttempt } from '@/services/client/quizTemplate.client'
-import type { Topic, CustomQuizPayload } from '@/types/quizTemplate.types'
+import {
+  fetchAllTopics,
+  fetchEntranceTypes,
+  fetchTopicsByEntrance,
+  generateCustomQuizAttempt,
+  generateCustomQuizAttemptForEntrance,
+} from '@/services/client/quizTemplate.client'
+import type { Topic, CustomQuizPayload, EntranceType } from '@/types/quizTemplate.types'
 
 interface QuizCustomPracticeSidebarProps {
   isOpen: boolean
@@ -19,12 +25,22 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
   const [isLoadingTopics, setIsLoadingTopics] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
   const [globalError, setGlobalError] = useState<string | null>(null)
+  const [entranceTypes, setEntranceTypes] = useState<EntranceType[]>([])
+  const [selectedEntranceSlug, setSelectedEntranceSlug] = useState('')
 
   // Form State
   const [totalQuestions, setTotalQuestions] = useState(50)
+  const [totalMarks, setTotalMarks] = useState(50)
   const [durationMinutes, setDurationMinutes] = useState(60)
   const [enableNegativeMarking, setEnableNegativeMarking] = useState(false)
+  const [negativeMarkValue, setNegativeMarkValue] = useState(0.25)
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([])
+  const [topicCounts, setTopicCounts] = useState<Record<string, number>>({})
+  const [difficultyDistribution, setDifficultyDistribution] = useState<Record<string, number>>({
+    EASY: 30,
+    MEDIUM: 50,
+    HARD: 20,
+  })
   
   // Advanced Constraints
   const [avoidPreviouslyFailed, setAvoidPreviouslyFailed] = useState(true)
@@ -33,6 +49,24 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
   const topicsFetched = useRef(false)
 
   // Disable body scroll
+  const loadTopics = useCallback(async (entranceSlug = selectedEntranceSlug) => {
+    setIsLoadingTopics(true)
+    setGlobalError(null)
+    try {
+      const [dbTopics, entranceList] = await Promise.all([
+        entranceSlug ? fetchTopicsByEntrance(entranceSlug) : fetchAllTopics(),
+        entranceTypes.length > 0 ? Promise.resolve(entranceTypes) : fetchEntranceTypes(),
+      ])
+      setTopics(dbTopics || [])
+      setEntranceTypes(entranceList || [])
+      topicsFetched.current = true
+    } catch (err) {
+      setGlobalError(err instanceof Error ? err.message : 'Unable to load syllabus topics.')
+    } finally {
+      setIsLoadingTopics(false)
+    }
+  }, [entranceTypes, selectedEntranceSlug])
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
@@ -46,27 +80,40 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen])
-
-  const loadTopics = async () => {
-    setIsLoadingTopics(true)
-    setGlobalError(null)
-    try {
-      const dbTopics = await fetchAllTopics()
-      setTopics(dbTopics || [])
-      topicsFetched.current = true
-    } catch (err) {
-      setGlobalError(err instanceof Error ? err.message : 'Unable to load syllabus topics.')
-    } finally {
-      setIsLoadingTopics(false)
-    }
-  }
+  }, [isOpen, loadTopics])
 
   const handleToggleTopic = (topicId: string) => {
-    setSelectedTopicIds(prev => 
-      prev.includes(topicId) ? prev.filter(id => id !== topicId) : [...prev, topicId]
-    )
+    setSelectedTopicIds(prev => {
+      if (prev.includes(topicId)) {
+        setTopicCounts(current => {
+          const next = { ...current }
+          delete next[topicId]
+          return next
+        })
+        return prev.filter(id => id !== topicId)
+      }
+
+      setTopicCounts(current => ({ ...current, [topicId]: Math.max(1, Math.floor(totalQuestions / Math.max(prev.length + 1, 1))) }))
+      return [...prev, topicId]
+    })
   }
+
+  const handleEntranceChange = (slug: string) => {
+    setSelectedEntranceSlug(slug)
+    setSelectedTopicIds([])
+    setTopicCounts({})
+    topicsFetched.current = false
+    loadTopics(slug)
+  }
+
+  const updateDifficulty = (key: 'EASY' | 'MEDIUM' | 'HARD', value: number) => {
+    setDifficultyDistribution(prev => ({ ...prev, [key]: value }))
+  }
+
+  const allocatedQuestionTotal = selectedTopicIds.reduce((sum, topicId) => sum + (topicCounts[topicId] || 0), 0)
+  const difficultyTotal = Object.values(difficultyDistribution).reduce((sum, value) => sum + value, 0)
+  const isAllocationValid = selectedTopicIds.length > 0 && allocatedQuestionTotal === totalQuestions
+  const isDifficultyValid = difficultyTotal === 100
 
   const handleGenerate = async () => {
     if (selectedTopicIds.length === 0) {
@@ -74,30 +121,30 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
       return
     }
 
+    if (!isAllocationValid) {
+      showError(`Allocated topic questions must equal ${totalQuestions}. Current allocation is ${allocatedQuestionTotal}.`)
+      return
+    }
+
+    if (!isDifficultyValid) {
+      showError(`Difficulty distribution must total 100%. Current total is ${difficultyTotal}%.`)
+      return
+    }
+
     setIsGenerating(true)
-    
-    const topicCount = selectedTopicIds.length
-    const baseQuestions = Math.floor(totalQuestions / topicCount)
-    let questionsRemainder = totalQuestions % topicCount
-    
-    const baseWeight = Math.floor(100 / topicCount)
-    let weightRemainder = 100 % topicCount
 
     const payload: CustomQuizPayload = {
-      totalQuestions: totalQuestions,
-      totalMarks: totalQuestions, // Assume 1 mark per question
-      durationMinutes: durationMinutes,
-      enableNegativeMarking: enableNegativeMarking,
-      negativeMarkValue: enableNegativeMarking ? 0.25 : 0,
-      topicDistribution: selectedTopicIds.map(tid => {
-        const count = baseQuestions + (questionsRemainder > 0 ? 1 : 0)
-        const weightage = baseWeight + (weightRemainder > 0 ? 1 : 0)
-        
-        if (questionsRemainder > 0) questionsRemainder--
-        if (weightRemainder > 0) weightRemainder--
-
-        return { topicId: tid, count: Math.max(1, count), weightage: Math.max(1, weightage) }
-      }),
+      totalQuestions,
+      totalMarks,
+      durationMinutes,
+      enableNegativeMarking,
+      negativeMarkValue: enableNegativeMarking ? negativeMarkValue : 0,
+      difficultyDistribution,
+      topicDistribution: selectedTopicIds.map(topicId => ({
+        topicId,
+        count: topicCounts[topicId] || 0,
+        weightage: Math.round(((topicCounts[topicId] || 0) / totalQuestions) * 100),
+      })),
       constraints: {
         avoidPreviouslyFailed,
         noRepeatWithinDays
@@ -105,7 +152,9 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
     }
 
     try {
-      const response = await generateCustomQuizAttempt(payload)
+      const response = selectedEntranceSlug
+        ? await generateCustomQuizAttemptForEntrance(selectedEntranceSlug, payload)
+        : await generateCustomQuizAttempt(payload)
       if (!response?.data?.attemptId) {
         throw new Error('Invalid response: Missing attempt ID.')
       }
@@ -179,6 +228,22 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
                 </h3>
                 
                 <div className="space-y-5">
+                  <label className="block">
+                    <span className="block text-sm font-medium text-gray-700 mb-1">Entrance Type</span>
+                    <select
+                      value={selectedEntranceSlug}
+                      onChange={(event) => handleEntranceChange(event.target.value)}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                    >
+                      <option value="">General / All Topics</option>
+                      {entranceTypes.map((entrance) => (
+                        <option key={entrance.entranceTypeId} value={entrance.slug}>
+                          {entrance.entranceName}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+
                   <div>
                     <label className="flex justify-between text-sm font-medium text-gray-700 mb-1">
                       <span>Total Questions</span>
@@ -199,6 +264,21 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
 
                   <div>
                     <label className="flex justify-between text-sm font-medium text-gray-700 mb-1">
+                      <span>Total Marks</span>
+                      <span className="text-brand-blue font-bold">{totalMarks}</span>
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="500"
+                      value={totalMarks}
+                      onChange={(e) => setTotalMarks(Math.max(1, Number(e.target.value)))}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="flex justify-between text-sm font-medium text-gray-700 mb-1">
                       <span>Duration (Minutes)</span>
                       <span className="text-brand-blue font-bold">{durationMinutes}m</span>
                     </label>
@@ -213,13 +293,43 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
                 </div>
               </section>
 
+              {/* Difficulty Distribution */}
+              <section className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
+                <h3 className="font-bold text-brand-navy mb-1 flex items-center gap-2">
+                  <span className="material-symbols-outlined text-brand-blue">bar_chart</span>
+                  Difficulty Distribution
+                </h3>
+                <p className={`text-xs mb-4 ${isDifficultyValid ? 'text-gray-500' : 'text-red-500'}`}>
+                  Total must equal 100%. Current total: {difficultyTotal}%
+                </p>
+                <div className="space-y-4">
+                  {(['EASY', 'MEDIUM', 'HARD'] as const).map((difficulty) => (
+                    <div key={difficulty}>
+                      <label className="flex justify-between text-sm font-medium text-gray-700 mb-1">
+                        <span>{difficulty.charAt(0) + difficulty.slice(1).toLowerCase()}</span>
+                        <span className="text-brand-blue font-bold">{difficultyDistribution[difficulty]}%</span>
+                      </label>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        step="5"
+                        value={difficultyDistribution[difficulty]}
+                        onChange={(e) => updateDifficulty(difficulty, Number(e.target.value))}
+                        className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-blue"
+                      />
+                    </div>
+                  ))}
+                </div>
+              </section>
+
               {/* Topics Selection */}
               <section className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm">
                 <h3 className="font-bold text-brand-navy mb-1 flex items-center gap-2">
                   <span className="material-symbols-outlined text-brand-purple">category</span>
                   Syllabus Topics
                 </h3>
-                <p className="text-xs text-gray-500 mb-4">Select the specific subjects to focus on.</p>
+                <p className="text-xs text-gray-500 mb-4">Select topics and allocate exactly {totalQuestions} questions.</p>
                 
                 {isLoadingTopics ? (
                   <div className="animate-pulse flex gap-2 flex-wrap">
@@ -234,23 +344,55 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
                 ) : topics.length === 0 ? (
                   <div className="text-sm text-gray-500 italic">No topics available right now.</div>
                 ) : (
-                  <div className="flex flex-wrap gap-2">
-                    {topics.map(topic => {
-                      const isSelected = selectedTopicIds.includes(topic.topicId)
-                      return (
-                        <button
-                          key={topic.topicId}
-                          onClick={() => handleToggleTopic(topic.topicId)}
-                          className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
-                            isSelected 
-                              ? 'bg-brand-lavender border-brand-purple text-brand-purple shadow-sm' 
-                              : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'
-                          }`}
-                        >
-                          {topic.topicName}
-                        </button>
-                      )
-                    })}
+                  <div className="space-y-4">
+                    <div className="flex flex-wrap gap-2">
+                      {topics.map(topic => {
+                        const isSelected = selectedTopicIds.includes(topic.topicId)
+                        return (
+                          <button
+                            key={topic.topicId}
+                            onClick={() => handleToggleTopic(topic.topicId)}
+                            className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all duration-200 border ${
+                              isSelected 
+                                ? 'bg-brand-lavender border-brand-purple text-brand-purple shadow-sm' 
+                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'
+                            }`}
+                          >
+                            {topic.topicName}
+                          </button>
+                        )
+                      })}
+                    </div>
+
+                    {selectedTopicIds.length > 0 && (
+                      <div className="border-t border-gray-100 pt-4 space-y-3">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold text-brand-navy">Question Allocation</span>
+                          <span className={isAllocationValid ? 'text-green-600 font-bold' : 'text-red-500 font-bold'}>
+                            {allocatedQuestionTotal}/{totalQuestions}
+                          </span>
+                        </div>
+                        {selectedTopicIds.map((topicId) => {
+                          const topic = topics.find(item => item.topicId === topicId)
+                          return (
+                            <label key={topicId} className="flex items-center justify-between gap-3 text-sm">
+                              <span className="text-gray-700 flex-1">{topic?.topicName || topicId}</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max={totalQuestions}
+                                value={topicCounts[topicId] || 1}
+                                onChange={(event) => setTopicCounts(current => ({
+                                  ...current,
+                                  [topicId]: Math.max(1, Number(event.target.value)),
+                                }))}
+                                className="w-24 rounded-lg border border-gray-200 px-3 py-2 text-sm text-gray-900 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                              />
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </section>
@@ -265,13 +407,27 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
                 <label className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                   <div className="flex flex-col">
                     <span className="text-sm font-bold text-gray-800">Enable Negative Marking</span>
-                    <span className="text-xs text-gray-500">Deducts 0.25 marks per incorrect answer</span>
+                    <span className="text-xs text-gray-500">Deducts custom marks per incorrect answer</span>
                   </div>
                   <div className="relative inline-block w-10 mr-2 align-middle select-none transition duration-200 ease-in">
                     <input type="checkbox" checked={enableNegativeMarking} onChange={(e) => setEnableNegativeMarking(e.target.checked)} className="toggle-checkbox absolute block w-5 h-5 rounded-full bg-white border-4 appearance-none cursor-pointer"/>
                     <label className={`toggle-label block overflow-hidden h-5 rounded-full bg-gray-300 cursor-pointer ${enableNegativeMarking ? 'bg-brand-blue' : ''}`}></label>
                   </div>
                 </label>
+
+                {enableNegativeMarking && (
+                  <label className="block">
+                    <span className="block text-sm font-medium text-gray-700 mb-1">Negative Mark Value</span>
+                    <input
+                      type="number"
+                      min="0"
+                      step="0.05"
+                      value={negativeMarkValue}
+                      onChange={(event) => setNegativeMarkValue(Math.max(0, Number(event.target.value)))}
+                      className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2.5 text-sm text-gray-900 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
+                    />
+                  </label>
+                )}
 
                 <label className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
                   <div className="flex flex-col">
@@ -307,7 +463,7 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
         <div className="p-4 sm:p-6 border-t border-gray-200 bg-white">
           <button
             onClick={handleGenerate}
-            disabled={isGenerating || selectedTopicIds.length === 0 || globalError === 'UNAUTHORIZED'}
+            disabled={isGenerating || selectedTopicIds.length === 0 || !isAllocationValid || !isDifficultyValid || globalError === 'UNAUTHORIZED'}
             className="w-full flex items-center justify-center gap-2 bg-brand-navy hover:bg-brand-blue text-white font-bold py-3 px-4 rounded-lg transition-colors focus-brand disabled:opacity-70 disabled:cursor-not-allowed shadow-md"
           >
             {isGenerating ? (

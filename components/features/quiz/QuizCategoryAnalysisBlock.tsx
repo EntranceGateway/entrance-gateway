@@ -52,8 +52,16 @@ export function QuizCategoryAnalysisBlock() {
 
       <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scroll-safari" style={{ scrollbarWidth: 'none' }}>
         {analysisItems.map((topic, idx) => {
-          const isExcellent = topic.percentage >= 80
-          const isPassing = topic.percentage >= 60 && topic.percentage < 80
+          const totalQuestions = Number.isFinite(topic.totalQuestions) ? topic.totalQuestions : 0
+          const correctQuestions = Number.isFinite(topic.correctQuestions) ? topic.correctQuestions : 0
+          const percentage = Number.isFinite(topic.percentage)
+            ? topic.percentage
+            : totalQuestions > 0
+              ? (correctQuestions / totalQuestions) * 100
+              : 0
+          const clampedPercentage = Math.max(0, Math.min(100, percentage))
+          const isExcellent = clampedPercentage >= 80
+          const isPassing = clampedPercentage >= 60 && clampedPercentage < 80
 
           return (
             <div 
@@ -70,17 +78,17 @@ export function QuizCategoryAnalysisBlock() {
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-2">
                   <h3 className="font-bold text-gray-800 text-sm line-clamp-1 pr-2" title={topic.topicName}>
-                    {topic.topicName}
+                    {topic.topicName || 'Untitled topic'}
                   </h3>
                   <span className={`text-xs font-black shadow-sm px-2 py-0.5 rounded ${
                     isExcellent ? 'bg-green-100 text-green-700' : isPassing ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'
                   }`}>
-                    {topic.percentage.toFixed(0)}%
+                    {clampedPercentage.toFixed(0)}%
                   </span>
                 </div>
 
                 <div className="text-xs text-gray-500 mb-3 font-medium">
-                  Accuracy: <span className="text-gray-900 font-bold">{topic.correctQuestions}</span> / {topic.totalQuestions}
+                  Accuracy: <span className="text-gray-900 font-bold">{correctQuestions}</span> / {totalQuestions}
                 </div>
 
                 {/* Smooth Progress Bar */}
@@ -89,7 +97,7 @@ export function QuizCategoryAnalysisBlock() {
                     className={`h-1.5 rounded-full transition-all duration-1000 ease-out ${
                       isExcellent ? 'bg-green-500' : isPassing ? 'bg-blue-400' : 'bg-orange-400'
                     }`}
-                    style={{ width: `${topic.percentage}%` }}
+                    style={{ width: `${clampedPercentage}%` }}
                   ></div>
                 </div>
               </div>

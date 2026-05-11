@@ -79,13 +79,46 @@ export function QuizTemplateDetailSidebar({ templateId, isOpen, onClose }: QuizT
       router.push(`/quiz/attempt/${response.data.attemptId}/start`)
       // Not calling onClose here to prevent the sidebar snapping closed before the page route actually resolves
     } catch (err) {
-      showError(err instanceof Error ? err.message : 'Unable to start practice set.')
+      const message = err instanceof Error ? err.message : 'Unable to start practice set.'
+
+      if (message.toLowerCase().includes('sign in') || message === 'UNAUTHORIZED') {
+        sessionStorage.setItem('redirectAfterLogin', '/quiz')
+        showError('Please sign in to start this quiz.')
+        router.push('/signin')
+        return
+      }
+
+      showError(message)
       setIsGenerating(false) // Only stop generating if error happens
     }
   }
 
   const formatPrice = (price?: number) => {
     return price && price > 0 ? `NPR ${price.toLocaleString()}` : 'Free'
+  }
+
+  const formatDate = (value?: string) => {
+    if (!value) return 'Not available'
+    const date = new Date(value)
+    if (Number.isNaN(date.getTime())) return 'Not available'
+    return date.toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric',
+    })
+  }
+
+  const formatDifficultyLabel = (value: string) => {
+    return value
+      .toLowerCase()
+      .replace(/_/g, ' ')
+      .replace(/\b\w/g, (char) => char.toUpperCase())
+  }
+
+  const renderDistributionValue = (count: number, totalQuestions?: number) => {
+    if (!totalQuestions || totalQuestions <= 0) return `${count} questions`
+    const percent = Math.round((count / totalQuestions) * 100)
+    return `${count} questions · ${percent}%`
   }
 
   return (
@@ -178,55 +211,136 @@ export function QuizTemplateDetailSidebar({ templateId, isOpen, onClose }: QuizT
 
                 {/* Core Config Details */}
                 <div className="space-y-3 sm:space-y-4 mb-6">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-2">
-                    <div className="flex items-center text-gray-700">
-                      <span className="material-symbols-outlined text-brand-blue mr-2 sm:mr-3 text-[18px] sm:text-[20px]">quiz</span>
-                      <span className="font-medium text-sm sm:text-base">Questions</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center text-gray-700 mb-2">
+                        <span className="material-symbols-outlined text-brand-blue mr-2 text-[18px] sm:text-[20px]">quiz</span>
+                        <span className="font-medium text-sm sm:text-base">Questions</span>
+                      </div>
+                      <span className="text-brand-navy font-bold text-lg">
+                        {template.config?.totalQuestions ?? '?'}
+                      </span>
                     </div>
-                    <span className="text-brand-navy font-bold text-sm sm:text-base">
-                      {template.config?.totalQuestions || '?'}
+
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center text-gray-700 mb-2">
+                        <span className="material-symbols-outlined text-brand-blue mr-2 text-[18px] sm:text-[20px]">schedule</span>
+                        <span className="font-medium text-sm sm:text-base">Duration</span>
+                      </div>
+                      <span className="text-brand-navy font-bold text-lg">
+                        {template.config?.durationMinutes ?? '?'} min
+                      </span>
+                    </div>
+
+                    <div className="p-3 sm:p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-center text-gray-700 mb-2">
+                        <span className="material-symbols-outlined text-brand-blue mr-2 text-[18px] sm:text-[20px]">score</span>
+                        <span className="font-medium text-sm sm:text-base">Total Marks</span>
+                      </div>
+                      <span className="text-brand-navy font-bold text-lg">
+                        {template.config?.totalMarks ?? '?'}
+                      </span>
+                    </div>
+
+                    <div className="p-3 sm:p-4 bg-brand-gold/10 rounded-lg border border-brand-gold/30">
+                      <div className="flex items-center text-gray-700 mb-2">
+                        <span className="material-symbols-outlined text-brand-gold mr-2 text-[18px] sm:text-[20px]">payments</span>
+                        <span className="font-medium text-sm sm:text-base">Entry Fee</span>
+                      </div>
+                      <span className="text-brand-navy font-bold text-lg">
+                        {formatPrice(template.entryFee)}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className={`flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 rounded-lg gap-2 border ${
+                    template.config?.enableNegativeMarking
+                      ? 'bg-red-50 border-red-100'
+                      : 'bg-green-50 border-green-100'
+                  }`}>
+                    <div className={`flex items-center ${template.config?.enableNegativeMarking ? 'text-red-700' : 'text-green-700'}`}>
+                      <span className="material-symbols-outlined mr-2 sm:mr-3 text-[18px] sm:text-[20px]">
+                        {template.config?.enableNegativeMarking ? 'remove_circle' : 'verified'}
+                      </span>
+                      <span className="font-medium text-sm sm:text-base">Negative Marking</span>
+                    </div>
+                    <span className={`font-bold text-sm sm:text-base ${template.config?.enableNegativeMarking ? 'text-red-700' : 'text-green-700'}`}>
+                      {template.config?.enableNegativeMarking
+                        ? `${template.config.negativeMarkValue ?? 0} marks/error`
+                        : 'No'}
                     </span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-gray-50 rounded-lg gap-2">
-                    <div className="flex items-center text-gray-700">
-                      <span className="material-symbols-outlined text-brand-blue mr-2 sm:mr-3 text-[18px] sm:text-[20px]">schedule</span>
-                      <span className="font-medium text-sm sm:text-base">Duration</span>
-                    </div>
-                    <span className="text-brand-navy font-bold text-sm sm:text-base">
-                      {template.config?.durationMinutes ?? '?'} Minutes
-                    </span>
-                  </div>
-                  
-                  {template.config?.enableNegativeMarking && (
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-red-50 rounded-lg gap-2 border border-red-100">
-                      <div className="flex items-center text-red-700">
-                        <span className="material-symbols-outlined mr-2 sm:mr-3 text-[18px] sm:text-[20px]">remove_circle</span>
-                        <span className="font-medium text-sm sm:text-base">Negative Marking</span>
+                  {template.entranceType?.entranceName && (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-brand-lavender/40 rounded-lg gap-2 border border-brand-lavender">
+                      <div className="flex items-center text-gray-700">
+                        <span className="material-symbols-outlined text-brand-purple mr-2 sm:mr-3 text-[18px] sm:text-[20px]">school</span>
+                        <span className="font-medium text-sm sm:text-base">Entrance Type</span>
                       </div>
-                      <span className="text-red-700 font-bold text-sm sm:text-base">
-                        {template.config.negativeMarkValue || 0} marks/error
+                      <span className="text-brand-navy font-bold text-sm sm:text-base">
+                        {template.entranceType.entranceName}
                       </span>
                     </div>
                   )}
-
-                  <div className="flex items-center justify-between p-3 sm:p-4 bg-brand-gold/10 rounded-lg border border-brand-gold/30">
-                    <div className="flex items-center text-gray-700">
-                      <span className="material-symbols-outlined text-brand-gold mr-2 sm:mr-3 text-[18px] sm:text-[20px]">payments</span>
-                      <span className="font-medium text-sm sm:text-base">Entry Fee</span>
-                    </div>
-                    <span className="text-brand-navy font-bold text-base sm:text-lg">
-                      {formatPrice(template.entryFee)}
-                    </span>
-                  </div>
                 </div>
+
+                {/* Difficulty Distribution */}
+                {template.config?.difficultyDistribution && Object.keys(template.config.difficultyDistribution).length > 0 && (
+                  <div className="mb-6 p-4 border border-gray-200 bg-white rounded-lg">
+                    <h4 className="text-sm font-bold text-brand-navy mb-3 uppercase tracking-wide">Difficulty Distribution</h4>
+                    <div className="space-y-3">
+                      {Object.entries(template.config.difficultyDistribution).map(([difficulty, value]) => (
+                        <div key={difficulty}>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span className="font-medium text-gray-700">{formatDifficultyLabel(difficulty)}</span>
+                            <span className="text-brand-navy font-semibold">{value}%</span>
+                          </div>
+                          <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-brand-blue rounded-full"
+                              style={{ width: `${Math.min(Math.max(value, 0), 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Topic Distribution */}
+                {Array.isArray(template.config?.topicDistribution) && template.config.topicDistribution.length > 0 && (
+                  <div className="mb-6 p-4 border border-gray-200 bg-white rounded-lg">
+                    <h4 className="text-sm font-bold text-brand-navy mb-3 uppercase tracking-wide">Topic Distribution</h4>
+                    <div className="space-y-3">
+                      {template.config.topicDistribution.map((topic, index) => (
+                        <div key={topic.topicId || `${topic.topicName}-${index}`} className="p-3 bg-gray-50 rounded-lg">
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-sm font-semibold text-brand-navy">
+                                {topic.topicName || `Topic ${index + 1}`}
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">
+                                {renderDistributionValue(topic.count, template.config?.totalQuestions)}
+                              </p>
+                            </div>
+                            {topic.weightage > 0 && (
+                              <span className="shrink-0 bg-brand-lavender text-brand-purple text-xs font-bold px-2 py-1 rounded-full">
+                                {topic.weightage}%
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Extended Constraints */}
                 {template.config?.constraints && (
                   <div className="mb-6 p-4 border border-brand-lavender bg-white rounded-lg">
                     <h4 className="text-sm font-bold text-brand-navy mb-3 uppercase tracking-wide">Dynamic Generation Rules</h4>
                     <ul className="space-y-2 text-sm text-gray-600">
-                      {template.config.constraints.noRepeatWithinDays > 0 && (
+                      {(template.config.constraints.noRepeatWithinDays ?? 0) > 0 && (
                         <li className="flex gap-2">
                           <span className="material-symbols-outlined text-[18px] text-green-500">check_circle</span>
                           <span>Prioritizes unseen questions (last {template.config.constraints.noRepeatWithinDays} days)</span>
@@ -238,11 +352,43 @@ export function QuizTemplateDetailSidebar({ templateId, isOpen, onClose }: QuizT
                           <span>Excludes questions you recently failed or guessed</span>
                         </li>
                       )}
-                       <li className="flex gap-2">
-                          <span className="material-symbols-outlined text-[18px] text-brand-gold">auto_awesome</span>
-                          <span>Calculated instantly matching exam syllabus weighting</span>
-                        </li>
+                      <li className="flex gap-2">
+                        <span className="material-symbols-outlined text-[18px] text-brand-gold">auto_awesome</span>
+                        <span>Calculated instantly matching exam syllabus weighting</span>
+                      </li>
                     </ul>
+                  </div>
+                )}
+
+                {/* Metadata */}
+                <div className="mb-6 p-4 border border-gray-200 bg-gray-50 rounded-lg">
+                  <h4 className="text-sm font-bold text-brand-navy mb-3 uppercase tracking-wide">Template Metadata</h4>
+                  <dl className="grid grid-cols-1 gap-2 text-sm">
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-gray-500">Created</dt>
+                      <dd className="text-brand-navy font-medium text-right">{formatDate(template.createdAt)}</dd>
+                    </div>
+                    <div className="flex justify-between gap-4">
+                      <dt className="text-gray-500">Updated</dt>
+                      <dd className="text-brand-navy font-medium text-right">{formatDate(template.updatedAt)}</dd>
+                    </div>
+                    {(template.createdByName || template.createdBy) && (
+                      <div className="flex justify-between gap-4">
+                        <dt className="text-gray-500">Created By</dt>
+                        <dd className="text-brand-navy font-medium text-right">{template.createdByName || template.createdBy}</dd>
+                      </div>
+                    )}
+                  </dl>
+                </div>
+
+                {template.entryFee > 0 && (
+                  <div className="mb-6 p-4 bg-brand-gold/10 border border-brand-gold/30 rounded-lg">
+                    <div className="flex gap-3">
+                      <span className="material-symbols-outlined text-brand-gold text-[20px]">info</span>
+                      <p className="text-sm text-gray-700">
+                        This is a paid template. Access may require purchase, enrollment, or an active subscription before generation.
+                      </p>
+                    </div>
                   </div>
                 )}
               </>

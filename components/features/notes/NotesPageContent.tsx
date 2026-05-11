@@ -73,9 +73,11 @@ export function NotesPageContent({ initialData, initialPage = 0, pageSize = 9 }:
       setNotes(response.data.content)
       setTotalElements(response.data.totalElements)
       setTotalPages(response.data.totalPages)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Failed to load notes')
-      console.error('Error fetching notes:', err)
+    } catch {
+      setNotes([])
+      setTotalElements(0)
+      setTotalPages(0)
+      setError(null)
     } finally {
       setIsLoading(false)
     }

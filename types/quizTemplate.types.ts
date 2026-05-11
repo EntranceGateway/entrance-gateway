@@ -1,31 +1,49 @@
+export type QuizTemplateStatus = 'DRAFT' | 'PUBLISHED' | 'ARCHIVED'
+export type QuizTemplateType = 'PRACTICE' | 'COMPETITIVE'
+
+export interface EntranceTypeSummary {
+  entranceTypeId: number
+  entranceName: string
+  slug: string
+}
+
+export interface TopicDistribution {
+  topicId?: string
+  topicName?: string
+  count: number
+  weightage: number
+}
+
 export interface QuizTemplateConfig {
   totalQuestions: number
   totalMarks: number
   durationMinutes: number
-  topicDistribution: Record<string, unknown>[] // Omitted detailed typing for brevity unless needed
-  difficultyDistribution: Record<string, number>
+  topicDistribution?: TopicDistribution[]
+  difficultyDistribution?: Record<string, number>
   enableNegativeMarking: boolean
   negativeMarkValue: number
-  constraints: {
-    noRepeatWithinDays: number
-    avoidPreviouslyFailed: boolean
-    maxUsageCount: number
+  constraints?: {
+    noRepeatWithinDays?: number
+    avoidPreviouslyFailed?: boolean
+    maxUsageCount?: number
   }
 }
 
 export interface QuizTemplate {
   templateId: string
   name: string
-  description: string
-  type: 'PRACTICE' | 'COMPETITIVE'
+  description?: string
+  type: QuizTemplateType
   entryFee: number
   config: QuizTemplateConfig
-  status: string
+  status: QuizTemplateStatus
   createdAt: string
   updatedAt: string
-  createdById: number
-  createdByName: string
-  // Added optional fallback for mapping legacy mock types if necessary
+  createdById?: number
+  createdByName?: string
+  createdBy?: string
+  entranceType?: EntranceTypeSummary
+  // Optional fallback for mapping legacy mock/backend fields if necessary
   difficulty?: string
 }
 
@@ -68,6 +86,14 @@ export interface Topic {
   topicId: string
   topicName: string
   description?: string
+  categoryName?: string
+}
+
+export interface EntranceType {
+  entranceTypeId: number
+  entranceName: string
+  slug: string
+  description?: string
 }
 
 export interface CustomTopicDistribution {
@@ -89,4 +115,19 @@ export interface CustomQuizPayload {
     avoidPreviouslyFailed?: boolean
     maxUsageCount?: number
   }
+}
+
+export interface CreateQuizTemplateRequest {
+  name: string
+  description?: string
+  type: QuizTemplateType
+  entryFee: number
+  status: QuizTemplateStatus
+  entranceTypeId?: number
+  config: QuizTemplateConfig
+}
+
+export interface CreateQuizTemplateResponse {
+  message: string
+  data: QuizTemplate[] | QuizTemplate
 }

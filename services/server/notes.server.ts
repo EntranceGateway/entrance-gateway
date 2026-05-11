@@ -80,7 +80,7 @@ export async function getAllNotes(): Promise<NotesListResponse> {
   return apiClient<NotesListResponse>('/api/v1/notes', {
     params: {
       page: 0,
-      size: 1000, // Fetch large set to get all categories
+      size: 12, // Keep homepage SSR lightweight
     },
     cache: 'no-store',
   })

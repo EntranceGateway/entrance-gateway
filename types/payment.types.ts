@@ -1,7 +1,7 @@
 // Payment Types
 
-export type PaymentMethod = 'BANK_TRANSFER' | 'FONE_PAY_QR' | 'ESEWA' | 'KHALTI'
-export type PaymentType = 'QUIZ' | 'TRAINING' | 'COURSE'
+export type PaymentMethod = 'BANK_TRANSFER' | 'FONE_PAY_QR' | 'ESEWA' | 'KHALTI' | 'MANUAL'
+export type PaymentType = 'QUIZ' | 'TRAINING' | 'COURSE' | 'SUBSCRIPTION'
 export type PurchaseStatus = 
   | 'NOT_PURCHASED'
   | 'PENDING'
@@ -21,8 +21,13 @@ export type PurchaseStatus =
 export interface PaymentRequest {
   amount: number
   paymentMethod: PaymentMethod
-  transactionReference: string
-  remarks: string
+  transactionReference?: string
+  transactionId?: string
+  paymentDate?: string
+  remarks?: string
+  notes?: string
+  moduleId?: string
+  moduleType?: PaymentType
 }
 
 export interface PaymentResponse {

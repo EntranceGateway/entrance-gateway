@@ -48,9 +48,9 @@ export async function apiClient<T>(
     ...fetchOptions.headers,
   }
 
-  // Add timeout (default 30 seconds) - merge with user-provided signal if exists
+  // Add timeout (default 8 seconds) - merge with user-provided signal if exists
   const controller = new AbortController()
-  const timeoutId = setTimeout(() => controller.abort(), 30000)
+  const timeoutId = setTimeout(() => controller.abort(), 8000)
 
   // If user provided a signal, listen to it and abort our controller
   const userSignal = fetchOptions.signal

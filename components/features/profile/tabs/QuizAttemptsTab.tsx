@@ -7,7 +7,19 @@ interface QuizAttemptsTabProps {
   onPageChange: (page: number) => void
 }
 
+function getAttemptKey(attempt: QuizAttemptHistory) {
+  return [
+    attempt.attemptId,
+    attempt.quizId,
+    attempt.questionSetId,
+    attempt.attemptDate,
+  ]
+    .filter((value) => value !== undefined && value !== null && value !== '')
+    .join('-')
+}
+
 export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
+
   // Null safety checks
   if (!data || !data.content) {
     return (
@@ -28,7 +40,7 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
           <path d="M19 3h-4.18C14.4 1.84 13.3 1 12 1c-1.3 0-2.4.84-2.82 2H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-7 0c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm2 14H7v-2h7v2zm3-4H7v-2h10v2zm0-4H7V7h10v2z" />
         </svg>
         <h3 className="text-lg font-semibold text-gray-900 mb-2">No Quiz Attempts Yet</h3>
-        <p className="text-gray-500 mb-4">You haven't attempted any quizzes.</p>
+        <p className="text-gray-500 mb-4">You haven&apos;t attempted any quizzes.</p>
         <Link
           href="/quiz"
           className="inline-flex items-center gap-2 bg-brand-gold hover:bg-yellow-400 text-brand-navy font-bold py-2 px-6 rounded-lg transition-colors"
@@ -45,7 +57,7 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
       <div className="lg:hidden space-y-4 p-4">
         {data.content.map((attempt) => (
           <div
-            key={attempt.attemptId}
+            key={getAttemptKey(attempt)}
             className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="flex items-start justify-between mb-3">
@@ -108,7 +120,7 @@ export function QuizAttemptsTab({ data, onPageChange }: QuizAttemptsTabProps) {
           <tbody className="divide-y divide-gray-100">
             {data.content.map((attempt, index) => (
               <tr
-                key={attempt.attemptId}
+                key={getAttemptKey(attempt)}
                 className={`hover:bg-gray-50/50 ${index % 2 === 1 ? 'bg-gray-50/30' : ''}`}
               >
                 <td className="px-6 py-4">

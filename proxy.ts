@@ -20,7 +20,7 @@ const protectedPatterns = [
 ]
 
 // Auth routes that should redirect to home if already logged in
-const authPaths = ['/signin', '/signup']
+const authPaths = ['/signin', '/signup', '/verify-otp']
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useMemo, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useToast } from '@/components/shared/Toast'
 import { submitQuizAttempt, submitGeneratedAttempt } from '@/services/client/quizAttempt.client'
 import type { QuizAttemptResult } from '@/services/client/quizAttempt.client'
@@ -89,26 +89,83 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
   const [showResults, setShowResults] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [serverResult, setServerResult] = useState<QuizAttemptResult | null>(null)
+  const [topicPerformance, setTopicPerformance] = useState<Array<{ topicName: string; totalQuestions: number; correctQuestions: number; percentage: number }>>([])
+  const [timeTakenSeconds, setTimeTakenSeconds] = useState<number | null>(null)
   const [submitError, setSubmitError] = useState<string | null>(null)
 
-  // Guard against empty questions array
-  if (total === 0) {
-    return (
-      <div className="fixed inset-0 z-[60] bg-gray-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-md w-full text-center">
-          <h2 className="text-xl font-bold text-brand-navy mb-2">No questions available</h2>
-          <p className="text-gray-600 text-sm mb-6">This quiz has no questions yet.</p>
-          <button onClick={onExit} className="px-6 py-2.5 bg-brand-navy text-white font-bold rounded-lg hover:bg-brand-blue transition-colors text-sm cursor-pointer">Go Back</button>
-        </div>
-      </div>
-    )
-  }
+  const resultStorageKey = attemptId
+    ? `quiz_attempt_result_${attemptId}`
+    : `quiz_standard_result_${questionSetId}`
 
-  const q = questions[currentIndex]
-  const progress = ((currentIndex + 1) / total) * 100
+  const q = questions[currentIndex] ?? questions[0]
+  const progress = total > 0 ? ((currentIndex + 1) / total) * 100 : 0
 
   // Render LaTeX each time the question changes
   const mathRef = useRenderMath([currentIndex, selectedOptionId])
+
+  useEffect(() => {
+    if (typeof window === 'undefined') return
+
+    const savedResult = sessionStorage.getItem(resultStorageKey)
+    if (!savedResult) return
+
+    try {
+      const parsed = JSON.parse(savedResult) as {
+        result?: QuizAttemptResult
+        answers?: Record<number, number>
+        topicPerformance?: Array<{ topicName: string; totalQuestions: number; correctQuestions: number; percentage: number }>
+        timeTakenSeconds?: number
+      }
+
+      if (parsed.result) {
+        setServerResult(parsed.result)
+        setAnswers(parsed.answers || {})
+        setTopicPerformance(parsed.topicPerformance || [])
+        setTimeTakenSeconds(parsed.timeTakenSeconds ?? null)
+        setShowResults(true)
+      }
+    } catch {
+      sessionStorage.removeItem(resultStorageKey)
+    }
+  }, [resultStorageKey])
+
+  const persistResult = useCallback((payload: {
+    result: QuizAttemptResult
+    answers: Record<number, number>
+    topicPerformance?: Array<{ topicName: string; totalQuestions: number; correctQuestions: number; percentage: number }>
+    timeTakenSeconds?: number | null
+  }) => {
+    if (typeof window === 'undefined') return
+
+    try {
+      sessionStorage.setItem(resultStorageKey, JSON.stringify(payload))
+    } catch {
+      // Non-critical: result UI still works for current render.
+    }
+  }, [resultStorageKey])
+
+  const deriveTopicPerformance = useCallback((answerMap: Record<number, number>) => {
+    const grouped = questions.reduce<Record<string, { totalQuestions: number; correctQuestions: number }>>((acc, qn) => {
+      const topicName = qn.categoryName || 'General'
+      if (!acc[topicName]) acc[topicName] = { totalQuestions: 0, correctQuestions: 0 }
+      acc[topicName].totalQuestions += 1
+
+      const selected = answerMap[qn.questionId]
+      const correct = qn.options.find((option) => option.correct)
+      if (selected !== undefined && correct?.optionId === selected) {
+        acc[topicName].correctQuestions += 1
+      }
+
+      return acc
+    }, {})
+
+    return Object.entries(grouped).map(([topicName, item]) => ({
+      topicName,
+      totalQuestions: item.totalQuestions,
+      correctQuestions: item.correctQuestions,
+      percentage: item.totalQuestions > 0 ? Math.round((item.correctQuestions / item.totalQuestions) * 100) : 0,
+    }))
+  }, [questions])
 
   /* ---------- handlers ---------- */
 
@@ -145,19 +202,25 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
       if (attemptId !== undefined && attemptId !== 0) {
         submitGeneratedAttempt(attemptId, { questionSetId, questionAnswers })
           .then((response) => {
-            // Map the minimal generated attempting result into the existing UI shape
+            // Map generated attempt result into the existing UI shape, using backend analytics when present.
             const derivedPct = questions.length > 0 ? (response.data.score / questions.length) * 100 : 0
-            setServerResult({
+            const resolvedTopicPerformance = response.data.topicPerformance || deriveTopicPerformance(updatedAnswers)
+            const resolvedTimeTaken = response.data.timeTakenSeconds ?? null
+            const result: QuizAttemptResult = {
               totalScore: response.data.score,
-              percentage: derivedPct,
-              status: derivedPct >= 60 ? 'PASSED' : 'FAILED',
-              totalQuestions: questions.length,
-              correctAnswers: undefined as unknown as number, // Let client strictly calculate via ??
-              wrongAnswers: undefined as unknown as number,
-              skippedAnswers: undefined as unknown as number,
-              rank: 0,
-              percentile: 0
-            })
+              percentage: response.data.percentage ?? derivedPct,
+              status: (response.data.percentage ?? derivedPct) >= 60 ? 'PASSED' : 'FAILED',
+              totalQuestions: response.data.totalQuestions ?? questions.length,
+              correctAnswers: response.data.correctAnswers ?? undefined as unknown as number,
+              wrongAnswers: response.data.wrongAnswers ?? undefined as unknown as number,
+              skippedAnswers: response.data.skippedAnswers ?? undefined as unknown as number,
+              rank: response.data.rank ?? 0,
+              percentile: response.data.percentile ?? 0
+            }
+            setServerResult(result)
+            setTopicPerformance(resolvedTopicPerformance)
+            setTimeTakenSeconds(resolvedTimeTaken)
+            persistResult({ result, answers: updatedAnswers, topicPerformance: resolvedTopicPerformance, timeTakenSeconds: resolvedTimeTaken })
             success(`Practice Set Submitted. You scored ${response.data.score}!`)
           })
           .catch((err) => {
@@ -171,6 +234,10 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
         submitQuizAttempt({ questionSetId, questionAnswers })
           .then((response) => {
             setServerResult(response.data)
+            const resolvedTopicPerformance = deriveTopicPerformance(updatedAnswers)
+            setTopicPerformance(resolvedTopicPerformance)
+            setTimeTakenSeconds(null)
+            persistResult({ result: response.data, answers: updatedAnswers, topicPerformance: resolvedTopicPerformance, timeTakenSeconds: null })
             if (response.data.percentage >= 70) {
               success(`🎉 ${response.data.status}! You scored ${response.data.totalScore} (${response.data.percentage}%)`)
             } else {
@@ -185,7 +252,7 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
           .finally(() => setIsSubmitting(false))
       }
     }
-  }, [selectedOptionId, q, currentIndex, total, questions, answers, questionSetId, attemptId, info, success, showError])
+  }, [selectedOptionId, q, currentIndex, total, questions, answers, questionSetId, attemptId, info, success, showError, deriveTopicPerformance, persistResult])
 
   const handleBack = useCallback(() => {
     if (currentIndex > 0) {
@@ -214,6 +281,19 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
     return () => { document.body.style.overflow = '' }
   }, [])
 
+  // Guard against empty questions array after hooks have been registered.
+  if (total === 0 || !q) {
+    return (
+      <div className="fixed inset-0 z-[60] bg-gray-50 flex items-center justify-center p-4">
+        <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-8 max-w-md w-full text-center">
+          <h2 className="text-xl font-bold text-brand-navy mb-2">No questions available</h2>
+          <p className="text-gray-600 text-sm mb-6">This quiz has no questions yet.</p>
+          <button onClick={onExit} className="px-6 py-2.5 bg-brand-navy text-white font-bold rounded-lg hover:bg-brand-blue transition-colors text-sm cursor-pointer">Go Back</button>
+        </div>
+      </div>
+    )
+  }
+
   /* ---------- results screen ---------- */
   if (showResults) {
     // Use server results if available, otherwise calculate client-side as fallback
@@ -231,6 +311,10 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
     })
     const answeredCount = Object.keys(answers).length
     const clientIncorrect = answeredCount - clientCorrect
+    const resolvedTopicPerformance = topicPerformance.length > 0 ? topicPerformance : deriveTopicPerformance(answers)
+    const formattedTimeTaken = timeTakenSeconds !== null
+      ? `${Math.floor(timeTakenSeconds / 60)}m ${timeTakenSeconds % 60}s`
+      : null
 
     // For standard quizzes we prefer server results. For custom quizzes, the server just gives total score,
     // so we merge server's total score with client's correctly computed detailed metrics smoothly.
@@ -323,6 +407,21 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
                 </div>
               )}
 
+              {formattedTimeTaken && (
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4 text-sm">
+                  <div className="bg-brand-blue/10 rounded-lg p-3 text-center">
+                    <p className="text-brand-navy font-bold">{formattedTimeTaken}</p>
+                    <p className="text-brand-blue text-xs">Time Taken</p>
+                  </div>
+                  {serverResult?.percentile && serverResult.percentile > 0 && (
+                    <div className="bg-brand-gold/15 rounded-lg p-3 text-center">
+                      <p className="text-brand-navy font-bold">Top {Math.max(0, 100 - serverResult.percentile)}%</p>
+                      <p className="text-brand-gold text-xs">Percentile Band</p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* Stats */}
               <div className="grid grid-cols-3 gap-2 sm:gap-3 text-sm">
                 <div className="bg-green-50 rounded-lg p-2 sm:p-3 text-center">
@@ -339,6 +438,28 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
                 </div>
               </div>
             </div>
+
+            {resolvedTopicPerformance.length > 0 && (
+              <div className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 sm:p-6 mb-6">
+                <h3 className="text-lg font-bold text-brand-navy mb-4 font-heading">Topic Performance</h3>
+                <div className="space-y-3">
+                  {resolvedTopicPerformance.map((topic) => (
+                    <div key={topic.topicName}>
+                      <div className="flex items-center justify-between text-sm mb-1">
+                        <span className="font-medium text-gray-700">{topic.topicName}</span>
+                        <span className="text-gray-500">{topic.correctQuestions}/{topic.totalQuestions} correct</span>
+                      </div>
+                      <div className="h-2 rounded-full bg-gray-100 overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-brand-blue transition-all duration-700"
+                          style={{ width: `${topic.percentage}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Question-by-question review */}
             <h3 className="text-lg font-bold text-brand-navy mb-4 font-heading">Question Review</h3>
