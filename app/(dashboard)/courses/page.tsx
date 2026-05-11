@@ -1,7 +1,7 @@
 import { Suspense } from 'react'
 import { CoursesPageContent } from '@/components/features/courses/CoursesPageContent'
 import { getCourses } from '@/services/server/courses.server'
-import { CenteredSpinner } from '@/components/shared/Loading'
+import { CoursesSkeleton } from '@/components/features/courses/CoursesSkeleton'
 
 export const metadata = {
   title: 'Courses | EntranceGateway',
@@ -43,7 +43,7 @@ export default async function CoursesPage({ searchParams }: CoursesPageProps) {
   }
 
   return (
-    <Suspense fallback={<CenteredSpinner size="lg" text="Loading courses..." />}>
+    <Suspense fallback={<CoursesSkeleton />}>
       <CoursesPageContent 
         initialData={initialData?.content || null} 
         initialError={error}

@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 
 const API_BASE_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
-const DEFAULT_ACCESS_TOKEN_MAX_AGE = 60 * 15
+const DEFAULT_ACCESS_TOKEN_MAX_AGE = 60 * 60 * 24 * 30
 const REFRESH_TOKEN_MAX_AGE = 60 * 60 * 24 * 7
-const OAUTH_TIMEOUT_MS = 8000
+const OAUTH_TIMEOUT_MS = 10000
 
 interface OAuthTokenResponse {
   message?: string

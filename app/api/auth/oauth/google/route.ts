@@ -10,7 +10,7 @@ function sanitizeRedirect(value: string | null): string {
 
 export async function GET(request: NextRequest) {
   const redirect = sanitizeRedirect(request.nextUrl.searchParams.get('redirect'))
-  const target = new URL(`${API_BASE_URL}/oauth2/authorization/google`)
+  const target = `${API_BASE_URL}/oauth2/authorization/google`
 
   const response = NextResponse.redirect(target)
   response.cookies.set('oauthRedirectAfterLogin', redirect, {

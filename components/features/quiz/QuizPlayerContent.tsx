@@ -200,7 +200,7 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
       }))
 
       if (attemptId !== undefined && attemptId !== 0) {
-        submitGeneratedAttempt(attemptId, { questionSetId, questionAnswers })
+        submitGeneratedAttempt(attemptId, { questionAnswers })
           .then((response) => {
             // Map generated attempt result into the existing UI shape, using backend analytics when present.
             const derivedPct = questions.length > 0 ? (response.data.score / questions.length) * 100 : 0

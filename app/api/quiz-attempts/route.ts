@@ -32,19 +32,34 @@ export async function POST(request: Request) {
       )
     }
 
-    // Validate required fields
-    if (typeof body.questionSetId !== 'number' || body.questionSetId < 0) {
-      logger.error('[API] Invalid questionSetId in quiz attempt')
+    // Backend DTO only expects: { questionAnswers: [{ questionId, selectedOptionId }] }
+    if (!Array.isArray(body.questionAnswers) || body.questionAnswers.length === 0) {
+      logger.error('[API] Invalid questionAnswers format in quiz attempt')
       return NextResponse.json(
         { message: 'Invalid quiz data. Please try again.' },
         { status: 400 }
       )
     }
-    
-    if (!Array.isArray(body.questionAnswers)) {
-      logger.error('[API] Invalid questionAnswers format in quiz attempt')
+
+    const submissionPayload = {
+      questionAnswers: body.questionAnswers.map((answer: { questionId?: unknown; selectedOptionId?: unknown }) => ({
+        questionId: Number(answer.questionId),
+        selectedOptionId: answer.selectedOptionId === null || answer.selectedOptionId === undefined
+          ? null
+          : Number(answer.selectedOptionId),
+      })),
+    }
+
+    const hasInvalidAnswer = submissionPayload.questionAnswers.some(
+      (answer: { questionId: number; selectedOptionId: number | null }) => (
+        !Number.isFinite(answer.questionId)
+        || (answer.selectedOptionId !== null && !Number.isFinite(answer.selectedOptionId))
+      )
+    )
+
+    if (hasInvalidAnswer) {
       return NextResponse.json(
-        { message: 'Invalid quiz data. Please try again.' },
+        { message: 'Invalid question answer data. Please try again.' },
         { status: 400 }
       )
     }
@@ -57,7 +72,7 @@ export async function POST(request: Request) {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${accessToken}`,
         },
-        body: JSON.stringify(body),
+        body: JSON.stringify(submissionPayload),
         signal: AbortSignal.timeout(15000),
       }
     )
@@ -68,7 +83,7 @@ export async function POST(request: Request) {
       // Silent error logging - no sensitive data
       logger.error('[API] Backend error submitting quiz attempt:', {
         status: response.status,
-        questionSetId: body.questionSetId
+        answerCount: submissionPayload.questionAnswers.length
       })
 
       // User-friendly error messages

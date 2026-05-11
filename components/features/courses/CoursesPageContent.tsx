@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { fetchCourses } from '@/services/client/courses.client'
-import { CenteredSpinner } from '@/components/shared/Loading'
+import { CoursesSkeleton } from '@/components/features/courses/CoursesSkeleton'
 import type { Course } from '@/types/courses.types'
 
 interface CoursesPageContentProps {
@@ -86,14 +86,7 @@ export function CoursesPageContent({
   }
 
   if (isLoading && !courses.length) {
-    return (
-      <main className="flex-grow">
-        <div data-role="page-content" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <h1 data-role="page-title" className="text-3xl font-bold text-brand-navy mb-8 font-heading">Courses</h1>
-          <CenteredSpinner size="lg" text="Loading courses..." />
-        </div>
-      </main>
-    )
+    return <CoursesSkeleton />
   }
 
   return (

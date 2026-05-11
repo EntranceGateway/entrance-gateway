@@ -19,11 +19,14 @@ interface InitiatePaymentResponse {
 }
 
 interface ManualSubscriptionPaymentInput {
+  id: string | number
   moduleId: string
   amount: number
-  transactionId: string
-  paymentDate: string
-  notes?: string
+  remarks: string
+  transactionReference: string
+  entranceTypeSlug?: string | null
+  userEmail?: string
+  idempotencyKey?: string
 }
 
 /**
@@ -32,27 +35,46 @@ interface ManualSubscriptionPaymentInput {
  * Backend endpoint: POST /api/v1/payments/pay/{id}/{type}
  */
 export async function submitPaymentWithProof(
-  id: number,
+  id: string | number,
   type: PaymentType,
   paymentData: PaymentRequest,
-  proofFile: File
+  proofFile?: File | null
 ): Promise<PaymentResponse> {
+  if (id === null || id === undefined || String(id).trim().length === 0) {
+    throw new Error('Invalid payment target.')
+  }
+
+  if (!Number.isFinite(paymentData.amount) || paymentData.amount <= 0) {
+    throw new Error('Payment amount must be greater than zero.')
+  }
+
+  if (proofFile) {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+    const maxFileSizeBytes = 5 * 1024 * 1024
+
+    if (!allowedTypes.includes(proofFile.type)) {
+      throw new Error('Receipt must be a JPG, PNG, WEBP, or PDF file.')
+    }
+
+    if (proofFile.size > maxFileSizeBytes) {
+      throw new Error('Receipt file must be 5MB or smaller.')
+    }
+  }
+
   const formData = new FormData()
   
   // Add payment request as JSON blob
   const paymentBlob = new Blob([JSON.stringify(paymentData)], {
     type: 'application/json'
   })
-  formData.append('paymentRequest', paymentBlob)
+  formData.append('request', paymentBlob)
   
-  // Add file
-  formData.append('file', proofFile)
+  // Add optional file
+  if (proofFile) {
+    formData.append('file', proofFile)
+  }
   
-  // Add id and type for the proxy route
-  formData.append('id', id.toString())
-  formData.append('type', type)
-
-  const response = await fetch('/api/payments/submit', {
+  const response = await fetch(`/api/payments/pay/${id}/${type}`, {
     method: 'POST',
     body: formData,
   })
@@ -195,19 +217,26 @@ export async function initiateSubscriptionPayment(
 
 export async function submitSubscriptionManualPaymentProof(
   payload: ManualSubscriptionPaymentInput,
-  proofFile: File
+  proofFile?: File | null
 ): Promise<PaymentResponse> {
+  const trimmedEmail = payload.userEmail?.trim()
+  const safeUserEmail = trimmedEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmedEmail)
+    ? trimmedEmail
+    : undefined
+
   return submitPaymentWithProof(
-    0,
+    payload.id,
     'SUBSCRIPTION',
     {
-      moduleId: payload.moduleId,
-      moduleType: 'SUBSCRIPTION',
       amount: payload.amount,
       paymentMethod: 'MANUAL',
-      transactionId: payload.transactionId,
-      paymentDate: payload.paymentDate,
-      notes: payload.notes,
+      remarks: payload.remarks,
+      transactionReference: payload.transactionReference,
+      moduleId: payload.moduleId,
+      moduleType: 'SUBSCRIPTION',
+      userEmail: safeUserEmail,
+      idempotencyKey: payload.idempotencyKey || crypto.randomUUID(),
+      entranceTypeSlug: payload.entranceTypeSlug,
     },
     proofFile
   )

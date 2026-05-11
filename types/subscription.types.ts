@@ -22,6 +22,9 @@ export interface SubscriptionStatusResponse {
   quizzesLimitPerMonth: number
   isActive: boolean
   autoRenew: boolean
+  subscriptionId?: number
+  purchaseId?: number
+  paymentId?: number
 }
 
 export interface UpgradePriceResponse {

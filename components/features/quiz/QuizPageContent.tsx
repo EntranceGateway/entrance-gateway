@@ -8,7 +8,6 @@ import { QuizTemplateDetailSidebar } from './QuizTemplateDetailSidebar'
 import { QuizCustomPracticeSidebar } from './QuizCustomPracticeSidebar'
 import { QuizHistoryTab } from './QuizHistoryTab'
 import { CardGridSkeleton } from '@/components/shared/Loading'
-import { fetchQuizzes } from '@/services/client/quiz.client'
 import { checkPurchaseStatus } from '@/services/client/payment.client'
 import { addToCartAction } from '@/services/server/cart.server'
 import { useToast } from '@/components/shared/Toast'
@@ -122,41 +121,6 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
     params.set('size', '12')
     router.push(`${pathname}?${params.toString()}`, { scroll: false })
   }
-
-  useEffect(() => {
-    if (initialData && currentPage === initialPage) return
-
-    const loadQuizzes = async () => {
-      setIsLoading(true)
-      setError(null)
-
-      try {
-        const response = await fetchQuizzes({
-          page: currentPage,
-          size: 12,
-          sortBy: 'setName',
-          sortDir: 'asc',
-        })
-
-        if (response?.data?.content && Array.isArray(response.data.content)) {
-          setQuizzes(response.data.content)
-          setTotalPages(response.data.totalPages)
-        } else {
-          setQuizzes([])
-          setTotalPages(0)
-          setError(null)
-        }
-      } catch {
-        setQuizzes([])
-        setTotalPages(0)
-        setError(null)
-      } finally {
-        setIsLoading(false)
-      }
-    }
-
-    loadQuizzes()
-  }, [currentPage, initialData, initialPage])
 
   // Load Templates
   useEffect(() => {
@@ -440,7 +404,6 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
   }
 
   const handlePageChange = (pageIndex: number) => {
-    setCurrentPage(pageIndex)
     updatePageUrl(pageIndex)
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }

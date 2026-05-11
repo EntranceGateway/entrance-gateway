@@ -7,18 +7,20 @@ export async function POST() {
   try {
     const cookieStore = await cookies()
 
-    // Get refresh token before clearing cookies to invalidate on backend
+    // Get tokens before clearing cookies to revoke refresh token on backend
     const refreshToken = cookieStore.get('refreshToken')?.value
+    const accessToken = cookieStore.get('accessToken')?.value
 
-    // Call backend to invalidate the refresh token (session invalidation)
-    if (refreshToken) {
+    // Backend expects Authorization: Bearer {accessToken} and { refreshToken } body.
+    if (refreshToken && accessToken) {
       try {
         await fetch(`${API_BASE_URL}/api/v1/auth/logout`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${refreshToken}`,
+            'Authorization': `Bearer ${accessToken}`,
           },
+          body: JSON.stringify({ refreshToken }),
         })
       } catch (backendError) {
         // Log but don't fail - still clear local cookies

@@ -7,6 +7,9 @@ export const metadata: Metadata = {
   description: 'Prepare for your entrance exams with our professionally curated quizzes designed to simulate real exam conditions and boost your cognitive agility.',
 }
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 interface QuizPageProps {
   searchParams?: Promise<{
     page?: string

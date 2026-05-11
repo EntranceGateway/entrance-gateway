@@ -2,9 +2,11 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
 import { fetchMySubscription } from '@/services/client/subscription.client'
-import { initiateSubscriptionPayment } from '@/services/client/payment.client'
+import { initiateSubscriptionPayment, submitSubscriptionManualPaymentProof } from '@/services/client/payment.client'
 import { fetchEntranceTypes } from '@/services/client/quizTemplate.client'
+import { isAuthenticated } from '@/lib/auth/client'
 import type {
   SubscriptionPlan,
   SubscriptionPlanResponse,
@@ -147,12 +149,23 @@ export function SubscriptionPlansContent({
   initialPlans = [],
   initialSubscription = null,
 }: SubscriptionPlansContentProps) {
+  const router = useRouter()
+  const pathname = usePathname()
   const [subscription, setSubscription] = useState<SubscriptionStatusResponse | null>(initialSubscription)
   const [loadingSubscription, setLoadingSubscription] = useState(false)
   const [processingPlan, setProcessingPlan] = useState<SubscriptionPlan | null>(null)
   const [entranceOptions, setEntranceOptions] = useState<SubscriptionEntranceOption[]>(fallbackSubscriptionEntranceOptions)
   const [selectedEntranceSlug, setSelectedEntranceSlug] = useState('')
   const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [manualPaymentPlan, setManualPaymentPlan] = useState<SubscriptionPlanResponse | null>(null)
+  const [manualPaymentFile, setManualPaymentFile] = useState<File | null>(null)
+  const [manualPaymentForm, setManualPaymentForm] = useState({
+    amount: 0,
+    remarks: '',
+    transactionReference: '',
+    userEmail: '',
+  })
+  const [isSubmittingManualPayment, setIsSubmittingManualPayment] = useState(false)
 
   const plans = useMemo(() => {
     const source = initialPlans.length > 0 ? initialPlans : fallbackPlans
@@ -218,6 +231,17 @@ export function SubscriptionPlansContent({
     ? Math.min(100, Math.round((subscription.quizzesUsedThisMonth / subscription.quizzesLimitPerMonth) * 100))
     : 0
 
+  const redirectToSignIn = () => {
+    const redirect = encodeURIComponent(pathname || '/subscription')
+    router.push(`/signin?redirect=${redirect}`)
+  }
+
+  const isUnauthorizedError = (error: unknown) => {
+    if (!(error instanceof Error)) return false
+    const message = error.message.toLowerCase()
+    return message.includes('unauthorized') || message.includes('please login') || message.includes('please sign in')
+  }
+
   async function handleSubscribe(plan: SubscriptionPlanResponse) {
     if (!selectedEntranceSlug) {
       setPaymentError('Please select a valid entrance type before subscribing.')
@@ -249,9 +273,78 @@ export function SubscriptionPlansContent({
 
       await fetchMySubscription().then(setSubscription).catch(() => undefined)
     } catch (error) {
+      if (isUnauthorizedError(error)) {
+        redirectToSignIn()
+        return
+      }
+
       setPaymentError(error instanceof Error ? error.message : 'Payment initiation failed. Please try again.')
     } finally {
       setProcessingPlan(null)
+    }
+  }
+
+  function handleOpenManualPayment(plan: SubscriptionPlanResponse) {
+    if (!isAuthenticated()) {
+      redirectToSignIn()
+      return
+    }
+
+    setPaymentError(null)
+    setManualPaymentPlan(plan)
+    setManualPaymentFile(null)
+    setManualPaymentForm({
+      amount: plan.price,
+      remarks: '',
+      transactionReference: `MANUAL-${plan.plan}-${Date.now()}`,
+      userEmail: '',
+    })
+  }
+
+  async function handleSubmitManualPayment() {
+    if (!manualPaymentPlan) return
+    if (!manualPaymentForm.transactionReference.trim()) {
+      setPaymentError('Please enter a transaction/reference number for manual payment.')
+      return
+    }
+
+    const paymentAmount = Number(manualPaymentForm.amount)
+    if (!Number.isFinite(paymentAmount) || paymentAmount <= 0) {
+      setPaymentError('Please enter a valid payment amount greater than zero.')
+      return
+    }
+
+    setIsSubmittingManualPayment(true)
+    setPaymentError(null)
+
+    try {
+      await submitSubscriptionManualPaymentProof(
+        {
+          id: manualPaymentPlan.plan,
+          moduleId: manualPaymentPlan.plan,
+          amount: paymentAmount,
+          remarks: manualPaymentForm.remarks.trim() || 'Manual subscription payment submitted from dashboard',
+          transactionReference: manualPaymentForm.transactionReference.trim(),
+          userEmail: manualPaymentForm.userEmail.trim() || undefined,
+          idempotencyKey: crypto.randomUUID(),
+          entranceTypeSlug: selectedEntranceSlug || null,
+        },
+        manualPaymentFile
+      )
+
+      setManualPaymentPlan(null)
+      setManualPaymentFile(null)
+      await fetchMySubscription().then(setSubscription).catch(() => undefined)
+    } catch (error) {
+      if (isUnauthorizedError(error)) {
+        setManualPaymentPlan(null)
+        redirectToSignIn()
+        return
+      }
+
+      setPaymentError(error instanceof Error ? error.message : 'Manual payment submission failed. Please try again.')
+    } finally {
+      setIsSubmittingManualPayment(false)
     }
   }
 
@@ -459,14 +552,23 @@ export function SubscriptionPlansContent({
                       Continue practicing
                     </Link>
                   ) : (
-                    <button
-                      type="button"
-                      onClick={() => handleSubscribe(plan)}
-                      disabled={processingPlan === plan.plan || !selectedEntranceSlug}
-                      className={`mt-5 inline-flex min-h-12 w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 ${meta.button}`}
-                    >
-                      {processingPlan === plan.plan ? 'Starting payment...' : hasActiveSubscription ? 'Upgrade plan' : 'Subscribe now'}
-                    </button>
+                    <div className="mt-5 space-y-2.5">
+                      <button
+                        type="button"
+                        onClick={() => handleSubscribe(plan)}
+                        disabled={processingPlan === plan.plan || !selectedEntranceSlug}
+                        className={`inline-flex min-h-12 w-full items-center justify-center rounded-2xl px-5 py-3 text-sm font-black shadow-sm transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 active:scale-[0.99] hover:-translate-y-0.5 disabled:cursor-not-allowed disabled:opacity-70 ${meta.button}`}
+                      >
+                        {processingPlan === plan.plan ? 'Starting payment...' : hasActiveSubscription ? 'Upgrade plan' : 'Subscribe now'}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenManualPayment(plan)}
+                        className="inline-flex min-h-11 w-full items-center justify-center rounded-2xl border border-brand-blue/15 bg-white/85 px-5 py-2.5 text-sm font-black text-brand-blue shadow-sm transition hover:-translate-y-0.5 hover:bg-brand-lavender focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand-blue/30 disabled:cursor-not-allowed disabled:opacity-70"
+                      >
+                        Manual payment
+                      </button>
+                    </div>
                   )}
                 </article>
               )
@@ -487,6 +589,112 @@ export function SubscriptionPlansContent({
           </section>
         </div>
       </section>
+      {manualPaymentPlan && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/60 p-4 backdrop-blur-sm">
+          <div className="w-full max-w-2xl overflow-hidden rounded-[2rem] border border-white/20 bg-white shadow-2xl">
+            <div className="bg-gradient-to-br from-brand-navy to-brand-blue p-6 text-white">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-xs font-black uppercase tracking-[0.22em] text-brand-gold">Manual subscription payment</p>
+                  <h2 className="mt-2 text-2xl font-black">{manualPaymentPlan.name || manualPaymentPlan.plan}</h2>
+                  <p className="mt-2 text-sm leading-6 text-blue-100">
+                    Record a cash, bank transfer, or office payment with an optional receipt screenshot.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setManualPaymentPlan(null)}
+                  disabled={isSubmittingManualPayment}
+                  className="rounded-xl bg-white/10 p-2 text-white transition hover:bg-white/20 disabled:opacity-60"
+                  aria-label="Close manual payment dialog"
+                >
+                  <span className="material-symbols-outlined">close</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="max-h-[70vh] overflow-y-auto p-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="block">
+                  <span className="mb-1 block text-sm font-bold text-gray-700">Amount</span>
+                  <input
+                    type="number"
+                    min="1"
+                    value={manualPaymentForm.amount}
+                    onChange={(event) => setManualPaymentForm(prev => ({ ...prev, amount: Number(event.target.value) }))}
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                  />
+                </label>
+
+                <label className="block">
+                  <span className="mb-1 block text-sm font-bold text-gray-700">Transaction reference</span>
+                  <input
+                    value={manualPaymentForm.transactionReference}
+                    onChange={(event) => setManualPaymentForm(prev => ({ ...prev, transactionReference: event.target.value }))}
+                    placeholder="CASH-2024-001"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <span className="mb-1 block text-sm font-bold text-gray-700">Student email optional</span>
+                  <input
+                    type="email"
+                    value={manualPaymentForm.userEmail}
+                    onChange={(event) => setManualPaymentForm(prev => ({ ...prev, userEmail: event.target.value }))}
+                    placeholder="student@example.com"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <span className="mb-1 block text-sm font-bold text-gray-700">Remarks</span>
+                  <textarea
+                    rows={3}
+                    value={manualPaymentForm.remarks}
+                    onChange={(event) => setManualPaymentForm(prev => ({ ...prev, remarks: event.target.value }))}
+                    placeholder="Cash received at office"
+                    className="w-full rounded-xl border border-gray-200 px-4 py-3 text-sm font-semibold outline-none transition focus:border-brand-blue focus:ring-4 focus:ring-brand-blue/10"
+                  />
+                </label>
+
+                <label className="block sm:col-span-2">
+                  <span className="mb-1 block text-sm font-bold text-gray-700">Receipt screenshot optional</span>
+                  <input
+                    type="file"
+                    accept="image/*,.pdf"
+                    onChange={(event) => setManualPaymentFile(event.target.files?.[0] || null)}
+                    className="w-full rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-3 text-sm font-semibold text-gray-700 file:mr-4 file:rounded-lg file:border-0 file:bg-brand-navy file:px-4 file:py-2 file:text-sm file:font-bold file:text-white"
+                  />
+                </label>
+              </div>
+
+              <div className="mt-5 rounded-2xl border border-blue-100 bg-blue-50 p-4 text-sm leading-6 text-gray-700">
+                This sends <strong>paymentMethod: MANUAL</strong>, <strong>moduleType: SUBSCRIPTION</strong>, and entrance access <strong>{selectedEntranceSlug || 'global'}</strong> to the payment API.
+              </div>
+            </div>
+
+            <div className="flex flex-col-reverse gap-3 border-t border-gray-100 bg-gray-50 p-5 sm:flex-row sm:justify-end">
+              <button
+                type="button"
+                onClick={() => setManualPaymentPlan(null)}
+                disabled={isSubmittingManualPayment}
+                className="rounded-xl border border-gray-200 bg-white px-5 py-3 text-sm font-black text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmitManualPayment}
+                disabled={isSubmittingManualPayment}
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-brand-navy px-5 py-3 text-sm font-black text-white transition hover:bg-brand-blue disabled:opacity-60"
+              >
+                {isSubmittingManualPayment ? 'Submitting...' : 'Submit manual payment'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }

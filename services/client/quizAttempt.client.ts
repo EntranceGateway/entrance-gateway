@@ -26,7 +26,6 @@ export interface QuizAttemptResponse {
 }
 
 export interface GeneratedAttemptSubmission {
-  questionSetId: number
   questionAnswers: Array<{
     questionId: number
     selectedOptionId: number | null
@@ -125,12 +124,19 @@ export async function submitQuizAttempt(payload: QuizAttemptRequest): Promise<Qu
       throw new Error('Quiz answers are required')
     }
 
+    const submissionPayload = {
+      questionAnswers: payload.questionAnswers.map((answer) => ({
+        questionId: answer.questionId,
+        selectedOptionId: answer.selectedOptionId,
+      })),
+    }
+
     const response = await fetch('/api/quiz-attempts', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(payload),
+      body: JSON.stringify(submissionPayload),
     })
 
     if (!response.ok) {

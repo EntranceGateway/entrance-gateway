@@ -30,9 +30,6 @@ export async function fetchMySubscription(): Promise<SubscriptionStatusResponse 
     const data: MySubscriptionResponse = await response.json().catch(() => ({ data: null }))
 
     if (!response.ok) {
-      if (response.status !== 401 && response.status !== 404) {
-        logger.error('[fetchMySubscription] API error:', { status: response.status })
-      }
       throw new Error(normalizeErrorMessage(response.status, data.message))
     }
 

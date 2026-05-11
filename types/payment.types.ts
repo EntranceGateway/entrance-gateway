@@ -28,6 +28,10 @@ export interface PaymentRequest {
   notes?: string
   moduleId?: string
   moduleType?: PaymentType
+  /** Optional PII: include only for manual/admin attribution; never log this value. */
+  userEmail?: string
+  idempotencyKey?: string
+  entranceTypeSlug?: string | null
 }
 
 export interface PaymentResponse {

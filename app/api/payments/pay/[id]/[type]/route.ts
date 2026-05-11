@@ -19,15 +19,52 @@ export async function POST(
     }
 
     // Validate type parameter
-    if (type !== 'QUIZ' && type !== 'TRAINING') {
+    if (type !== 'QUIZ' && type !== 'TRAINING' && type !== 'SUBSCRIPTION') {
       return NextResponse.json(
-        { message: 'Invalid payment type. Must be QUIZ or TRAINING', data: null },
+        { message: 'Invalid payment type. Must be QUIZ, TRAINING, or SUBSCRIPTION', data: null },
         { status: 400 }
       )
     }
 
-    // Get FormData from request
-    const formData = await request.formData()
+    // Get FormData from request and normalize legacy/current field names
+    const incomingFormData = await request.formData()
+    const requestBlob = incomingFormData.get('request') || incomingFormData.get('paymentRequest')
+    const file = incomingFormData.get('file')
+
+    if (!requestBlob) {
+      return NextResponse.json(
+        { message: 'Missing payment request payload', data: null },
+        { status: 400 }
+      )
+    }
+
+    const formData = new FormData()
+    formData.append('request', requestBlob)
+    if (file instanceof File) {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf']
+      const maxFileSizeBytes = 5 * 1024 * 1024
+
+      if (!allowedTypes.includes(file.type)) {
+        return NextResponse.json(
+          { message: 'Receipt must be a JPG, PNG, WEBP, or PDF file.', data: null },
+          { status: 400 }
+        )
+      }
+
+      if (file.size > maxFileSizeBytes) {
+        return NextResponse.json(
+          { message: 'Receipt file must be 5MB or smaller.', data: null },
+          { status: 400 }
+        )
+      }
+
+      formData.append('file', file)
+    } else if (file !== null) {
+      return NextResponse.json(
+        { message: 'Invalid receipt file.', data: null },
+        { status: 400 }
+      )
+    }
 
     // Call backend API with multipart/form-data
     const response = await fetch(
