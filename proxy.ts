@@ -5,13 +5,13 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegat
 
 // Protected routes that require authentication
 const protectedPaths = [
-//   '/dashboard',
+  //   '/dashboard',
   '/profile',
   '/my-enrollments',
-//   '/notes',
-//   '/syllabus',
-//   '/questions',
-//   '/colleges',
+  //   '/notes',
+  //   '/syllabus',
+  //   '/questions',
+  //   '/colleges',
 ]
 
 // Dynamic protected patterns (regex-based)
@@ -23,24 +23,32 @@ const protectedPatterns = [
 const authPaths = ['/signin', '/signup', '/verify-otp']
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
+
+  // Backend redirects to /?code=xxx after Google OAuth.
+  // Rewrite to the /oauth2/callback route handler so the code is exchanged for tokens.
+  if (pathname === '/' && searchParams.has('code')) {
+    const callbackUrl = new URL('/oauth2/callback', request.url)
+    callbackUrl.search = request.nextUrl.search
+    return NextResponse.rewrite(callbackUrl)
+  }
 
   const accessToken = request.cookies.get('accessToken')?.value
   const refreshToken = request.cookies.get('refreshToken')?.value
   const requestHeaders = new Headers(request.headers)
 
   requestHeaders.set('x-pathname', pathname)
-  
+
   // Check if current path is protected
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path)) ||
-                          protectedPatterns.some(pattern => pattern.test(pathname))
+    protectedPatterns.some(pattern => pattern.test(pathname))
   const isAuthPath = authPaths.some(path => pathname.startsWith(path))
-  
+
   // Redirect authenticated users away from auth pages
   if (isAuthPath && accessToken) {
     return NextResponse.redirect(new URL('/', request.url))
   }
-  
+
   // Allow access to non-protected routes (including auth pages for non-authenticated users)
   if (!isProtectedPath) {
     return NextResponse.next({
@@ -49,7 +57,7 @@ export async function proxy(request: NextRequest) {
       },
     })
   }
-  
+
   // Protected route - check authentication
   if (!accessToken && !refreshToken) {
     // No tokens - redirect to login
@@ -58,7 +66,7 @@ export async function proxy(request: NextRequest) {
     loginUrl.searchParams.set('reason', 'auth_required')
     return NextResponse.redirect(loginUrl)
   }
-  
+
   // Access token missing but refresh token exists - try to refresh
   if (!accessToken && refreshToken) {
     try {
@@ -69,7 +77,7 @@ export async function proxy(request: NextRequest) {
         },
         body: JSON.stringify({ refreshToken }),
       })
-      
+
       if (refreshResponse.ok) {
         const data = await refreshResponse.json()
         const response = NextResponse.next({
@@ -77,7 +85,7 @@ export async function proxy(request: NextRequest) {
             headers: requestHeaders,
           },
         })
-        
+
         // Update cookies with new tokens
         response.cookies.set('accessToken', data.data.accessToken, {
           httpOnly: true,
@@ -86,7 +94,7 @@ export async function proxy(request: NextRequest) {
           maxAge: data.data.expiresIn,
           path: '/',
         })
-        
+
         response.cookies.set('refreshToken', data.data.refreshToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
@@ -94,36 +102,36 @@ export async function proxy(request: NextRequest) {
           maxAge: 60 * 60 * 24 * 7,
           path: '/',
         })
-        
+
         return response
       } else {
         // Refresh failed - clear cookies and redirect to login
         const loginUrl = new URL('/signin', request.url)
         loginUrl.searchParams.set('redirect', pathname)
         const response = NextResponse.redirect(loginUrl)
-        
+
         response.cookies.delete('accessToken')
         response.cookies.delete('refreshToken')
         response.cookies.delete('userId')
-        
+
         return response
       }
     } catch (error) {
       console.error('Token refresh error in middleware:', error)
-      
+
       // Error during refresh - redirect to login
       const loginUrl = new URL('/signin', request.url)
       loginUrl.searchParams.set('redirect', pathname)
       const response = NextResponse.redirect(loginUrl)
-      
+
       response.cookies.delete('accessToken')
       response.cookies.delete('refreshToken')
       response.cookies.delete('userId')
-      
+
       return response
     }
   }
-  
+
   // Access token exists - allow access
   return NextResponse.next({
     request: {
