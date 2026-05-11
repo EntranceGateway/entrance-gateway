@@ -23,7 +23,16 @@ const protectedPatterns = [
 const authPaths = ['/signin', '/signup', '/verify-otp']
 
 export async function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl
+  const { pathname, searchParams } = request.nextUrl
+
+  // Backend redirects to /?code=xxx after Google OAuth.
+  // Rewrite to the /oauth2/callback route handler so the code is exchanged for tokens.
+  if (pathname === '/' && searchParams.has('code')) {
+    const callbackUrl = new URL('/oauth2/callback', request.url)
+    callbackUrl.search = request.nextUrl.search
+    return NextResponse.rewrite(callbackUrl)
+  }
+
   const accessToken = request.cookies.get('accessToken')?.value
   const refreshToken = request.cookies.get('refreshToken')?.value
   const requestHeaders = new Headers(request.headers)
