@@ -5,6 +5,7 @@ interface InitiateSubscriptionPaymentRequest {
   amount: number
   paymentMethod: PaymentMethod
   entranceTypeSlug?: string | null
+  isUpgrade?: boolean
 }
 
 interface InitiatePaymentResponse {
@@ -14,6 +15,21 @@ interface InitiatePaymentResponse {
     redirectUrl?: string
     transactionUuid?: string
     paymentId?: number
+    // eSewa-specific fields
+    esewaUrl?: string
+    amount?: string
+    taxAmount?: string
+    totalAmount?: string
+    productCode?: string
+    productServiceCharge?: string
+    productDeliveryCharge?: string
+    successUrl?: string
+    failureUrl?: string
+    signedFieldNames?: string
+    signature?: string
+    // Khalti-specific fields
+    pidx?: string
+    khaltiUrl?: string
     [key: string]: unknown
   }
 }
@@ -27,6 +43,7 @@ interface ManualSubscriptionPaymentInput {
   entranceTypeSlug?: string | null
   userEmail?: string
   idempotencyKey?: string
+  isUpgrade?: boolean
 }
 
 /**
@@ -237,6 +254,7 @@ export async function submitSubscriptionManualPaymentProof(
       userEmail: safeUserEmail,
       idempotencyKey: payload.idempotencyKey || crypto.randomUUID(),
       entranceTypeSlug: payload.entranceTypeSlug,
+      isUpgrade: payload.isUpgrade,
     },
     proofFile
   )

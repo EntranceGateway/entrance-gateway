@@ -28,9 +28,9 @@ export function QuizCategoryAnalysisBlock() {
     return (
       <div className="mb-10 w-full">
         <h2 className="text-xl font-bold text-gray-900 mb-4 animate-pulse bg-gray-200 h-6 w-48 rounded"></h2>
-        <div className="flex gap-4 overflow-x-auto scbar-none pb-4">
+        <div className="flex gap-3 sm:gap-4 overflow-x-auto scbar-none pb-4">
           {[1, 2, 3].map((i) => (
-            <div key={i} className="min-w-[280px] bg-white border border-gray-100 p-5 rounded-2xl animate-pulse h-24"></div>
+            <div key={i} className="min-w-[220px] sm:min-w-[280px] bg-white border border-gray-100 p-4 sm:p-5 rounded-2xl animate-pulse h-24"></div>
           ))}
         </div>
       </div>
@@ -44,18 +44,19 @@ export function QuizCategoryAnalysisBlock() {
   return (
     <div className="mb-10 w-full relative group">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-bold text-brand-navy flex items-center gap-2">
+        <h2 className="text-lg sm:text-xl font-bold text-brand-navy flex items-center gap-2">
           <span className="material-symbols-outlined text-brand-blue">donut_small</span>
           Topic Performance Profile
         </h2>
       </div>
 
-      <div className="flex gap-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scroll-safari" style={{ scrollbarWidth: 'none' }}>
+      <div className="flex gap-3 sm:gap-4 overflow-x-auto pb-4 snap-x snap-mandatory hide-scroll-safari" style={{ scrollbarWidth: 'none' }}>
         {analysisItems.map((topic, idx) => {
-          const totalQuestions = Number.isFinite(topic.totalQuestions) ? topic.totalQuestions : 0
-          const correctQuestions = Number.isFinite(topic.correctQuestions) ? topic.correctQuestions : 0
-          const percentage = Number.isFinite(topic.percentage)
-            ? topic.percentage
+          const totalQuestions = Number(topic.totalQuestions ?? topic.totalAttempted ?? 0)
+          const correctQuestions = Number(topic.correctQuestions ?? topic.totalCorrect ?? 0)
+          const percentageValue = Number(topic.percentage ?? topic.accuracy ?? Number.NaN)
+          const percentage = Number.isFinite(percentageValue)
+            ? percentageValue
             : totalQuestions > 0
               ? (correctQuestions / totalQuestions) * 100
               : 0
@@ -66,7 +67,7 @@ export function QuizCategoryAnalysisBlock() {
           return (
             <div 
               key={idx} 
-              className="min-w-[280px] snap-center shrink-0 bg-white border border-gray-200 p-5 rounded-2xl relative overflow-hidden"
+              className="min-w-[220px] sm:min-w-[280px] snap-center shrink-0 bg-white border border-gray-200 p-4 sm:p-5 rounded-2xl relative overflow-hidden"
             >
               {/* Background accent based on score */}
               <div 
@@ -77,8 +78,8 @@ export function QuizCategoryAnalysisBlock() {
 
               <div className="relative z-10">
                 <div className="flex justify-between items-start mb-2">
-                  <h3 className="font-bold text-gray-800 text-sm line-clamp-1 pr-2" title={topic.topicName}>
-                    {topic.topicName || 'Untitled topic'}
+                  <h3 className="font-bold text-gray-800 text-sm line-clamp-1 pr-2" title={topic.topicName || topic.categoryName}>
+                    {topic.topicName || topic.categoryName || 'Untitled topic'}
                   </h3>
                   <span className={`text-xs font-black shadow-sm px-2 py-0.5 rounded ${
                     isExcellent ? 'bg-green-100 text-green-700' : isPassing ? 'bg-blue-100 text-blue-700' : 'bg-orange-100 text-orange-700'

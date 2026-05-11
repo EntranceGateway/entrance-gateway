@@ -192,6 +192,33 @@ export async function fetchGlobalQuizTemplates(
   )
 }
 
+function normalizeEntranceTypes(value: unknown): EntranceType[] {
+  if (!Array.isArray(value)) return []
+
+  return value
+    .map((item): EntranceType | null => {
+      if (!item || typeof item !== 'object') return null
+
+      const record = item as Record<string, unknown>
+      const id = record.entranceTypeId ?? record.id ?? record.entrance_type_id
+      const name = record.entranceName ?? record.name ?? record.title ?? record.entrance_name
+      const slug = record.slug ?? record.entranceTypeSlug ?? record.entrance_type_slug
+
+      if (typeof slug !== 'string' || !slug.trim()) return null
+      if (typeof name !== 'string' || !name.trim()) return null
+
+      const numericId = typeof id === 'number' ? id : Number(id)
+
+      return {
+        entranceTypeId: Number.isFinite(numericId) ? numericId : 0,
+        entranceName: name,
+        slug,
+        description: typeof record.description === 'string' ? record.description : undefined,
+      }
+    })
+    .filter((item): item is EntranceType => item !== null)
+}
+
 export async function fetchEntranceTypes(): Promise<EntranceType[]> {
   const response = await fetch('/api/entrance-types', {
     method: 'GET',
@@ -209,16 +236,16 @@ export async function fetchEntranceTypes(): Promise<EntranceType[]> {
     throw new Error(responseData?.message || 'Failed to load entrance types.')
   }
 
-  if (Array.isArray(responseData)) {
-    return responseData
-  }
+  const candidates = [
+    responseData,
+    responseData?.data,
+    responseData?.data?.content,
+    responseData?.content,
+  ]
 
-  if (Array.isArray(responseData?.data)) {
-    return responseData.data
-  }
-
-  if (Array.isArray(responseData?.data?.content)) {
-    return responseData.data.content
+  for (const candidate of candidates) {
+    const normalized = normalizeEntranceTypes(candidate)
+    if (normalized.length > 0) return normalized
   }
 
   logger.error('[fetchEntranceTypes] Invalid entrance types response structure')

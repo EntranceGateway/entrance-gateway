@@ -5,12 +5,20 @@ import { QuizHistoryCard } from './QuizHistoryCard'
 import { QuizCategoryAnalysisBlock } from './QuizCategoryAnalysisBlock'
 import { CardGridSkeleton } from '@/components/shared/Loading'
 
-export function QuizHistoryTab() {
-  const [historyItems, setHistoryItems] = useState<QuizHistoryItem[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+interface QuizHistoryTabProps {
+  initialHistory?: {
+    data?: QuizHistoryItem[]
+  } | null
+}
+
+export function QuizHistoryTab({ initialHistory }: QuizHistoryTabProps) {
+  const [historyItems, setHistoryItems] = useState<QuizHistoryItem[]>(initialHistory?.data || [])
+  const [isLoading, setIsLoading] = useState(!initialHistory)
   const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
+    if (initialHistory) return
+
     const loadHistory = async () => {
       setIsLoading(true)
       setError(null)
@@ -25,7 +33,7 @@ export function QuizHistoryTab() {
     }
 
     loadHistory()
-  }, [])
+  }, [initialHistory])
 
   if (isLoading) {
     return <CardGridSkeleton />
@@ -63,14 +71,14 @@ export function QuizHistoryTab() {
       <QuizCategoryAnalysisBlock />
 
       {/* Header Stat row */}
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="text-xl font-bold text-gray-900">Your Recent Graded Attempts</h2>
+      <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between mb-2">
+        <h2 className="text-lg sm:text-xl font-bold text-gray-900">Your Recent Graded Attempts</h2>
         <span className="text-sm text-gray-500 font-medium bg-gray-100 px-3 py-1 rounded-full">
           {historyItems.length} Records
         </span>
       </div>
 
-      <div data-role="quiz-history-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+      <div data-role="quiz-history-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {historyItems.map((item) => (
           <QuizHistoryCard key={item.id} item={item} />
         ))}

@@ -1,5 +1,6 @@
 import { QuizPageContent } from '@/components/features/quiz'
 import { getQuizzes } from '@/services/server/quiz.server'
+import { getQuizAttemptHistory } from '@/services/server/quizAttempt.server'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
@@ -28,12 +29,22 @@ export default async function QuizPage({ searchParams }: QuizPageProps) {
     Math.max(1, Number(params?.size ?? String(DEFAULT_PAGE_SIZE)) || DEFAULT_PAGE_SIZE)
   )
 
-  const initialData = await getQuizzes({
-    page,
-    size,
-    sortBy: 'setName',
-    sortDir: 'asc',
-  }).catch(() => null)
+  const [initialData, initialHistory] = await Promise.all([
+    getQuizzes({
+      page,
+      size,
+      sortBy: 'setName',
+      sortDir: 'asc',
+    }).catch(() => null),
+    getQuizAttemptHistory().catch(() => null),
+  ])
 
-  return <QuizPageContent initialData={initialData} purchaseStatuses={{}} initialPage={page} />
+  return (
+    <QuizPageContent
+      initialData={initialData}
+      initialHistory={initialHistory}
+      purchaseStatuses={{}}
+      initialPage={page}
+    />
+  )
 }

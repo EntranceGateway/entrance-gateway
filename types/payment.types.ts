@@ -32,6 +32,7 @@ export interface PaymentRequest {
   userEmail?: string
   idempotencyKey?: string
   entranceTypeSlug?: string | null
+  isUpgrade?: boolean
 }
 
 export interface PaymentResponse {

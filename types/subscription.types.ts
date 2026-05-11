@@ -25,17 +25,29 @@ export interface SubscriptionStatusResponse {
   subscriptionId?: number
   purchaseId?: number
   paymentId?: number
+  plan?: SubscriptionPlan | null
+  status?: string | null
+  monthlyQuotaUsed?: number | null
+  monthlyQuotaLimit?: number | null
+  entranceType?: {
+    entranceTypeId?: number | null
+    entranceName?: string | null
+  } | null
 }
 
 export interface UpgradePriceResponse {
   currentPlan: SubscriptionPlan | null
   targetPlan: SubscriptionPlan
-  currentPlanRemainingDays: number
-  currentPlanDailyRate: number
-  currentPlanCredit: number
-  targetPlanPrice: number
-  finalUpgradePrice: number
-  currency: string
+  currentPlanRemainingDays?: number
+  currentPlanDailyRate?: number
+  currentPlanCredit?: number
+  targetPlanPrice?: number
+  finalUpgradePrice?: number
+  currency?: string
+  // Alternative field names from backend
+  remainingDays?: number
+  creditAmount?: number
+  effectivePrice?: number
 }
 
 export interface SubscriptionPlansResponse {

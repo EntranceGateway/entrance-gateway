@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { SubscriptionPlansContent } from '@/components/features/subscription'
-import { getMySubscription, getSubscriptionPlans } from '@/services/server/subscription.server'
+import { getSubscriptionPlans, getMySubscription } from '@/services/server/subscription.server'
+import { getEntranceTypes } from '@/services/server/entranceTypes.server'
 
 export const metadata: Metadata = {
   title: 'Subscription Plans | EntranceGateway',
@@ -8,10 +9,24 @@ export const metadata: Metadata = {
 }
 
 export default async function PlansPage() {
-  const [plans, subscription] = await Promise.all([
+  const [plans, subscription, entranceTypes] = await Promise.all([
     getSubscriptionPlans(),
     getMySubscription(),
+    getEntranceTypes(),
   ])
 
-  return <SubscriptionPlansContent initialPlans={plans} initialSubscription={subscription} />
+  const entranceOptions = entranceTypes
+    .filter((entrance) => Boolean(entrance.slug))
+    .map((entrance) => ({
+      slug: entrance.slug,
+      name: entrance.entranceName || entrance.slug,
+    }))
+
+  return (
+    <SubscriptionPlansContent
+      initialPlans={plans}
+      initialSubscription={subscription}
+      initialEntranceOptions={entranceOptions}
+    />
+  )
 }

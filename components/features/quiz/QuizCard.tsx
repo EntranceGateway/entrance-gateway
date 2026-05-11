@@ -97,7 +97,7 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
       className="bg-white border border-gray-200 rounded-2xl overflow-hidden flex flex-col hover:shadow-lg transition-shadow cursor-pointer"
     >
       {/* Content */}
-      <div className="p-6 flex-grow">
+      <div className="p-4 sm:p-6 flex-grow">
         {/* Header: Status Badge and Category */}
         <div className="flex justify-between items-start mb-4">
           {getStatusBadge()}
@@ -107,7 +107,7 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
         </div>
 
         {/* Quiz Title */}
-        <h3 data-role="quiz-title" className="text-xl font-bold text-brand-navy mb-4 leading-tight">
+        <h3 data-role="quiz-title" className="text-lg sm:text-xl font-bold text-brand-navy mb-4 leading-tight line-clamp-2 break-words">
           {item.setName}
         </h3>
 
@@ -131,7 +131,7 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
       </div>
 
       {/* Actions */}
-      <div className="p-6 pt-0 space-y-3">
+      <div className="p-4 sm:p-6 pt-0 space-y-3">
         <button
           onClick={(e) => {
             e.stopPropagation()
@@ -167,7 +167,7 @@ export function QuizCard({ item, onClick, onAddToCart, purchaseStatus }: QuizCar
 // Card Grid Container
 export function QuizCardGrid({ children }: { children: React.ReactNode }) {
   return (
-    <div data-role="quiz-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 sm:gap-8">
+    <div data-role="quiz-list" className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
       {children}
     </div>
   )

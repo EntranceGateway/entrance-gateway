@@ -78,16 +78,23 @@ export interface QuizAttemptDetailResponse {
 
 export interface QuizHistoryItem {
   id: number
-  quizId: number
-  quizName: string
-  totalScore: number
-  correctAnswers: number
-  wrongAnswers: number
-  skippedAnswers: number
-  totalQuestions: number
-  timeTakenSeconds: number
-  percentage: number
-  status: string
+  quizId: number | null
+  quizName: string | null
+  quizTemplateId?: string | null
+  quizTemplateName?: string | null
+  totalScore: number | null
+  correctAnswers: number | null
+  wrongAnswers: number | null
+  skippedAnswers: number | null
+  totalQuestions: number | null
+  timeTakenSeconds: number | null
+  percentage: number | null
+  status: string | null
+  rankAtAttempt?: number | null
+  previousRank?: number | null
+  previousScore?: number | null
+  currentRank?: number | null
+  topicPerformanceJson?: string | null
   attemptedAt: string
 }
 
@@ -97,10 +104,14 @@ export interface QuizHistoryResponse {
 }
 
 export interface CategoryAnalysisItem {
-  topicName: string
-  totalQuestions: number
-  correctQuestions: number
-  percentage: number
+  topicName?: string
+  categoryName?: string
+  totalQuestions?: number
+  totalAttempted?: number
+  correctQuestions?: number
+  totalCorrect?: number
+  percentage?: number
+  accuracy?: number
 }
 
 export interface CategoryAnalysisResponse {
@@ -362,7 +373,16 @@ export async function fetchCategoryAnalysis(): Promise<CategoryAnalysisResponse>
       throw new Error('Invalid analysis format returned from server.')
     }
 
-    return data
+    return {
+      ...data,
+      data: data.data.map((item) => ({
+        ...item,
+        topicName: item.topicName || item.categoryName || 'Untitled topic',
+        totalQuestions: item.totalQuestions ?? item.totalAttempted ?? 0,
+        correctQuestions: item.correctQuestions ?? item.totalCorrect ?? 0,
+        percentage: item.percentage ?? item.accuracy ?? 0,
+      })),
+    }
   } catch (error) {
     logger.error('[fetchCategoryAnalysis] Error:', error instanceof Error ? error.message : 'Unknown error')
     if (error instanceof Error) throw error

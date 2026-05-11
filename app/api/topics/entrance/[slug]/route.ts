@@ -6,7 +6,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegat
 
 /**
  * GET /api/topics/entrance/[slug]
- * Proxy for: GET /api/v1/topics/entrance/{slug}
+ * Proxy for: GET /api/v1/topics/by-entrance/slug/{entranceSlug}
  * Authentication: Optional / Derived from cookie
  */
 export async function GET(
@@ -29,7 +29,7 @@ export async function GET(
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/topics/entrance/${encodeURIComponent(slug)}`,
+      `${API_BASE_URL}/api/v1/topics/by-entrance/slug/${encodeURIComponent(slug)}`,
       {
         method: 'GET',
         headers,

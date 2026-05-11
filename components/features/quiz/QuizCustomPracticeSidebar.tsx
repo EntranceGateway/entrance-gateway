@@ -49,27 +49,35 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
   const topicsFetched = useRef(false)
 
   // Disable body scroll
+  const loadEntranceTypes = useCallback(async () => {
+    if (entranceTypes.length > 0) return entranceTypes
+
+    const entranceList = await fetchEntranceTypes()
+    setEntranceTypes(entranceList || [])
+    return entranceList || []
+  }, [entranceTypes])
+
   const loadTopics = useCallback(async (entranceSlug = selectedEntranceSlug) => {
     setIsLoadingTopics(true)
     setGlobalError(null)
     try {
-      const [dbTopics, entranceList] = await Promise.all([
-        entranceSlug ? fetchTopicsByEntrance(entranceSlug) : fetchAllTopics(),
-        entranceTypes.length > 0 ? Promise.resolve(entranceTypes) : fetchEntranceTypes(),
-      ])
+      const dbTopics = entranceSlug ? await fetchTopicsByEntrance(entranceSlug) : await fetchAllTopics()
       setTopics(dbTopics || [])
-      setEntranceTypes(entranceList || [])
       topicsFetched.current = true
     } catch (err) {
       setGlobalError(err instanceof Error ? err.message : 'Unable to load syllabus topics.')
     } finally {
       setIsLoadingTopics(false)
     }
-  }, [entranceTypes, selectedEntranceSlug])
+  }, [selectedEntranceSlug])
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = 'hidden'
+      loadEntranceTypes().catch(() => {
+        // Keep custom practice usable even if the entrance reference list fails.
+        setEntranceTypes([])
+      })
       // Fetch topics if we haven't already
       if (!topicsFetched.current) {
         loadTopics()
@@ -80,7 +88,7 @@ export function QuizCustomPracticeSidebar({ isOpen, onClose }: QuizCustomPractic
     return () => {
       document.body.style.overflow = 'unset'
     }
-  }, [isOpen, loadTopics])
+  }, [isOpen, loadEntranceTypes, loadTopics])
 
   const handleToggleTopic = (topicId: string) => {
     setSelectedTopicIds(prev => {

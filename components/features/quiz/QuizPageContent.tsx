@@ -14,6 +14,7 @@ import { useToast } from '@/components/shared/Toast'
 import { useAuth } from '@/hooks/auth/useAuth'
 import type { Quiz, QuizListResponse } from '@/types/quiz.types'
 import type { PurchaseStatus } from '@/types/payment.types'
+import type { QuizHistoryResponse } from '@/services/client/quizAttempt.client'
 import type { QuizTemplate } from '@/types/quizTemplate.types'
 import { QuizPaymentForm } from './QuizPaymentForm'
 import { QuizDetailSidebar } from './QuizDetailSidebar'
@@ -31,11 +32,12 @@ import Link from 'next/link'
 
 interface QuizPageContentProps {
   initialData?: QuizListResponse | null
+  initialHistory?: QuizHistoryResponse | null
   purchaseStatuses?: Record<number, string>
   initialPage?: number
 }
 
-export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPage = 0 }: QuizPageContentProps) {
+export function QuizPageContent({ initialData, initialHistory, purchaseStatuses = {}, initialPage = 0 }: QuizPageContentProps) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
@@ -415,10 +417,10 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
 
         {/* Type Toggle Tabs */}
         <div className="mb-8 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-          <div className="flex bg-gray-100 p-1.5 rounded-xl self-start overflow-x-auto scbar-none flex-shrink-0">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-gray-100 p-1 sm:p-1.5 rounded-xl self-start w-full lg:w-auto lg:flex lg:flex-shrink-0">
             <button
               onClick={() => setActiveTab('QUIZZES')}
-              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+              className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                 activeTab === 'QUIZZES' 
                   ? 'bg-white text-brand-navy shadow-sm' 
                   : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
@@ -428,7 +430,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
             </button>
             <button
               onClick={() => setActiveTab('TEMPLATES')}
-              className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+              className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                 activeTab === 'TEMPLATES' 
                   ? 'bg-white text-brand-navy shadow-sm' 
                   : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
@@ -439,7 +441,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
             {isLoggedIn && (
               <button
                 onClick={() => setActiveTab('MY_TEMPLATES')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                   activeTab === 'MY_TEMPLATES'
                     ? 'bg-white text-brand-navy shadow-sm'
                     : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
@@ -451,7 +453,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
             {isLoggedIn && (
               <button
                 onClick={() => setActiveTab('HISTORY')}
-                className={`px-5 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                className={`px-3 sm:px-5 py-2 sm:py-2.5 rounded-lg text-xs sm:text-sm font-bold transition-all whitespace-nowrap ${
                   activeTab === 'HISTORY' 
                     ? 'bg-white text-brand-navy shadow-sm' 
                     : 'text-gray-500 hover:text-brand-navy hover:bg-gray-200'
@@ -473,7 +475,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
 
         <div data-role="quiz-list">
           {activeTab === 'HISTORY' ? (
-            <QuizHistoryTab />
+            <QuizHistoryTab initialHistory={initialHistory} />
           ) : activeTab === 'TEMPLATES' ? (
             <div className="space-y-6">
               {templatesError === 'UNAUTHORIZED' ? (
@@ -512,7 +514,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
                   </div>
 
                   <section className="bg-white border border-gray-100 rounded-xl p-4 sm:p-5 shadow-sm mb-6" aria-label="Template filters">
-                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto_auto] gap-4 items-end">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-[1fr_auto_auto] gap-3 sm:gap-4 items-end">
                       <label className="block">
                         <span className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Search templates</span>
                         <div className="relative">
@@ -528,7 +530,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
                         </div>
                       </label>
 
-                      <label className="block min-w-[190px]">
+                      <label className="block">
                         <span className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Entrance Type</span>
                         <select
                           id="template-entrance-filter"
@@ -548,7 +550,7 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
                         </select>
                       </label>
 
-                      <label className="block min-w-[150px]">
+                      <label className="block">
                         <span className="block text-xs font-bold uppercase tracking-wide text-gray-500 mb-2">Access</span>
                         <select
                           id="template-price-filter"
@@ -648,14 +650,6 @@ export function QuizPageContent({ initialData, purchaseStatuses = {}, initialPag
                           className="w-full rounded-lg border border-gray-200 bg-white py-2.5 pl-10 pr-3 text-sm text-gray-900 outline-none focus:border-brand-blue focus:ring-2 focus:ring-brand-blue/20"
                         />
                       </div>
-                      <button
-                        type="button"
-                        onClick={handleOpenCreateTemplate}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-brand-navy px-4 py-2.5 text-sm font-bold text-white shadow-sm transition-colors hover:bg-brand-blue"
-                      >
-                        <span className="material-symbols-outlined text-[18px]">add</span>
-                        Create
-                      </button>
                     </div>
                   </section>
 

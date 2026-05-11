@@ -38,7 +38,7 @@ export function QuizTemplateCard({ template, onClick }: QuizTemplateCardProps) {
           )}
         </div>
 
-        <h3 className="text-xl font-heading font-bold text-brand-navy mb-2 group-hover:text-brand-blue transition-colors">
+        <h3 className="text-lg sm:text-xl font-heading font-bold text-brand-navy mb-2 group-hover:text-brand-blue transition-colors line-clamp-2 break-words">
           {template.name}
         </h3>
 

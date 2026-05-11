@@ -33,7 +33,18 @@ export async function fetchMySubscription(): Promise<SubscriptionStatusResponse 
       throw new Error(normalizeErrorMessage(response.status, data.message))
     }
 
-    return data.data
+    if (!data.data) return null
+
+    const subscription = data.data
+    return {
+      ...subscription,
+      currentPlan: subscription.currentPlan ?? subscription.plan ?? null,
+      planName: subscription.planName ?? subscription.plan ?? null,
+      quizzesUsedThisMonth: subscription.quizzesUsedThisMonth ?? subscription.monthlyQuotaUsed ?? 0,
+      quizzesLimitPerMonth: subscription.quizzesLimitPerMonth ?? subscription.monthlyQuotaLimit ?? 0,
+      isActive: subscription.isActive ?? subscription.status === 'ACTIVE',
+      autoRenew: subscription.autoRenew ?? false,
+    }
   } catch (error) {
     if (error instanceof Error) throw error
     logger.error('[fetchMySubscription] Unexpected error:', error)
