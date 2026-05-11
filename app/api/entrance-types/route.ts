@@ -23,13 +23,35 @@ export async function GET() {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/entrance-types`, {
-      method: 'GET',
-      headers,
-      next: { revalidate: 300 },
-    })
+    const endpointCandidates = [
+      `${API_BASE_URL}/api/v1/entrance-types`,
+    ]
 
-    const data = await response.json().catch(() => ({}))
+    let response: Response | null = null
+    let data: unknown = null
+
+    for (const endpoint of endpointCandidates) {
+      response = await fetch(endpoint, {
+        method: 'GET',
+        headers,
+        next: { revalidate: 300 },
+      })
+
+      data = await response.json().catch(() => ({}))
+
+      if (response.ok) break
+
+      if (response.status !== 404) {
+        break
+      }
+    }
+
+    if (!response) {
+      return NextResponse.json(
+        { message: 'Unable to fetch entrance types. Please try again later.' },
+        { status: 500 }
+      )
+    }
 
     if (!response.ok) {
       logger.error('[API] Backend error fetching entrance types:', {
@@ -37,7 +59,7 @@ export async function GET() {
       })
 
       return NextResponse.json(
-        { message: data.message || 'Unable to fetch entrance types. Please try again later.' },
+        { message: (data && typeof data === 'object' && 'message' in data && typeof data.message === 'string') ? data.message : 'Unable to fetch entrance types. Please try again later.' },
         { status: response.status }
       )
     }

@@ -222,11 +222,6 @@ export function SubscriptionPlansContent({
   }
 
   async function handleSubscribe(plan: SubscriptionPlanResponse, method: PaymentMethod) {
-    if (!selectedEntranceSlug) {
-      setPaymentError('Please select a valid entrance type before subscribing.')
-      return
-    }
-
     setPaymentError(null)
 
     setProcessingPlan(plan.plan)
@@ -238,7 +233,7 @@ export function SubscriptionPlansContent({
         moduleType: 'SUBSCRIPTION',
         amount: plan.price,
         paymentMethod: method,
-        entranceTypeSlug: selectedEntranceSlug,
+        entranceTypeSlug: selectedEntranceSlug || null,
         isUpgrade,
       })
 
@@ -634,10 +629,6 @@ export function SubscriptionPlansContent({
                       onClick={() => {
                         if (!isAuthenticated()) {
                           redirectToSignIn()
-                          return
-                        }
-                        if (!selectedEntranceSlug) {
-                          setPaymentError('Please select a valid entrance type before subscribing.')
                           return
                         }
                         setPaymentMethodPlan(plan)

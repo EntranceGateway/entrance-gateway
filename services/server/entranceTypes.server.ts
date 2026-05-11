@@ -43,13 +43,32 @@ export async function getEntranceTypes(): Promise<EntranceType[]> {
       headers.Authorization = `Bearer ${accessToken}`
     }
 
-    const response = await fetch(`${API_BASE_URL}/api/v1/entrance-types`, {
-      method: 'GET',
-      headers,
-      next: { revalidate: 300 },
-    })
+    const endpointCandidates = [
+      `${API_BASE_URL}/api/v1/entrance-types`,
+    ]
 
-    const responseData = await response.json().catch(() => null)
+    let response: Response | null = null
+    let responseData: unknown = null
+
+    for (const endpoint of endpointCandidates) {
+      response = await fetch(endpoint, {
+        method: 'GET',
+        headers,
+        next: { revalidate: 300 },
+      })
+
+      responseData = await response.json().catch(() => null)
+
+      if (response.ok) break
+
+      if (response.status !== 404) {
+        break
+      }
+    }
+
+    if (!response) {
+      return []
+    }
 
     if (!response.ok) {
       if (response.status !== 401 && response.status !== 404) {
@@ -58,11 +77,18 @@ export async function getEntranceTypes(): Promise<EntranceType[]> {
       return []
     }
 
+    const responseRecord = responseData && typeof responseData === 'object'
+      ? responseData as Record<string, unknown>
+      : {}
+    const responseDataRecord = responseRecord.data && typeof responseRecord.data === 'object'
+      ? responseRecord.data as Record<string, unknown>
+      : {}
+
     const candidates = [
       responseData,
-      responseData?.data,
-      responseData?.data?.content,
-      responseData?.content,
+      responseRecord.data,
+      responseDataRecord.content,
+      responseRecord.content,
     ]
 
     for (const candidate of candidates) {
