@@ -16,7 +16,7 @@ import type {
 import { getOrCreateChatSessionId } from '@/lib/chatbot/session'
 
 // Get API base URL from environment
-const CHATBOT_API_BASE_URL = process.env.NEXT_PUBLIC_CHATBOT_API_BASE_URL || 'http://185.177.116.173:8002/api/v1'
+const CHATBOT_API_BASE_URL = process.env.NEXT_PUBLIC_CHATBOT_API_BASE_URL || 'https://chat.entrancegateway.com/api/v1'
 
 /**
  * Send a normal (non-streaming) chat message
