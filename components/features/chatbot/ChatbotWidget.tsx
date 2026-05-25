@@ -19,7 +19,6 @@ export function ChatbotWidget({
   const {
     botName = 'EntranceGateway AI',
     botAvatar = 'AI',
-    welcomeMessage = 'Hi! I\'m your EntranceGateway AI assistant. How can I help you today?',
     placeholder = 'Ask me anything about courses, exams, or admissions...',
   } = config
 
@@ -34,8 +33,6 @@ export function ChatbotWidget({
     closeChat,
     clearMessages,
   } = useChatbot({
-    apiEndpoint,
-    welcomeMessage,
     onError: (error) => {
       console.error('Chatbot error:', error)
     },

@@ -37,10 +37,12 @@ export function ChatbotWindow({
   const messagesContainerRef = useRef<HTMLDivElement>(null)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  // Auto-scroll to bottom when new messages arrive
+  // Auto-scroll to bottom when new messages arrive or during streaming
   useEffect(() => {
-    if (messagesEndRef.current && isOpen) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' })
+    const container = messagesContainerRef.current
+    if (container && isOpen) {
+      // Use scrollTop for immediate, reliable scroll during streaming
+      container.scrollTop = container.scrollHeight
     }
   }, [messages, isTyping, isOpen])
 
@@ -82,12 +84,17 @@ export function ChatbotWindow({
           scrollbarColor: '#CBD5E0 #F7FAFC',
         }}
       >
-        {/* Messages */}
-        {messages.map((message) => (
-          <ChatbotMessage key={message.id} message={message} />
-        ))}
+        {/* Messages — rendered in array order, which is chronological */}
+        {messages.map((message) => {
+          // Skip rendering the assistant placeholder if it has no content yet
+          // (the TypingIndicator below handles that visual state)
+          if (message.role === 'assistant' && message.status === 'sending' && !message.content) {
+            return null
+          }
+          return <ChatbotMessage key={message.id} message={message} />
+        })}
 
-        {/* Typing Indicator */}
+        {/* Typing Indicator — only shown when waiting for first token */}
         {isTyping && <TypingIndicator />}
 
         {/* Empty State */}
