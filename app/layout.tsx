@@ -4,6 +4,7 @@ import "./globals.css";
 import { ProgressBar } from "@/components/shared/Loading";
 import { ToastProvider } from "@/components/shared/Toast";
 import { DebugPageStructureLoader } from "@/components/shared/DebugPageStructureLoader";
+import { ChatbotWidget } from "@/components/features/chatbot";
 
 const inter = Inter({
   variable: "--font-sans",
@@ -76,6 +77,7 @@ export default function RootLayout({
           <DebugPageStructureLoader />
           <ProgressBar />
           {children}
+          <ChatbotWidget />
         </ToastProvider>
         <script
           dangerouslySetInnerHTML={{
