@@ -74,7 +74,10 @@ export interface ChatResponse {
   sources: ChatSource[]
   session_id: string
   allowed: boolean
+  /** Guardrail outcome, e.g. "grounded", "missing_citations", "conversational_templated". */
   reason: string
+  /** Classified turn type: "greeting" | "small_talk" | "knowledge". */
+  intent?: string
 }
 
 /**
@@ -98,6 +101,8 @@ export interface StreamSourcesData {
   confidence: number
   allowed: boolean
   reason: string
+  /** Classified turn type: "greeting" | "small_talk" | "knowledge". */
+  intent?: string
 }
 
 export interface StreamDoneData {

@@ -140,9 +140,23 @@ export function useChatbot(options: UseChatbotOptions = {}): UseChatbotReturn {
                   confidence: payload.confidence,
                 }))
               },
-              onDone: () => {
+              onDone: (payload) => {
+                // The backend validates the answer only AFTER generation
+                // finishes: citations are checked, and an ungrounded or
+                // mis-cited answer is replaced with the refusal message. The
+                // streamed tokens are therefore provisional — `payload.answer`
+                // is the authoritative, guardrail-approved text and must
+                // overwrite whatever was streamed, or rejected output stays on
+                // screen.
+                const finalAnswer = payload?.answer ?? streamedAnswer
                 setState((prev) => ({
                   ...prev,
+                  messages: prev.messages.map((msg) =>
+                    msg.id === assistantMsgId
+                      ? { ...msg, content: finalAnswer, status: 'sent' as const }
+                      : msg
+                  ),
+                  confidence: payload?.confidence ?? prev.confidence,
                   isTyping: false,
                   isStreaming: false,
                   hasUnread: !prev.isOpen,

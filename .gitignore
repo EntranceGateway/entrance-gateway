@@ -45,3 +45,5 @@ next-env.d.ts
 .agent/
 .kiro/
 entrance-backend/
+
+.claude-flow/
