@@ -42,7 +42,6 @@ export function ProfilePageContent({ initialData }: ProfilePageContentProps) {
     e.preventDefault()
 
     if (!hasChanges()) {
-      console.log('ℹ️ No changes to save')
       return
     }
 
@@ -61,15 +60,11 @@ export function ProfilePageContent({ initialData }: ProfilePageContentProps) {
         latestQualification: userData.latestQualification,
       }
 
-      console.log('📤 Updating profile with:', updateData)
-
       const response = await updateUserProfile(updateData)
       setUserData(response.data)
       setOriginalData(response.data) // Update original data after successful save
       setShowSuccessToast(true)
       setTimeout(() => setShowSuccessToast(false), 3000)
-
-      console.log('✅ Profile updated successfully:', response.data)
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Failed to update profile'
       setError(errorMessage)
@@ -82,7 +77,6 @@ export function ProfilePageContent({ initialData }: ProfilePageContentProps) {
   const handleCancel = () => {
     // Restore original data
     setUserData(originalData)
-    console.log('↩️ Changes discarded')
   }
 
   return (

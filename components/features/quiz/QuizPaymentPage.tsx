@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useAuth } from '@/hooks/auth/useAuth'
 import { Spinner } from '@/components/shared/Loading'
 import { submitPaymentWithProof } from '@/services/client/payment.client'
+import { fetchQuizBySlug } from '@/services/client/quiz.client'
 import type { Quiz } from '@/types/quiz.types'
 
 interface QuizPaymentPageProps {
@@ -35,23 +36,40 @@ export function QuizPaymentPage({ slug }: QuizPaymentPageProps) {
   }, [authLoading, isLoggedIn, router, slug])
 
   useEffect(() => {
-    // TODO: Fetch quiz details by slug
-    // For now, using mock data
-    const timer = setTimeout(() => {
-      setQuiz({
-        questionSetId: 2,
-        slug: 'bca-i-9cf270',
-        setName: 'BCA I',
-        nosOfQuestions: 10,
-        durationInMinutes: 15,
-        description: 'Comprehensive test for BCA first semester',
-        price: 0.01,
-        courseId: 2,
-        courseName: 'BCA',
-      })
-      setIsLoading(false)
-    }, 500)
-    return () => clearTimeout(timer)
+    let cancelled = false
+
+    async function loadQuiz() {
+      setIsLoading(true)
+      setError(null)
+      try {
+        const data = await fetchQuizBySlug(slug)
+        if (!cancelled) {
+          setQuiz(data)
+        }
+      } catch (err) {
+        if (cancelled) return
+        let errorMessage = 'Failed to load quiz details. Please try again.'
+        if (err instanceof Error) {
+          const message = err.message.toLowerCase()
+          if (message.includes('network') || message.includes('fetch')) {
+            errorMessage = 'Network error. Please check your connection and try again.'
+          } else if (message.includes('not found') || message.includes('404')) {
+            errorMessage = 'This quiz could not be found.'
+          } else {
+            errorMessage = err.message
+          }
+        }
+        setError(errorMessage)
+        console.error('Failed to fetch quiz by slug:', err)
+      } finally {
+        if (!cancelled) setIsLoading(false)
+      }
+    }
+
+    loadQuiz()
+    return () => {
+      cancelled = true
+    }
   }, [slug])
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {

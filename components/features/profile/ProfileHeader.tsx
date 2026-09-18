@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import type { User } from '@/types/user.types'
 
 interface ProfileHeaderProps {
@@ -8,14 +7,6 @@ interface ProfileHeaderProps {
 }
 
 export function ProfileHeader({ userData }: ProfileHeaderProps) {
-  const [isUploading, setIsUploading] = useState(false)
-
-  const handleAvatarChange = () => {
-    // TODO: Implement avatar upload
-    setIsUploading(true)
-    setTimeout(() => setIsUploading(false), 1000)
-  }
-
   if (!userData) {
     return (
       <div className="bg-white shadow rounded-lg overflow-hidden">
@@ -62,12 +53,12 @@ export function ProfileHeader({ userData }: ProfileHeaderProps) {
           </div>
           <div className="mt-4 flex md:mt-0 md:ml-4">
             <button
-              onClick={handleAvatarChange}
-              disabled={isUploading}
-              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-brand-blue transition-colors disabled:opacity-50"
+              disabled
+              title="Avatar upload is coming soon"
+              className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-400 bg-gray-50 cursor-not-allowed"
               type="button"
             >
-              {isUploading ? 'Uploading...' : 'Change Avatar'}
+              Change Avatar (Coming Soon)
             </button>
           </div>
         </div>

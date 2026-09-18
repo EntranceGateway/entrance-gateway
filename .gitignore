@@ -47,3 +47,6 @@ next-env.d.ts
 entrance-backend/
 
 .claude-flow/
+
+### Superpowers SDD workspace ###
+.superpowers/

@@ -17,12 +17,6 @@ export function BlogDetailContent({ blogSlug, initialData }: BlogDetailContentPr
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
-  // Console log initial data
-  console.log('=== Blog Detail Page ===')
-  console.log('Blog Slug/ID:', blogSlug)
-  console.log('Initial Data:', initialData)
-  console.log('Blog State:', blog)
-
   // Fetch blog data (skip if we have SSR data)
   useEffect(() => {
     if (initialData) {
@@ -35,7 +29,6 @@ export function BlogDetailContent({ blogSlug, initialData }: BlogDetailContentPr
 
       try {
         const response = await fetchBlogById(blogSlug)
-        console.log('Fetched Blog Response:', response)
         setBlog(response.data)
       } catch (err) {
         console.error('Error fetching blog:', err)
@@ -95,15 +88,10 @@ export function BlogDetailContent({ blogSlug, initialData }: BlogDetailContentPr
       ? (blog.imageName.startsWith('http') 
           ? blog.imageName 
           : `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`)
-      : '/placeholder-blog.jpg',
+      : '',
     excerpt: '', // Remove excerpt to avoid showing raw markdown
     content: blog.content,
   }
-
-  console.log('Formatted Blog:', formattedBlog)
-  console.log('Blog Image Name (raw):', blog.imageName)
-  console.log('Blog Image URL (final):', formattedBlog.image)
-  console.log('Blog Content Length:', blog.content.length)
 
   return (
     <main className="flex-grow">

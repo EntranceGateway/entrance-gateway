@@ -17,12 +17,6 @@ export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContent
   const [isLoading, setIsLoading] = useState(!initialData)
   const [error, setError] = useState<string | null>(null)
 
-  // Console log initial data
-  console.log('=== Notes Detail Page ===')
-  console.log('Note Slug/ID:', noteSlug)
-  console.log('Initial Data:', initialData)
-  console.log('Note State:', note)
-
   // Fetch note data (skip if we have SSR data)
   useEffect(() => {
     // Skip if we already have initial data
@@ -36,7 +30,6 @@ export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContent
 
       try {
         const response = await fetchNoteById(noteSlug)
-        console.log('Fetched Note Response:', response)
         setNote(response.data)
       } catch (err) {
         console.error('Error fetching note:', err)
@@ -48,9 +41,6 @@ export function NotesDetailContent({ noteSlug, initialData }: NotesDetailContent
 
     loadNote()
   }, [noteSlug, initialData])
-
-  // Console log PDF URL (noteName now contains the full signed URL)
-  console.log('PDF URL (from noteName):', note?.noteName)
 
   // Loading State
   if (isLoading) {

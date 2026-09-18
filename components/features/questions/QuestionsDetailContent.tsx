@@ -45,9 +45,6 @@ export function QuestionsDetailContent({ questionSlug, initialData }: QuestionsD
     loadQuestion()
   }, [questionSlug, initialData, showToast])
 
-  // pdfFilePath now contains the full signed URL
-  console.log('PDF URL (from pdfFilePath):', question?.pdfFilePath)
-
   // Loading State
   if (isLoading) {
     return (
