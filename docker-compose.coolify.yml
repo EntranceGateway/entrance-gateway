@@ -1,0 +1,47 @@
+# ==============================================================================
+# entrance-gateway (public Next.js frontend) stack for COOLIFY.
+#
+# No database here — this app only talks to entrance-backend over HTTP.
+# NEXT_PUBLIC_* vars are baked into the client JS bundle at BUILD time
+# (see Dockerfile ARG/ENV), so they must be the PUBLIC domain the visitor's
+# browser can reach (e.g. https://api.entrancegateway.com), never an internal
+# container hostname.
+#
+# Coolify builds from ./Dockerfile (no registry), so NO `container_name:`.
+# Publish the site by assigning a domain to `frontend` (port 5000).
+# ==============================================================================
+
+services:
+
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+        NEXT_PUBLIC_CHATBOT_API_BASE_URL: ${NEXT_PUBLIC_CHATBOT_API_BASE_URL}
+    restart: unless-stopped
+    expose:
+      - "5000"
+    environment:
+      NODE_ENV: production
+      PORT: 5000
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL}
+      NEXT_PUBLIC_CHATBOT_API_BASE_URL: ${NEXT_PUBLIC_CHATBOT_API_BASE_URL}
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').get('http://localhost:5000/api/health', (r) => {process.exit(r.statusCode === 200 ? 0 : 1)}).on('error', () => process.exit(1))"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - coolify
+
+networks:
+  coolify:
+    external: true
