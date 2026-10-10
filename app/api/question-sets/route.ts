@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'setName'
     const sortDir = searchParams.get('sortDir') || 'asc'
 
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_BASE_URL}/question-sets?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
+    const apiUrl = `${process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/v1/question-sets?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
 
     const response = await fetch(apiUrl, {
       headers: {

@@ -1,4 +1,4 @@
-import { getValidTokenOrRefresh } from '@/lib/auth/token'
+import { getAccessToken } from '@/lib/auth/token'
 import { logger } from '@/lib/logger'
 import type {
   MySubscriptionResponse,
@@ -7,11 +7,11 @@ import type {
   SubscriptionStatusResponse,
 } from '@/types/subscription.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export async function getSubscriptionPlans(): Promise<SubscriptionPlanResponse[]> {
   try {
-    const accessToken = await getValidTokenOrRefresh()
+    const accessToken = await getAccessToken()
     const headers: HeadersInit = {
       Accept: 'application/json',
     }
@@ -44,7 +44,7 @@ export async function getSubscriptionPlans(): Promise<SubscriptionPlanResponse[]
 
 export async function getMySubscription(): Promise<SubscriptionStatusResponse | null> {
   try {
-    const accessToken = await getValidTokenOrRefresh()
+    const accessToken = await getAccessToken()
 
     if (!accessToken) {
       return null

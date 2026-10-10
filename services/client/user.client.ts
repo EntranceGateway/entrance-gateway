@@ -53,7 +53,7 @@ export async function fetchUserProfileFull(params?: UserProfileQueryParams): Pro
   if (params?.admissionsSize !== undefined) queryParams.set('admissionsSize', params.admissionsSize.toString())
 
   const queryString = queryParams.toString()
-  const url = `/api/user/profile${queryString ? `?${queryString}` : ''}`
+  const url = `/api/user/history${queryString ? `?${queryString}` : ''}`
 
   const response = await fetch(url, {
     method: 'GET',

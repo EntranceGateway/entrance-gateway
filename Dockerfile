@@ -3,7 +3,7 @@
 # ============================================
 # Stage 1: Dependencies
 # ============================================
-FROM node:20-alpine AS deps
+FROM node:22-alpine AS deps
 
 # Install libc6-compat for Alpine compatibility
 RUN apk add --no-cache libc6-compat
@@ -15,6 +15,7 @@ WORKDIR /app
 
 # Copy package files for dependency installation
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml* ./
+COPY scripts/harden-braces.cjs ./scripts/harden-braces.cjs
 
 # Install dependencies
 RUN pnpm install --frozen-lockfile
@@ -22,7 +23,7 @@ RUN pnpm install --frozen-lockfile
 # ============================================
 # Stage 2: Builder
 # ============================================
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
 
 # Install pnpm
 RUN corepack enable && corepack prepare pnpm@10.19.0 --activate
@@ -51,7 +52,8 @@ RUN pnpm run build
 # ============================================
 # Stage 3: Runner (Production)
 # ============================================
-FROM node:20-alpine AS runner
+FROM node:22-alpine AS runner
+RUN apk upgrade --no-cache
 
 WORKDIR /app
 
@@ -59,6 +61,7 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 ENV PORT=5000
+ENV HOSTNAME=0.0.0.0
 
 # Create non-root user for security
 RUN addgroup --system --gid 1001 nodejs && \

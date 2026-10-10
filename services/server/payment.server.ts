@@ -2,7 +2,7 @@ import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
 import type { PurchaseStatusResponse } from '@/types/payment.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * Check quiz purchase status (Server-side)

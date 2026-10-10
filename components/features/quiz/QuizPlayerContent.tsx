@@ -79,7 +79,9 @@ interface QuizPlayerContentProps {
 /* ------------------------------------------------------------------ */
 /*  Component                                                         */
 /* ------------------------------------------------------------------ */
-export function QuizPlayerContent({ questions, quizTitle, questionSetId, attemptId, onExit }: QuizPlayerContentProps) {
+export function QuizPlayerContent({ questions: initialQuestions, quizTitle, questionSetId, attemptId, onExit }: QuizPlayerContentProps) {
+  const [gradedQuestions, setGradedQuestions] = useState<QuizQuestion[] | null>(null)
+  const questions = gradedQuestions || initialQuestions
   const total = questions.length
   const { success, error: showError, info } = useToast()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -144,8 +146,8 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
     }
   }, [resultStorageKey])
 
-  const deriveTopicPerformance = useCallback((answerMap: Record<number, number>) => {
-    const grouped = questions.reduce<Record<string, { totalQuestions: number; correctQuestions: number }>>((acc, qn) => {
+  const deriveTopicPerformance = useCallback((answerMap: Record<number, number>, graded = questions) => {
+    const grouped = graded.reduce<Record<string, { totalQuestions: number; correctQuestions: number }>>((acc, qn) => {
       const topicName = qn.categoryName || 'General'
       if (!acc[topicName]) acc[topicName] = { totalQuestions: 0, correctQuestions: 0 }
       acc[topicName].totalQuestions += 1
@@ -202,9 +204,19 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
       if (attemptId !== undefined && attemptId !== 0) {
         submitGeneratedAttempt(attemptId, { questionAnswers })
           .then((response) => {
+            let reviewQuestions = questions
+            if (response.data.questionsSnapshotJson) {
+              const snapshot = JSON.parse(response.data.questionsSnapshotJson) as Array<{ questionId: number; options: Array<{ optionId: number; correct?: boolean; isCorrect?: boolean }> }>
+              const graded = questions.map(question => ({ ...question, options: question.options.map(option => {
+                const answer = snapshot.find(item => item.questionId === question.questionId)?.options.find(item => item.optionId === option.optionId)
+                return { ...option, correct: answer?.correct === true || answer?.isCorrect === true }
+              }) }))
+              setGradedQuestions(graded)
+              reviewQuestions = graded
+            }
             // Map generated attempt result into the existing UI shape, using backend analytics when present.
             const derivedPct = questions.length > 0 ? (response.data.score / questions.length) * 100 : 0
-            const resolvedTopicPerformance = response.data.topicPerformance || deriveTopicPerformance(updatedAnswers)
+            const resolvedTopicPerformance = response.data.topicPerformance || deriveTopicPerformance(updatedAnswers, reviewQuestions)
             const resolvedTimeTaken = response.data.timeTakenSeconds ?? null
             const result: QuizAttemptResult = {
               totalScore: response.data.score,
@@ -233,8 +245,17 @@ export function QuizPlayerContent({ questions, quizTitle, questionSetId, attempt
       } else {
         submitQuizAttempt({ questionSetId, questionAnswers })
           .then((response) => {
+            let reviewQuestions = questions
+            if (response.data.questionsSnapshotJson) {
+              const snapshot = JSON.parse(response.data.questionsSnapshotJson) as Array<{ questionId: number; options: Array<{ optionId: number; correct?: boolean; isCorrect?: boolean }> }>
+              reviewQuestions = questions.map(question => ({ ...question, options: question.options.map(option => {
+                const answer = snapshot.find(item => item.questionId === question.questionId)?.options.find(item => item.optionId === option.optionId)
+                return { ...option, correct: answer?.correct === true || answer?.isCorrect === true }
+              }) }))
+              setGradedQuestions(reviewQuestions)
+            }
             setServerResult(response.data)
-            const resolvedTopicPerformance = deriveTopicPerformance(updatedAnswers)
+            const resolvedTopicPerformance = deriveTopicPerformance(updatedAnswers, reviewQuestions)
             setTopicPerformance(resolvedTopicPerformance)
             setTimeTakenSeconds(null)
             persistResult({ result: response.data, answers: updatedAnswers, topicPerformance: resolvedTopicPerformance, timeTakenSeconds: null })

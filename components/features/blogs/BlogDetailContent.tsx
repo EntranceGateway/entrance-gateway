@@ -87,7 +87,7 @@ export function BlogDetailContent({ blogSlug, initialData }: BlogDetailContentPr
     image: blog.imageName 
       ? (blog.imageName.startsWith('http') 
           ? blog.imageName 
-          : `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`)
+          : `/api/resources/${encodeURIComponent(blog.imageName)}`)
       : '',
     excerpt: '', // Remove excerpt to avoid showing raw markdown
     content: blog.content,

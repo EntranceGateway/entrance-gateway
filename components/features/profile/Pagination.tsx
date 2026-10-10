@@ -52,11 +52,11 @@ export function Pagination({ currentPage, totalPages, onPageChange }: Pagination
   }
 
   return (
-    <div className="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+    <div className="px-6 py-4 border-t border-gray-200 flex flex-col items-start gap-3 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs font-medium text-gray-500">
         Page {currentPage + 1} of {totalPages}
       </p>
-      <div className="flex gap-2">
+      <div className="flex max-w-full flex-wrap gap-2">
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={!canGoPrevious}

@@ -84,6 +84,8 @@ export function NavbarExample({ initialUser = null }: Pick<NavbarProps, 'initial
                       </div>
                     </Navbar.UserMenuItem>
 
+                    <Navbar.UserMenuItem href="/leaderboard">Leaderboard</Navbar.UserMenuItem>
+
                     <button
                       onClick={handleSignOut}
                       disabled={isSigningOut}
@@ -118,7 +120,7 @@ export function NavbarExample({ initialUser = null }: Pick<NavbarProps, 'initial
           </Navbar.Actions>
         </Navbar.Container>
 
-        <Navbar.MobileMenu items={navigationItems} isAuthenticated={!!userData} />
+        <Navbar.MobileMenu items={[...navigationItems, { label: 'Leaderboard', href: '/leaderboard' }]} isAuthenticated={!!userData} />
       </Navbar.Frame>
     </Navbar.Provider>
   )

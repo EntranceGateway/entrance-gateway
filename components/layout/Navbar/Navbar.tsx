@@ -43,7 +43,7 @@ function NavbarMobileMenuButton() {
   const { isMobileMenuOpen, toggleMobileMenu } = use(NavbarContext)!
 
   return (
-    <div className="flex items-center md:hidden">
+    <div className="flex items-center lg:hidden">
       <button
         type="button"
         onClick={toggleMobileMenu}
@@ -88,7 +88,7 @@ function NavbarDesktopNav({ items }: { items: NavItem[] }) {
   const pathname = usePathname()
   
   return (
-    <div className="hidden md:flex md:flex-1 md:items-center md:justify-center">
+    <div className="hidden lg:flex lg:flex-1 lg:items-center lg:justify-center">
       <div className="flex space-x-1">
         {items.map((item) => {
           const isActive = pathname === item.href
@@ -178,8 +178,8 @@ function NavbarUserMenuButton({ avatar, name }: { avatar: string; name: string }
             className="size-8 rounded-full bg-gray-200 ring-2 ring-gray-200"
           />
         )}
-        <div className="hidden sm:block text-left">
-          <div className="text-sm font-medium text-gray-900">{name}</div>
+        <div className="hidden sm:block max-w-24 xl:max-w-32 text-left">
+          <div className="truncate text-sm font-medium text-gray-900" title={name}>{name}</div>
           <div className="text-xs text-gray-500">User</div>
         </div>
         <svg
@@ -232,7 +232,7 @@ function NavbarMobileMenu({ items, isAuthenticated = false }: { items: NavItem[]
     <>
       {/* Backdrop Overlay */}
       <div
-        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 md:hidden transition-opacity duration-300 ${
+        className={`fixed inset-0 bg-black/50 backdrop-blur-sm z-40 lg:hidden transition-opacity duration-300 ${
           isMobileMenuOpen ? 'opacity-100' : 'opacity-0 pointer-events-none'
         }`}
         onClick={closeMobileMenu}
@@ -241,7 +241,7 @@ function NavbarMobileMenu({ items, isAuthenticated = false }: { items: NavItem[]
 
       {/* Slide-in Menu - Half Width */}
       <div
-        className={`fixed top-0 left-0 bottom-0 w-[75%] max-w-sm bg-white z-50 md:hidden transform transition-transform duration-300 ease-in-out shadow-2xl ${
+        className={`fixed top-0 left-0 bottom-0 w-[75%] max-w-sm bg-white z-50 lg:hidden transform transition-transform duration-300 ease-in-out shadow-2xl ${
           isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
@@ -339,7 +339,7 @@ function NavbarProvider({ children }: { children: React.ReactNode }) {
   // Close mobile menu on window resize to desktop
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth >= 768) {
+      if (window.innerWidth >= 1024) {
         setIsMobileMenuOpen(false)
       }
     }

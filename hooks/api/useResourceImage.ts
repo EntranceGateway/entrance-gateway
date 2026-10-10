@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { fetchResourcePreview } from '@/services/api/resources'
 
 interface UseResourceImageOptions {
   enabled?: boolean
@@ -68,18 +69,8 @@ export function useResourceImage(
       setError(null)
 
       try {
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
-        const imageUrl = `${apiUrl}/api/v1/resources/${encodeURIComponent(fileName)}`
-
-        const response = await fetch(imageUrl)
-
-        if (!response.ok) {
-          throw new Error(`Image not found: ${fileName}`)
-        }
-
-        // Create blob URL for better performance
-        const blob = await response.blob()
-        objectUrl = URL.createObjectURL(blob)
+        const preview = await fetchResourcePreview(fileName)
+        objectUrl = preview.url
 
         setSrc(objectUrl)
         onSuccess?.(objectUrl)

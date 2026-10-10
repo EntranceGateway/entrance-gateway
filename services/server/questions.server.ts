@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers'
 import type { OldQuestionsListResponse, OldQuestionDetailResponse, OldQuestionsFilters } from '@/types/questions.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * Fetch old questions list (server-side)

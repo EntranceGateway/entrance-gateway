@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getValidTokenOrRefresh } from '@/lib/auth/token'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * GET /api/enrollments/trainings

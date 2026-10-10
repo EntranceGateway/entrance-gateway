@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getValidTokenOrRefresh } from '@/lib/auth/token'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export async function GET(request: NextRequest) {
   try {
@@ -61,8 +61,6 @@ export async function PUT(request: NextRequest) {
 
     const body = await request.json()
 
-    console.log(`📤 Updating profile for user ${userId}:`, body)
-
     // Use the correct endpoint: PUT /api/v1/user/{id}/update-profile
     const response = await fetch(`${API_BASE_URL}/api/v1/user/${userId}/update-profile`, {
       method: 'PUT',
@@ -81,7 +79,6 @@ export async function PUT(request: NextRequest) {
     }
 
     const data = await response.json()
-    console.log('✅ Profile updated successfully')
     return NextResponse.json(data)
   } catch (error) {
     console.error('Error updating user profile:', error)

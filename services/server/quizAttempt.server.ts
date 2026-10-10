@@ -1,11 +1,11 @@
-import { getValidTokenOrRefresh } from '@/lib/auth/token'
+import { getAccessToken } from '@/lib/auth/token'
 import { logger } from '@/lib/logger'
 import type { QuizHistoryResponse } from '@/services/client/quizAttempt.client'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export async function getQuizAttemptHistory(): Promise<QuizHistoryResponse | null> {
-  const accessToken = await getValidTokenOrRefresh()
+  const accessToken = await getAccessToken()
 
   if (!accessToken) {
     return null

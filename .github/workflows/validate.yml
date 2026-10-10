@@ -1,0 +1,16 @@
+name: Validate
+on:
+  pull_request:
+  push:
+    branches: [main, develop, production-master]
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: corepack enable && corepack prepare pnpm@10.19.0 --activate && pnpm install --frozen-lockfile
+      - run: pnpm test
+      - run: pnpm build

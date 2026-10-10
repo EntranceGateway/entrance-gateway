@@ -4,7 +4,7 @@
 import { cookies } from 'next/headers'
 import type { UserHistoryResponse, HistoryQueryParams } from '@/types/history.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * Fetch user history with paginated data on server-side

@@ -3,7 +3,7 @@ import { fetchWithAuthRetry } from '@/lib/auth/apiProxy'
 import { logger } from '@/lib/logger'
 import type { SubscriptionPlan } from '@/types/subscription.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 const VALID_PLANS: SubscriptionPlan[] = ['SILVER', 'GOLD', 'PREMIUM']
 
 export async function GET(

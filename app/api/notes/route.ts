@@ -1,21 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const page = searchParams.get('page') || '0'
     const size = searchParams.get('size') || '10'
-    const sortBy = searchParams.get('sortBy') || 'title'
+    const sortBy = searchParams.get('sortBy') || 'noteName'
     const sortDir = searchParams.get('sortDir') || 'asc'
-    const courseId = searchParams.get('courseId')
-    const semesterId = searchParams.get('semesterId')
-
-    let url = `${API_BASE_URL}/api/v1/notes?page=${page}&size=${size}&sortBy=${sortBy}&sortDir=${sortDir}`
-    
-    if (courseId) url += `&courseId=${courseId}`
-    if (semesterId) url += `&semesterId=${semesterId}`
+    const query = new URLSearchParams({ page, size, sortBy, sortDir })
+    for (const key of ['courseName', 'semester', 'affiliation']) {
+      const value = searchParams.get(key)
+      if (value) query.set(key, value)
+    }
+    const url = `${API_BASE_URL}/api/v1/notes?${query}`
 
     const response = await fetch(url, {
       method: 'GET',

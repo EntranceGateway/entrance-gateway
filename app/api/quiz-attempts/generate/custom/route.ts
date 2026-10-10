@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server'
 import { getValidTokenOrRefresh } from '@/lib/auth/token'
 import { logger } from '@/lib/logger'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * POST /api/quiz-attempts/generate/custom

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getValidTokenOrRefresh } from '@/lib/auth/token'
 
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
+
 export async function GET(request: NextRequest) {
   try {
     const accessToken = await getValidTokenOrRefresh()
@@ -17,7 +19,7 @@ export async function GET(request: NextRequest) {
     const queryString = searchParams.toString()
 
     const response = await fetch(
-      `https://api.entrancegateway.com/api/v1/user/me/full${queryString ? `?${queryString}` : ''}`,
+      `${API_BASE_URL}/api/v1/user/me/full${queryString ? `?${queryString}` : ''}`,
       {
         method: 'GET',
         headers: {

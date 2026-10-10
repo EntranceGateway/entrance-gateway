@@ -1,6 +1,6 @@
 // API Client Configuration
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (typeof window === 'undefined' ? process.env.INTERNAL_API_URL : undefined) || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'
 
 export interface ApiClientOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>

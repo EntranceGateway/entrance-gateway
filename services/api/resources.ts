@@ -10,7 +10,7 @@
 /**
  * Fetch resource file as blob for preview/display
  * 
- * @param {string} fileName - Name of the file to fetch (used as-is, not URL encoded)
+ * @param {string} fileName - Name of the file to fetch
  * @param {Object} options - Additional options
  * @param {AbortSignal} options.signal - AbortController signal for cancellation
  * @returns {Promise<{blob: Blob, url: string, mimeType: string, fileName: string, size: number}>}
@@ -35,11 +35,11 @@ export const fetchResourcePreview = async (
   }
 
   try {
-    // Build endpoint with filename as-is (backend expects unencoded filenames)
-    const endpoint = `/api/v1/resources/${fileName}`
+    // The backend returns signed URLs; older responses contain only an object key.
+    const endpoint = /^https?:\/\//i.test(fileName) ? fileName : `/api/resources/${encodeURIComponent(fileName)}`
 
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'}${endpoint}`,
+      endpoint,
       {
         method: 'GET',
         signal: options.signal,

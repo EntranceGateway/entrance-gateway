@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { getValidTokenOrRefresh } from '@/lib/auth/token'
 import { logger } from '@/lib/logger'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * POST /api/quiz-attempts
@@ -41,7 +41,11 @@ export async function POST(request: Request) {
       )
     }
 
+    if (!Number.isSafeInteger(body.questionSetId) || body.questionSetId <= 0) {
+      return NextResponse.json({ message: 'Invalid question set ID' }, { status: 400 })
+    }
     const submissionPayload = {
+      questionSetId: body.questionSetId,
       questionAnswers: body.questionAnswers.map((answer: { questionId?: unknown; selectedOptionId?: unknown }) => ({
         questionId: Number(answer.questionId),
         selectedOptionId: answer.selectedOptionId === null || answer.selectedOptionId === undefined

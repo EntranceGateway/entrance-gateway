@@ -9,6 +9,7 @@ export interface QuizAttemptRequest {
 }
 
 export interface QuizAttemptResult {
+  questionsSnapshotJson?: string
   totalQuestions: number
   correctAnswers: number
   wrongAnswers: number
@@ -36,6 +37,7 @@ export interface GeneratedAttemptResponse {
   message: string
   data: {
     attemptId: number
+    questionsSnapshotJson?: string
     score: number
     isSubmitted: boolean
     attemptedAt: string
@@ -136,6 +138,7 @@ export async function submitQuizAttempt(payload: QuizAttemptRequest): Promise<Qu
     }
 
     const submissionPayload = {
+      questionSetId: payload.questionSetId,
       questionAnswers: payload.questionAnswers.map((answer) => ({
         questionId: answer.questionId,
         selectedOptionId: answer.selectedOptionId,

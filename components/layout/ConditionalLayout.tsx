@@ -2,7 +2,7 @@ import { headers } from 'next/headers'
 import { NavbarServer } from './Navbar'
 import { Footer } from './Footer'
 
-const AUTH_PATH_PREFIXES = ['/signup', '/signin', '/verify-otp']
+const AUTH_PATH_PREFIXES = ['/signup', '/signin', '/verify-otp', '/forgot-password']
 
 export async function ConditionalLayout({ children }: { children: React.ReactNode }) {
   const requestHeaders = await headers()

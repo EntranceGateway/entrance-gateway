@@ -123,7 +123,7 @@ export function BlogsPageContent({ initialData, initialPage = 0 }: BlogsPageCont
                   image: blog.imageName 
                     ? (blog.imageName.startsWith('http') 
                         ? blog.imageName 
-                        : `https://api.entrancegateway.com/api/v1/resources/${blog.imageName}`)
+                        : `/api/resources/${encodeURIComponent(blog.imageName)}`)
                     : '',
                   category: 'Article',
                   date: new Date(blog.createdDate).toLocaleDateString('en-US', {

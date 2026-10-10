@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getValidTokenOrRefresh } from '@/lib/auth/token'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export async function POST(
   request: NextRequest,
@@ -41,7 +41,7 @@ export async function POST(
 
     // Call backend API
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/training-enrollments/${id}/enroll`,
+      `${API_BASE_URL}/api/v1/training-enrollments/${id}/${hasFormData ? 'enroll-with-payment' : 'enroll-free'}`,
       {
         method: 'POST',
         headers: {

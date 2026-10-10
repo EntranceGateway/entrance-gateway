@@ -2,7 +2,7 @@ import { NextResponse, NextRequest } from 'next/server'
 import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * GET /api/quiz-templates/entrance/[slug]
@@ -36,7 +36,7 @@ export async function GET(
     }
 
     const response = await fetch(
-      `${API_BASE_URL}/api/v1/quiz-templates/entrance/${encodeURIComponent(slug)}?${queryParams.toString()}`,
+      `${API_BASE_URL}/api/v1/quiz-templates/entrance/slug/${encodeURIComponent(slug)}?${queryParams.toString()}`,
       {
         method: 'GET',
         headers,

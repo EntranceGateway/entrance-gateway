@@ -60,3 +60,8 @@ deployment-package.zip
 
 # CI/CD
 .github
+
+.env*
+!.env.example
+*verification.log
+graphify-out

@@ -2,9 +2,9 @@
 // Uses cookies for authentication
 
 import type { UserResponse } from '@/types/user.types'
-import { getValidTokenOrRefresh } from '@/lib/auth/token'
+import { getAccessToken } from '@/lib/auth/token'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * Fetch user profile on server-side
@@ -12,7 +12,7 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'https://api.entran
  */
 export async function getUserProfile(): Promise<UserResponse | null> {
   try {
-    const accessToken = await getValidTokenOrRefresh()
+    const accessToken = await getAccessToken()
 
     if (!accessToken) {
       return null
@@ -52,7 +52,7 @@ export async function getUserProfileFull(params?: {
   admissionsSize?: number
 }): Promise<import('@/types/user.types').UserProfileFullResponse | null> {
   try {
-    const accessToken = await getValidTokenOrRefresh()
+    const accessToken = await getAccessToken()
 
     if (!accessToken) {
       return null

@@ -64,9 +64,9 @@ export function SignUpPageContent() {
             <div className="mt-12 border-t border-gray-100 pt-6 text-center mb-8">
               <p className="text-xs text-gray-400">
                 Need help with registration?{' '}
-                <Link href="/contact" className="text-gray-500 hover:text-gray-700 underline">
+                <a href="mailto:info@entrancegateway.com" className="text-gray-500 hover:text-gray-700 underline">
                   Contact Support
-                </Link>
+                </a>
               </p>
             </div>
           </div>

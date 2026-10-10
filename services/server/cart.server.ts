@@ -7,7 +7,7 @@ import { cookies } from 'next/headers'
 import { revalidatePath } from 'next/cache'
 import type { CartResponse, AddToCartResponse, RemoveFromCartResponse } from '@/types/cart.types'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 /**
  * Get user's cart (Server-side)

@@ -1,25 +1,13 @@
 import { cookies } from 'next/headers'
 import { logger } from '@/lib/logger'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.entrancegateway.com'
-const TOKEN_EXPIRY_BUFFER_SECONDS = 30
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
+import { isJwtExpired } from './expiry'
 
-function isJwtExpired(token: string): boolean {
-  try {
-    const [, payload] = token.split('.')
-    if (!payload) return false
-
-    const normalizedPayload = payload.replace(/-/g, '+').replace(/_/g, '/')
-    const decoded = JSON.parse(Buffer.from(normalizedPayload, 'base64').toString('utf8')) as { exp?: number }
-
-    if (typeof decoded.exp !== 'number') return false
-
-    const now = Math.floor(Date.now() / 1000)
-    return decoded.exp <= now + TOKEN_EXPIRY_BUFFER_SECONDS
-  } catch {
-    // If the token is opaque/non-JWT, let the backend validate it.
-    return false
-  }
+/** Server Components only read cookies; middleware refreshes before rendering. */
+export async function getAccessToken(): Promise<string | null> {
+  const token = (await cookies()).get('accessToken')?.value
+  return token && !isJwtExpired(token) ? token : null
 }
 
 /**
@@ -61,9 +49,11 @@ export async function getValidTokenOrRefresh(options: TokenRefreshOptions = {}):
     if (!response.ok) {
       // Refresh failed — clear stale cookies.
       logger.error('[token.ts] Backend refresh failed:', { status: response.status })
-      cookieStore.delete('accessToken')
-      cookieStore.delete('refreshToken')
-      cookieStore.delete('userId')
+      if ([400, 401, 403].includes(response.status)) {
+        cookieStore.delete('accessToken')
+        cookieStore.delete('refreshToken')
+        cookieStore.delete('userId')
+      }
       return null
     }
 

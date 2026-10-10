@@ -44,7 +44,7 @@ export function QuizPaymentPage({ slug }: QuizPaymentPageProps) {
       try {
         const data = await fetchQuizBySlug(slug)
         if (!cancelled) {
-          setQuiz(data)
+          setQuiz(data.data)
         }
       } catch (err) {
         if (cancelled) return

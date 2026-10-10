@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { QuizStartPageContent } from '@/components/features/quiz/QuizStartPageContent'
 import { getQuestionSet } from '@/services/server/questionSet.server'
+import { getQuizBySlug } from '@/services/server/quiz.server'
 import { logger } from '@/lib/logger'
 import type { QuizQuestion } from '@/types/quiz-player.types'
 
@@ -17,8 +18,8 @@ export default async function QuizStartPage({ params }: { params: Promise<{ slug
   let questionSetId = 0
 
   try {
-    questionSetId = parseInt(slug, 10)
-    if (isNaN(questionSetId)) {
+    questionSetId = /^\d+$/.test(slug) ? Number(slug) : (await getQuizBySlug(slug)).data.questionSetId
+    if (!Number.isSafeInteger(questionSetId) || questionSetId <= 0) {
       logger.error('[QuizStartPage] Invalid quiz ID format:', slug)
       error = 'Unable to load quiz. Please try again.'
       return <QuizStartPageContent initialQuestions={questions} initialTitle={quizTitle} initialError={error} questionSetId={0} />

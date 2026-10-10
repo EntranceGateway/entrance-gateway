@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8080'
+const API_BASE_URL = (process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080').replace(/\/$/, '')
 
 export async function GET(
   request: NextRequest,
@@ -9,7 +9,7 @@ export async function GET(
   try {
     const { id } = await params
     
-    const url = `${API_BASE_URL}/api/v1/quizzes/${id}`
+    const url = `${API_BASE_URL}/api/v1/question-sets/${id}`
     
     const response = await fetch(url, {
       method: 'GET',
